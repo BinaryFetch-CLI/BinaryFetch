@@ -283,16 +283,17 @@ int main() {
 
                 for (const auto& d : all_disks) {
 
-                    auto fmt_speed = [](const std::string& s) {
-                        std::ostringstream tmp;
-                        double v = stod(s);
-                        tmp << std::fixed << std::setprecision(2) << v;
-                        std::string val = tmp.str();
+                    auto fmt_speed = [](const std::string& s) 
+                        {
+                           std::ostringstream tmp;
+                           double v = stod(s);
+                           tmp << std::fixed << std::setprecision(2) << v;
+                           std::string val = tmp.str();
 
-                        int padding = 7 - val.size();
-                        if (padding < 0) padding = 0;
+                           int padding = 7 - val.size();
+                           if (padding < 0) padding = 0;
 
-                        return std::string(padding, ' ') + val;
+                           return std::string(padding, ' ') + val;
                         };
 
                     cout << d.drive_letter << " [ Read: ("
