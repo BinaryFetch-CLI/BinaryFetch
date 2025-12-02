@@ -425,6 +425,300 @@ int main() {
 
 
 
+/*
+=====================================================================
+                      🔷 BinaryFetch Main Module 🔷
+=====================================================================
+
+This file is the MAIN ENTRY POINT of the BinaryFetch system.
+Its responsibility is to orchestrate:
+
+  • Initialization of all system-information modules
+  • Rendering ASCII art
+  • Calling both COMPACT and FULL information providers
+  • Formatting + arranging all text output
+  • Presenting the final system summary to the user
+
+This file does **NOT** handle:
+  - Low-level hardware access
+  - WMI queries
+  - Performance counters
+  - Registry queries
+  - GPU/CPU polling
+  - Any background tasks
+
+All of that work is handled by the imported classes.
+
+---------------------------------------------------------------------
+  SECTION 1 ― GENERAL THEORY OF THE FILE
+---------------------------------------------------------------------
+
+BinaryFetch architecture follows this pattern:
+
+          [Module Classes]      <-- Provide raw system information
+                   |
+                   v
+          [Compact Modules]     <-- Lightweight summaries of each system area
+                   |
+                   v
+       main.cpp  -- orchestrates everything and renders the final report
+                   |
+                   v
+          [AsciiArt Renderer]  <-- Wraps all output inside ASCII banner
+
+
+🔹 **main.cpp is the “director / controller” of the entire program.**
+It creates objects from every module, calls the functions in the correct
+order, formats the output, and prints it.
+
+🔹 The ASCII art object (`AsciiArt`) provides a "callback wrapper":
+       art.printWithArt( [lambda printing function] );
+  This allows your entire system-info block to appear INSIDE the ASCII art
+  layout without each module needing to know about ASCII printing.
+
+🔹 Two layers of system information are printed:
+     1. COMPACT SUMMARY – lightweight info for quick overview
+     2. FULL DETAILED SECTION – extended data for power users
+
+The result: fast, readable output at the top, and extremely detailed info
+below it.
+
+
+---------------------------------------------------------------------
+  SECTION 2 ― CLASS-WISE FUNCTION RESPONSIBILITY LIST
+---------------------------------------------------------------------
+
+Below is what each class generally contributes.
+(*Exact function names are based on your usage inside this file.*)
+
+-------------------------------------
+🔷 OSInfo
+-------------------------------------
+• GetOSName()
+• GetOSVersion()
+• GetOSArchitecture()
+• get_os_kernel_info()
+• get_os_uptime()
+• get_os_install_date()
+• get_os_serial_number()
+
+Purpose:
+- Reads OS-level information through Windows APIs and/or WMI.
+- Responsible only for operating system attributes.
+
+-------------------------------------
+🔷 CPUInfo
+-------------------------------------
+• get_cpu_info()
+• get_cpu_utilization()
+• get_cpu_speed()
+• get_cpu_base_speed()
+• get_cpu_cores()
+• get_cpu_logical_processors()
+• get_cpu_sockets()
+• get_cpu_virtualization()
+• get_cpu_l1_cache()
+• get_cpu_l2_cache()
+• get_cpu_l3_cache()
+
+Purpose:
+- Provides low-level CPU hardware properties.
+- Calls performance counters for live CPU usage.
+
+-------------------------------------
+🔷 MemoryInfo
+-------------------------------------
+• getTotal()
+• getFree()
+• getUsedPercentage()
+• getModules()  --> vector of RAM slots each with:
+        - capacity
+        - type (DDR4/DDR5)
+        - speed
+
+Purpose:
+- Queries all RAM modules installed.
+- Calculates usage percentages and total memory.
+
+-------------------------------------
+🔷 GPUInfo
+-------------------------------------
+• get_all_gpu_info()
+
+Each GPU entry contains:
+    - gpu_name
+    - gpu_memory
+    - gpu_usage
+    - gpu_vendor
+    - gpu_driver_version
+    - gpu_temperature
+    - gpu_core_count
+
+Purpose:
+- Provides a list of installed GPUs (NVIDIA, AMD, Intel).
+- Displays essential GPU attributes.
+
+-------------------------------------
+🔷 DetailedGPUInfo
+-------------------------------------
+• primary_gpu_info()
+     returns:
+        - name
+        - vram_gb
+        - frequency_ghz
+
+Purpose:
+- Deeper GPU statistics: VRAM usage, live clocks, frequency.
+
+-------------------------------------
+🔷 StorageInfo
+-------------------------------------
+• get_all_storage_info()
+
+Each disk entry provides:
+    - drive_letter
+    - used_space
+    - total_space
+    - used_percentage
+    - file_system
+    - read_speed
+    - write_speed
+    - predicted_read_speed
+    - predicted_write_speed
+    - is_external
+    - serial_number
+
+Purpose:
+- Gathers disk partitions information.
+- Measures or estimates disk R/W speeds.
+- Separates external vs internal.
+
+-------------------------------------
+🔷 DiskInfo (compact)
+-------------------------------------
+• getAllDiskUsage()
+• getDiskCapacity()
+
+Purpose:
+- Simple summary form for compact mode:
+  displays capacity and usage % only.
+
+-------------------------------------
+🔷 NetworkInfo / CompactNetwork
+-------------------------------------
+• get_network_name()
+• get_network_type()
+• get_network_ip()
+
+Purpose:
+- Retrieve basic network adapter information.
+- Show compact network summary.
+
+-------------------------------------
+🔷 UserInfo / CompactUser
+-------------------------------------
+• get_username()
+• get_computer_name()
+• get_domain_name()
+• get_user_groups()
+
+Purpose:
+- Reads WinAPI user identity data.
+
+-------------------------------------
+🔷 PerformanceInfo
+-------------------------------------
+• get_system_uptime()
+• get_cpu_usage_percent()
+• get_ram_usage_percent()
+• get_disk_usage_percent()
+• get_gpu_usage_percent()
+
+Purpose:
+- Live system utilization polling.
+
+-------------------------------------
+🔷 SystemInfo / CompactSystem
+-------------------------------------
+• get_bios_vendor()
+• get_bios_version()
+• get_bios_date()
+• get_motherboard_model()
+• get_motherboard_manufacturer()
+
+Purpose:
+- Reads BIOS + motherboard details via WMI.
+
+-------------------------------------
+🔷 DisplayInfo / CompactScreen
+-------------------------------------
+• get_all_displays()
+Each monitor:
+    - brand_name
+    - resolution
+    - refresh_rate
+
+Purpose:
+- Detects monitors and resolutions.
+
+-------------------------------------
+🔷 CompactCPU, CompactMemory, CompactGPU, etc.
+-------------------------------------
+All compact classes provide simplified one-line summaries of real modules.
+
+Their goal:
+- Give quick glance info
+- Save space on terminal
+- Lower performance cost vs full modules
+
+
+---------------------------------------------------------------------
+  SECTION 3 ― EXECUTION FLOW OF main()
+---------------------------------------------------------------------
+
+1️⃣ Load ASCII art
+2️⃣ Create objects of all modules
+3️⃣ Call `art.printWithArt()` → send all printing inside lambda
+4️⃣ Print compact summary:
+      OS / CPU / Displays / Memory / Audio / Network / GPU / Disk
+5️⃣ Print full Memory Info
+6️⃣ Print full Storage Info
+7️⃣ Print full Network, Audio, OS, CPU, GPU, Display, BIOS, User, Performance
+8️⃣ End program
+
+Everything inside the lambda is printed inside the ASCII art frame.
+
+
+---------------------------------------------------------------------
+  SECTION 4 ― DEVELOPER NOTES / FUTURE IMPROVEMENTS
+---------------------------------------------------------------------
+
+• You can convert each section into a dedicated rendering function:
+      print_compact_summary();
+      print_full_memory();
+      print_full_storage();
+  This will make main.cpp cleaner.
+
+• You can add a config.json later (you already planned this)
+  to enable/disable sections dynamically.
+
+• Consider multi-thread polling for performance metrics in future.
+
+• Consider adding ANSI colors to make output more visually appealing.
+
+
+---------------------------------------------------------------------
+  SECTION 5 ― SUMMARY
+---------------------------------------------------------------------
+
+This file is the “presentation engine” of BinaryFetch.
+
+All technical backend work is handled by the imported modules.
+main.cpp orchestrates the entire flow, formatting, reporting, and
+routed ASCII visualization.
+
+=====================================================================
+*/
 
 
 
