@@ -1,6 +1,6 @@
 
 #include <iostream>
-#include <iomanip>   // for setprecision
+#include <iomanip>   // interblink
 #include <vector>
 #include <functional>
 #include <sstream>
@@ -806,7 +806,7 @@ int main() {
 
 using namespace std;
 
-// NOTE: CentralControl removed — all prints are unconditional (show everything available).
+// NOTE: CentralControl removed Â— all prints are unconditional (show everything available).
 
 void printStorageInfo(StorageInfo& storage) {
     const auto& disks = storage.get_all_storage_info();
