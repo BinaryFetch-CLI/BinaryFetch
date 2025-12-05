@@ -218,11 +218,8 @@ int main() {
                 cout << "--- Storage Info ---\nNo drives detected.\n\n";
             }
             else {
-
                 cout << "----------------------- STORAGE SUMMARY ------------------------\n";
                 for (const auto& d : all_disks) {
-
-                    // storage values: normal alignment, no zero padding
                     auto fmt_storage = [](const std::string& s) {
                         std::ostringstream oss;
                         double v = stod(s);
@@ -235,13 +232,13 @@ int main() {
                     cout << d.drive_letter << " [ (Used) "
                         << fmt_storage(d.used_space) << " GiB / "
                         << fmt_storage(d.total_space) << " GiB "
-                        << d.used_percentage 
+                        << d.used_percentage
                         << " - " << d.file_system;
 
                     if (d.is_external)
-                        cout << " Ext ]";
+                        cout << " Ext " << d.storage_type << "]";  // Add storage type here
                     else
-                        cout << " Int ]";
+                        cout << " Int " << d.storage_type << "]";  // Add storage type here
 
                     cout << "\n";
                 }
