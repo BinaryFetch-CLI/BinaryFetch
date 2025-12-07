@@ -211,7 +211,7 @@ int main() {
 
         cout << endl;
 
-        // --- Storage Info ---
+        // --- Storage Info --- inside main.cpp
         {
             const auto& all_disks = storage.get_all_storage_info();
             if (all_disks.empty()) {
