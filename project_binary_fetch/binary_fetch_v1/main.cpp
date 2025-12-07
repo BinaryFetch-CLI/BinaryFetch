@@ -218,7 +218,7 @@ int main() {
                 cout << "--- Storage Info ---\nNo drives detected.\n\n";
             }
             else {
-                cout << "----------------------- STORAGE SUMMARY --------------------------\n";
+                cout << "------------------------ STORAGE SUMMARY --------------------------\n";
                 for (const auto& d : all_disks) {
                     auto fmt_storage = [](const std::string& s) {
                         std::ostringstream oss;
