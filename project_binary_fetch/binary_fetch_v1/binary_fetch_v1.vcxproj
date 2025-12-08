@@ -49,6 +49,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="AsciiArt.txt" />
+    <Text Include="Info about main.cpp.txt" />
+    <Text Include="temp.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version_info.rc" />
