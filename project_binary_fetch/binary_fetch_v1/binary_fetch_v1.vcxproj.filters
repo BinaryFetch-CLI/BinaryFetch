@@ -101,9 +101,6 @@
     <ClInclude Include="ExtraInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CentralControl.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="json.hpp">
       <Filter>include</Filter>
     </ClInclude>
