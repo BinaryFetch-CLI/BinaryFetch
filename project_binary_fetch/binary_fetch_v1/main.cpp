@@ -248,54 +248,59 @@ int main() {
         }
     }
 
-    // Storage Info (detailed)
+    // Storage Info (detailed) - STREAMING VERSION
     {
-        const auto& all_disks = storage.get_all_storage_info();
-        if (all_disks.empty()) {
-            lp.push("--- Storage Info ---");
-            lp.push("No drives detected.");
-        }
-        else {
-            cout << endl;
-            lp.push("------------------------- STORAGE SUMMARY --------------------------");
-            for (const auto& d : all_disks) {
-                auto fmt_storage = [](const std::string& s) {
-                    std::ostringstream oss;
-                    double v = 0.0;
-                    try { v = stod(s); }
-                    catch (...) { v = 0.0; }
-                    oss << std::fixed << std::setprecision(2)
-                        << std::setw(7) << std::right << std::setfill(' ')
-                        << v;
-                    return oss.str();
-                    };
+        lp.push("");
+        lp.push("------------------------- STORAGE SUMMARY --------------------------");
 
-                std::ostringstream ss;
-                ss << d.storage_type << " " << d.drive_letter
-                    << " [ (Used) " << fmt_storage(d.used_space)
-                    << " GiB / " << fmt_storage(d.total_space)
-                    << " GiB " << d.used_percentage
-                    << " - " << d.file_system << " "
-                    << (d.is_external ? "Ext ]" : "Int ]");
-                lp.push(ss.str());
-            }
+        auto fmt_storage = [](const std::string& s) -> std::string {
+            std::ostringstream oss;
+            double v = 0.0;
+            try { v = stod(s); }
+            catch (...) { v = 0.0; }
+            oss << std::fixed << std::setprecision(2)
+                << std::setw(7) << std::right << std::setfill(' ')
+                << v;
+            return oss.str();
+            };
 
+        auto fmt_speed = [](const std::string& s) -> std::string {
+            std::ostringstream tmp;
+            double v = 0.0;
+            try { v = stod(s); }
+            catch (...) { v = 0.0; }
+            tmp << std::fixed << std::setprecision(2) << v;
+            std::string val = tmp.str();
+            int padding = 7 - (int)val.size();
+            if (padding < 0) padding = 0;
+            return std::string(padding, ' ') + val;
+            };
+
+        // Track disks for later sections
+        std::vector<storage_data> all_disks_captured;
+
+        // Process each disk as it's ready
+        storage.process_storage_info([&](const storage_data& d) {
+            // Store for later sections
+            all_disks_captured.push_back(d);
+
+            // Build and push SUMMARY line immediately
+            std::ostringstream ss;
+            ss << d.storage_type << " " << d.drive_letter
+                << " [ (Used) " << fmt_storage(d.used_space)
+                << " GiB / " << fmt_storage(d.total_space)
+                << " GiB " << d.used_percentage
+                << " - " << d.file_system << " "
+                << (d.is_external ? "Ext ]" : "Int ]");
+            lp.push(ss.str());
+            });
+
+        // Now print performance sections using captured data
+        if (!all_disks_captured.empty()) {
             lp.push("");
             lp.push("-------------------- DISK PERFORMANCE & DETAILS --------------------");
 
-            for (const auto& d : all_disks) {
-                auto fmt_speed = [](const std::string& s) {
-                    std::ostringstream tmp;
-                    double v = 0.0;
-                    try { v = stod(s); }
-                    catch (...) { v = 0.0; }
-                    tmp << std::fixed << std::setprecision(2) << v;
-                    std::string val = tmp.str();
-                    int padding = 7 - (int)val.size();
-                    if (padding < 0) padding = 0;
-                    return std::string(padding, ' ') + val;
-                    };
-
+            for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
                 ss << d.drive_letter << " [ Read: "
                     << fmt_speed(d.read_speed)
@@ -309,19 +314,7 @@ int main() {
             lp.push("");
             lp.push("----------------- DISK PERFORMANCE & DETAILS (Predicted) ---------------");
 
-            for (const auto& d : all_disks) {
-                auto fmt_speed = [](const std::string& s) {
-                    std::ostringstream tmp;
-                    double v = 0.0;
-                    try { v = stod(s); }
-                    catch (...) { v = 0.0; }
-                    tmp << std::fixed << std::setprecision(2) << v;
-                    std::string val = tmp.str();
-                    int padding = 7 - (int)val.size();
-                    if (padding < 0) padding = 0;
-                    return std::string(padding, ' ') + val;
-                    };
-
+            for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
                 ss << d.drive_letter << " [ Read: ("
                     << fmt_speed(d.predicted_read_speed)
@@ -331,6 +324,9 @@ int main() {
                     << (d.is_external ? " Ext ]" : " Int ]");
                 lp.push(ss.str());
             }
+        }
+        else {
+            lp.push("No drives detected.");
         }
     }
 

@@ -367,6 +367,103 @@ vector<storage_data> StorageInfo::get_all_storage_info() {
     return all_disks;
 }
 
+// ============================================================
+//  Function: StorageInfo::process_storage_info()
+//  Processes each disk and calls callback immediately
+// ============================================================
+void StorageInfo::process_storage_info(std::function<void(const storage_data&)> callback) {
+    DWORD drive_mask = GetLogicalDrives();
+    if (drive_mask == 0) return;
+
+    char drive_letter = 'A';
+    int disk_index = 0;
+
+    while (drive_mask) {
+        if (drive_mask & 1) {
+            string root_path = string(1, drive_letter) + ":\\";
+            ULARGE_INTEGER free_bytes, total_bytes, free_bytes_available;
+
+            if (GetDiskFreeSpaceExA(root_path.c_str(), &free_bytes_available, &total_bytes, &free_bytes)) {
+                double total_gib = total_bytes.QuadPart / (1024.0 * 1024.0 * 1024.0);
+                double free_gib = free_bytes.QuadPart / (1024.0 * 1024.0 * 1024.0);
+                double used_gib = total_gib - free_gib;
+                double used_percent = (total_gib > 0) ? (used_gib / total_gib) * 100.0 : 0.0;
+
+                char fs_name[MAX_PATH] = { 0 };
+                GetVolumeInformationA(root_path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, fs_name, sizeof(fs_name));
+                string formatted_fs = string(fs_name);
+                if (formatted_fs == "NTFS") formatted_fs = "NTFS ";
+
+                UINT drive_type = GetDriveTypeA(root_path.c_str());
+                bool is_external = (drive_type == DRIVE_REMOVABLE);
+
+                ostringstream used_str, total_str, percent_str;
+                used_str << fixed << setprecision(2) << used_gib;
+                total_str << fixed << setprecision(2) << total_gib;
+                percent_str << "(" << (int)used_percent << "%)";
+
+                storage_data disk;
+                disk.drive_letter = "Disk (" + string(1, drive_letter) + ":)";
+                disk.used_space = used_str.str();
+                disk.total_space = total_str.str();
+                disk.used_percentage = percent_str.str();
+                disk.file_system = formatted_fs;
+                disk.is_external = is_external;
+
+                // Storage type
+                disk.storage_type = get_storage_type(disk.drive_letter, root_path, is_external);
+
+                // Skip unknown drives
+                if (disk.storage_type == "Unknown") {
+                    drive_mask >>= 1;
+                    drive_letter++;
+                    continue;
+                }
+
+                // Snapshot read/write speeds
+                double w = measure_disk_speed(root_path, true);
+                double r = measure_disk_speed(root_path, false);
+
+                ostringstream ss;
+                ss << fixed << setprecision(2) << r;
+                disk.read_speed = ss.str();
+                ss.str("");
+                ss.clear();
+                ss << fixed << setprecision(2) << w;
+                disk.write_speed = ss.str();
+
+                // Serial number placeholder
+                disk.serial_number = "SN-" + to_string(1000 + disk_index);
+
+                // Predicted speeds based on type
+                if (disk.storage_type == "USB") {
+                    disk.predicted_read_speed = "100";
+                    disk.predicted_write_speed = "80";
+                }
+                else if (disk.storage_type == "SSD") {
+                    disk.predicted_read_speed = "500";
+                    disk.predicted_write_speed = "450";
+                }
+                else if (disk.storage_type == "HDD") {
+                    disk.predicted_read_speed = "140";
+                    disk.predicted_write_speed = "120";
+                }
+                else {
+                    disk.predicted_read_speed = "---";
+                    disk.predicted_write_speed = "---";
+                }
+
+                // CALL CALLBACK IMMEDIATELY for this disk
+                callback(disk);
+
+                disk_index++;
+            }
+        }
+        drive_letter++;
+        drive_mask >>= 1;
+    }
+}
+
 /*
 ===============================================================
   End of File - Snapshot Read/Write Fully Integrated (BUG FIXED)
