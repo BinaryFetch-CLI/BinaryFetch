@@ -1,0 +1,57 @@
+﻿┏━━━━━━━━━━━━━━━━━━ SYSTEM DIAGNOSTICS ━━━━━━━━━━━━━━━━━━┓
+
+   ▶ NETWORK
+      • SSID        : Maruf Hasan
+      • Interface   : WiFi
+      • IP Address  : 192.168.56.1
+
+   ▶ AUDIO DEVICES
+      → Output
+        ✓ Headphones (Active)
+        - CABLE Input
+        - Speakers
+        - Virtual Speakers
+      → Input
+        - Microphone (Active)
+        - Virtual Mic
+        - Cable Output
+
+   ▶ POWER
+      • Source: Wired
+
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━ OS INFORMATION ━━━━━━━━━━━━━━━━━━━━━┓
+   • Windows 11 Pro (23H2) — Build 22631
+   • Architecture : x64
+   • Kernel       : WIN32_NT
+   • Installed    : 2024-09-12
+   • Uptime       : 8h 31m
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━ CPU ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   • AMD Ryzen 5 5600G (6C/12T)
+   • Base Clock : 3.90 GHz
+   • Speed      : 3.90 GHz
+   • Usage      : 3.6%
+   • Cache      : L1:384KB  L2:3MB  L3:16MB
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━ GPU ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   » RTX 4070 SUPER
+     • VRAM : 11.7 GB
+     • Load : 46%
+     • Driver: 32.0.15.7652
+   » Microsoft Basic Render Driver
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━ DISPLAY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   • Generic PnP Monitor (2194x1234 @ 60 Hz)
+   • HP M22f Monitor (2194x1234 @ 60 Hz)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━ USER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   • User        : coffee~
+   • Device      : MARUF
+   • Groups      : Administrators, Hyper-V Admins, ...
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
