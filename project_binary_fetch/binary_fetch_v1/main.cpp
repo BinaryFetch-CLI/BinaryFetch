@@ -328,7 +328,7 @@ int main() {
         else {
             lp.push("No drives detected.");
         }
-    }
+    } 
 
     // Network (Compact + Extra)
     {
