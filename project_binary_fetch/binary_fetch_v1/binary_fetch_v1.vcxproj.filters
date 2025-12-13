@@ -155,9 +155,9 @@
     <Text Include="text infos\main-4 copy.txt" />
     <Text Include="text infos\main-5 copy.txt" />
     <Text Include="text infos\project structure.txt" />
-    <Text Include="temp_output.txt" />
-    <Text Include="main-6 copy.txt" />
-    <Text Include="main-7 copy.txt" />
+    <Text Include="text infos\temp_output.txt" />
+    <Text Include="text infos\main-6 copy.txt" />
+    <Text Include="text infos\main-7 copy.txt" />
     <Text Include="text infos\better output format.txt" />
   </ItemGroup>
   <ItemGroup>
