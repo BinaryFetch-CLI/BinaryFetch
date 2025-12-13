@@ -59,3 +59,25 @@
    • Device      : MARUF
    • Groups      : Administrators, Hyper-V Admins, ...
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+/////////////////////////style 2//////////////////////////
+
+╔════════════════════════ SYSTEM OVERVIEW ════════════════════════╗
+║                                                                 ║
+║ >> SYSTEM                                                       ║
+║      OS       : Windows 11 Pro | 23H2 | 22631                   ║
+║      Uptime   : ██████████░░░░░░ 8h 31m                         ║
+║      User     : coffee~ (MARUF\coffee)                          ║
+║                                                                 ║
+║ >> HARDWARE                                                     ║
+║      CPU      : AMD Ryzen 5 5600G | 3.9 GHz | 3.6% load         ║
+║      GPU      : RTX 4070 SUPER | 12 GB VRAM | 46% load          ║
+║      RAM      : 32.0 GB | 14.2 GB used (44%)                    ║
+║      Storage  : C: 128 GB free / 512 GB                         ║
+║                                                                 ║
+║ >> NETWORK                                                      ║
+║      WiFi     : Maruf Hasan | 192.168.56.1                      ║
+║      Adapter  : Intel Wi-Fi 6E AX210                            ║
+║                                                                 ║
+╚═════════════════════════════════════════════════════════════════╝
