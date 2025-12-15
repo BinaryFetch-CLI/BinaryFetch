@@ -592,7 +592,7 @@ int main() {
     // Display Info
     {
         cout << endl;
-        lp.push("#-Display-----------------------------------------------------#");
+        //lp.push("#-Display-----------------------------------------------------#");
         auto monitors = display.get_all_displays();
         if (monitors.empty()) {
             lp.push("No monitors detected.");
@@ -602,7 +602,7 @@ int main() {
                 auto& m = monitors[i];
                 {
                     std::ostringstream ss;
-                    ss << "#----Monitor---------->>> " << (i + 1) << ":";
+                    ss << "#-Monitor " << (i + 1) << "---------------------------------------------------#";
                     lp.push(ss.str());
                 }
                 {
