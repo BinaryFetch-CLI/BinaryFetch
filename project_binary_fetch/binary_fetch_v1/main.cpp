@@ -512,7 +512,14 @@ int main() {
                 // GPU index line (dynamic length handled to meet 27-char rule)
                 {
                     std::ostringstream label;
-                    label << "GPU " << (i + 1);
+                    if (i == 0)
+                    {
+                        label << "GPU " << (i + 1);
+                    }
+                    else {
+                        label << "#-" << "GPU " << (i + 1) << "-----------------------------------------------------#";
+                    }
+                    
                     std::string lbl = label.str();
                     if (lbl.length() < 27) lbl += std::string(27 - lbl.length(), ' ');
                     std::ostringstream ss;
