@@ -332,25 +332,25 @@ int main() {
 
     // Network (Compact + Extra)
     {
-
         cout << endl;
         lp.push("#-Network Info------------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "Network Name: " << c_net.get_network_name(); lp.push(ss.str());
+            ss << "Network Name              : " << c_net.get_network_name();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Network Type: " << c_net.get_network_type(); lp.push(ss.str());
+            ss << "Network Type              : " << c_net.get_network_type();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "IP (compact): " << c_net.get_network_ip(); lp.push(ss.str());
+            ss << "IP (Compact)              : " << c_net.get_network_ip();
+            lp.push(ss.str());
         }
-
-
-
     }
+
 
     // Audio & Power
     {
