@@ -334,7 +334,7 @@ int main() {
     {
 
         cout << endl;
-        lp.push("--- Network Info (Compact + Extra) ---");
+        lp.push("#-Network Info------------------------------------------------#");
         {
             std::ostringstream ss;
             ss << "Network Name: " << c_net.get_network_name(); lp.push(ss.str());
@@ -355,7 +355,7 @@ int main() {
     // Audio & Power
     {
         cout << endl;
-        lp.push("--- Audio & Power Info ---");
+        lp.push("#-Audio & Power Info -----------------------------------------#");
 
         // Use full audio (ExtraInfo) - it prints directly
         ExtraInfo audio;
@@ -395,7 +395,7 @@ int main() {
     // OS Info
     {
         cout << endl;
-        lp.push("--- OS Info ---");
+        lp.push("#-OS Info ----------------------------------------------------#");
         {
             std::ostringstream ss;
             ss << "Name: " << os.GetOSName(); lp.push(ss.str());
@@ -429,7 +429,7 @@ int main() {
     // CPU Info
     {
         cout << endl;
-        lp.push("--- CPU Info ---");
+        lp.push("#-CPU Info ---------------------------------------------------#");
         {
             std::ostringstream ss;
             ss << "Brand: " << cpu.get_cpu_info(); lp.push(ss.str());
@@ -481,11 +481,11 @@ int main() {
         cout << endl;
         auto all_gpu_info = obj_gpu.get_all_gpu_info();
         if (all_gpu_info.empty()) {
-            lp.push("--- GPU Info ---");
+            lp.push("#-GPU Info ---------------------------------------------------#");
             lp.push("No GPU detected.");
         }
         else {
-            lp.push("--- GPU Info ---");
+            lp.push("#-GPU Info ---------------------------------------------------#");
             for (size_t i = 0; i < all_gpu_info.size(); ++i) {
                 auto& g = all_gpu_info[i];
                 {
@@ -545,7 +545,7 @@ int main() {
     // Display Info
     {
         cout << endl;
-        lp.push("--- Display Info ---");
+        lp.push("#-Display-----------------------------------------------------#");
         auto monitors = display.get_all_displays();
         if (monitors.empty()) {
             lp.push("No monitors detected.");
@@ -555,19 +555,19 @@ int main() {
                 auto& m = monitors[i];
                 {
                     std::ostringstream ss;
-                    ss << "Monitor " << (i + 1) << ":"; lp.push(ss.str());
+                    ss << "#----Monitor---------->>> " << (i + 1) << ":"; lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Brand: " << m.brand_name; lp.push(ss.str());
+                    ss << "Brand:            " << m.brand_name; lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Resolution: " << m.resolution; lp.push(ss.str());
+                    ss << "Resolution:       " << m.resolution; lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Refresh Rate: " << m.refresh_rate << " Hz"; lp.push(ss.str());
+                    ss << "Refresh Rate:     " << m.refresh_rate << " Hz"; lp.push(ss.str());
                 }
             }
         }
@@ -576,7 +576,7 @@ int main() {
     // BIOS & Motherboard Info
     {
         cout << endl;
-        lp.push("#-BIOS & Motherboard Info -----------------------------------------#");
+        lp.push("#-BIOS & Motherboard Info ------------------------------------#");
         {
             std::ostringstream ss;
             ss << "Bios Vendor               : " << sys.get_bios_vendor(); lp.push(ss.str());
@@ -602,48 +602,48 @@ int main() {
     // User Info
     {
         cout << endl;
-        lp.push("--- User Info ---");
+        lp.push("#-User Info --------------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "Username: " << user.get_username(); lp.push(ss.str());
+            ss << "Username :             " << user.get_username(); lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Computer Name: " << user.get_computer_name(); lp.push(ss.str());
+            ss << "Computer Name :        " << user.get_computer_name(); lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Domain: " << user.get_domain_name(); lp.push(ss.str());
+            ss << "Domain :               " << user.get_domain_name(); lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Groups: " << user.get_user_groups(); lp.push(ss.str());
+            ss << "Groups :               " << user.get_user_groups(); lp.push(ss.str());
         }
     }
 
     // Performance Info
     {
         cout << endl;
-        lp.push("--- Performance Info ---");
+        lp.push("#-Performance Info -------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "System Uptime: " << perf.get_system_uptime(); lp.push(ss.str());
+            ss << "System Uptime:     " << perf.get_system_uptime(); lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "CPU Usage: " << perf.get_cpu_usage_percent() << "%"; lp.push(ss.str());
+            ss << "CPU Usage:         " << perf.get_cpu_usage_percent() << "%"; lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "RAM Usage: " << perf.get_ram_usage_percent() << "%"; lp.push(ss.str());
+            ss << "RAM Usage:         " << perf.get_ram_usage_percent() << "%"; lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Disk Usage: " << perf.get_disk_usage_percent() << "%"; lp.push(ss.str());
+            ss << "Disk Usage:        " << perf.get_disk_usage_percent() << "%"; lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "GPU Usage: " << perf.get_gpu_usage_percent() << "%"; lp.push(ss.str());
+            ss << "GPU Usage:         " << perf.get_gpu_usage_percent() << "%"; lp.push(ss.str());
         }
     }
 
