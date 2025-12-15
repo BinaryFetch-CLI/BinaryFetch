@@ -336,7 +336,7 @@ int main() {
         lp.push("#-Network Info------------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "Network Name               : " << c_net.get_network_name();
+            ss << "Network Name               : " << net.get_network_name();
             lp.push(ss.str());
         }
         {
