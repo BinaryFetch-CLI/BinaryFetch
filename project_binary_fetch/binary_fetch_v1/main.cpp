@@ -496,7 +496,7 @@ int main() {
     }
 
 
-    // GPU Info (detailed)
+    // GPU Info (detailed)------------------------------------------------------------
     {
         cout << endl;
         auto all_gpu_info = obj_gpu.get_all_gpu_info();
@@ -522,37 +522,37 @@ int main() {
 
                 {
                     std::ostringstream ss;
-                    ss << "  Name                     : " << g.gpu_name;
+                    ss << "|-> Name                   : " << g.gpu_name;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Memory                   : " << g.gpu_memory;
+                    ss << "|-> Memory                 : " << g.gpu_memory;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Usage                    : " << g.gpu_usage << "%";
+                    ss << "|-> Usage                  : " << g.gpu_usage << "%";
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Vendor                   : " << g.gpu_vendor;
+                    ss << "|-> Vendor                 : " << g.gpu_vendor;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Driver Version           : " << g.gpu_driver_version;
+                    ss << "|-> Driver Version         : " << g.gpu_driver_version;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Temperature              : " << g.gpu_temperature << " C";
+                    ss << "|-> Temperature            : " << g.gpu_temperature << " C";
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Core Count               : " << g.gpu_core_count;
+                    ss << "#->Core Count              : " << g.gpu_core_count;
                     lp.push(ss.str());
                 }
             }
@@ -560,22 +560,22 @@ int main() {
             auto primary = detailed_gpu_info.primary_gpu_info();
             {
                 std::ostringstream ss;
-                ss << "Primary GPU Details       :";
+                ss << "Primary GPU Details        :";
                 lp.push(ss.str());
             }
             {
                 std::ostringstream ss;
-                ss << "  Name                     : " << primary.name;
+                ss << "|-> Name                   : " << primary.name;
                 lp.push(ss.str());
             }
             {
                 std::ostringstream ss;
-                ss << "  VRAM                     : " << primary.vram_gb << " GiB";
+                ss << "|-> VRAM                   : " << primary.vram_gb << " GiB";
                 lp.push(ss.str());
             }
             {
                 std::ostringstream ss;
-                ss << "  Frequency                : " << primary.frequency_ghz << " GHz";
+                ss << "#-> Frequency              : " << primary.frequency_ghz << " GHz";
                 lp.push(ss.str());
             }
         }
