@@ -9,6 +9,8 @@
 #include <netioapi.h>
 #include <wlanapi.h>
 #include <winhttp.h>
+#include <algorithm>  // For std::transform
+#include <vector>     // For std::vector (if needed later)
 
 // Add this before any includes to target Windows Vista or later
 #define WINVER 0x0600
@@ -113,15 +115,98 @@ string NetworkInfo::get_locale()
 	return "Unknown";
 }
 
+//-----------------------------------------HELPER FUNCTIONS--------------------------------//
+
+/**
+ * Helper: Check if adapter name suggests it's virtual
+ * @param desc - Adapter description string
+ * @return true if adapter appears to be virtual, false otherwise
+ */
+static bool is_virtual_adapter(const string& desc)
+{
+	// Common virtual adapter keywords (case-insensitive check)
+	const char* virtualKeywords[] = {
+		"virtual", "vmware", "virtualbox", "hyper-v",
+		"vethernet", "loopback", "tunnel", "vpn",
+		"tap-windows", "tap-win", "bluetooth", "wan miniport",
+		"microsoft wi-fi direct", "teredo", "isatap"
+	};
+
+	string lowerDesc = desc;
+	transform(lowerDesc.begin(), lowerDesc.end(), lowerDesc.begin(), ::tolower);
+
+	for (const auto& keyword : virtualKeywords)
+	{
+		if (lowerDesc.find(keyword) != string::npos)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * Helper: Check if adapter type is physical (not virtual/loopback)
+ * @param type - Interface type constant
+ * @return true if physical adapter, false otherwise
+ */
+static bool is_physical_adapter(DWORD type)
+{
+	return (type == IF_TYPE_ETHERNET_CSMACD ||    // Ethernet
+		type == IF_TYPE_IEEE80211 ||           // WiFi
+		type == IF_TYPE_GIGABITETHERNET);      // Gigabit Ethernet
+}
+
+/**
+ * Helper: Get default gateway interface index (most likely internet-connected)
+ * @return Interface index of default gateway adapter, or 0 if not found
+ */
+static DWORD get_default_gateway_interface()
+{
+	DWORD dwSize = 0;
+	DWORD dwRetVal = 0;
+	PMIB_IPFORWARDTABLE pIpForwardTable = NULL;
+
+	// Get the size needed
+	dwRetVal = GetIpForwardTable(NULL, &dwSize, 0);
+	if (dwRetVal == ERROR_INSUFFICIENT_BUFFER)
+	{
+		pIpForwardTable = (MIB_IPFORWARDTABLE*)malloc(dwSize);
+		if (pIpForwardTable)
+		{
+			dwRetVal = GetIpForwardTable(pIpForwardTable, &dwSize, 0);
+			if (dwRetVal == NO_ERROR)
+			{
+				// Find default route (destination 0.0.0.0)
+				for (DWORD i = 0; i < pIpForwardTable->dwNumEntries; i++)
+				{
+					if (pIpForwardTable->table[i].dwForwardDest == 0)
+					{
+						DWORD ifIndex = pIpForwardTable->table[i].dwForwardIfIndex;
+						free(pIpForwardTable);
+						return ifIndex;
+					}
+				}
+			}
+			free(pIpForwardTable);
+		}
+	}
+	return 0;
+}
+
 //-----------------------------------------get_network_speed--------------------------------//
-// get connected network speed in Mbps
+/**
+ * Get the speed of the primary/active network connection
+ * Prioritizes the adapter with default gateway (actual internet connection)
+ * Filters out virtual adapters (VirtualBox, VMware, VPN, etc.)
+ * @return String with speed formatted as "1.0 Gbps (Ethernet)" or "300 Mbps (WiFi)"
+ */
 string NetworkInfo::get_network_speed()
 {
 	string net_speed_str = "Unknown";
-
-	// Use GetIfTable instead of GetIfTable2 for broader compatibility
 	MIB_IFTABLE* ifTable = NULL;
 	DWORD dwSize = 0;
+
+	// Get the interface index of the default gateway (internet connection)
+	DWORD defaultIfIndex = get_default_gateway_interface();
 
 	// First call to get the buffer size
 	if (GetIfTable(NULL, &dwSize, FALSE) == ERROR_INSUFFICIENT_BUFFER)
@@ -129,15 +214,89 @@ string NetworkInfo::get_network_speed()
 		ifTable = (MIB_IFTABLE*)malloc(dwSize);
 		if (ifTable && GetIfTable(ifTable, &dwSize, FALSE) == NO_ERROR)
 		{
+			// First pass: Try to find the default gateway adapter
+			if (defaultIfIndex != 0)
+			{
+				for (DWORD i = 0; i < ifTable->dwNumEntries; ++i)
+				{
+					MIB_IFROW row = ifTable->table[i];
+
+					// Check if this is the default gateway interface
+					if (row.dwIndex == defaultIfIndex &&
+						row.dwOperStatus == IF_OPER_STATUS_OPERATIONAL &&
+						is_physical_adapter(row.dwType))
+					{
+						string adapterDesc((char*)row.bDescr, row.dwDescrLen);
+
+						// Skip if virtual adapter
+						if (is_virtual_adapter(adapterDesc))
+							continue;
+
+						// Speed is in bits per second, convert to Mbps
+						double speed_mbps = row.dwSpeed / 1e6;
+
+						ostringstream oss;
+						// Format based on speed magnitude
+						if (speed_mbps >= 1000.0)
+						{
+							double speedGbps = speed_mbps / 1000.0;
+							oss << fixed << setprecision(1) << speedGbps << " Gbps";
+						}
+						else
+						{
+							oss << fixed << setprecision(0) << speed_mbps << " Mbps";
+						}
+
+						// Add connection type indicator
+						if (row.dwType == IF_TYPE_IEEE80211)
+							oss << " (WiFi)";
+						else if (row.dwType == IF_TYPE_ETHERNET_CSMACD || row.dwType == IF_TYPE_GIGABITETHERNET)
+							oss << " (Ethernet)";
+
+						net_speed_str = oss.str();
+						free(ifTable);
+						return net_speed_str;
+					}
+				}
+			}
+
+			// Second pass: Fallback to first operational physical adapter
 			for (DWORD i = 0; i < ifTable->dwNumEntries; ++i)
 			{
 				MIB_IFROW row = ifTable->table[i];
-				if (row.dwOperStatus == IF_OPER_STATUS_OPERATIONAL && row.dwPhysAddrLen != 0)
+
+				// Check if adapter is operational and has a physical address
+				if (row.dwOperStatus == IF_OPER_STATUS_OPERATIONAL &&
+					row.dwPhysAddrLen != 0 &&
+					is_physical_adapter(row.dwType))
 				{
-					// Speed is in bits per second
+					string adapterDesc((char*)row.bDescr, row.dwDescrLen);
+
+					// Skip if virtual adapter
+					if (is_virtual_adapter(adapterDesc))
+						continue;
+
+					// Speed is in bits per second, convert to Mbps
 					double speed_mbps = row.dwSpeed / 1e6;
+
 					ostringstream oss;
-					oss << fixed << setprecision(2) << speed_mbps << " Mbps";
+					// Format based on speed magnitude
+					if (speed_mbps >= 1000.0)
+					{
+						double speedGbps = speed_mbps / 1000.0;
+						oss << fixed << setprecision(1) << speedGbps << " Gbps";
+					}
+					else
+					{
+						oss << fixed << setprecision(0) << speed_mbps << " Mbps";
+					}
+
+					// Add connection type indicator
+					if (row.dwType == IF_TYPE_IEEE80211)
+						oss << " (WiFi)";
+					else if (row.dwType == IF_TYPE_ETHERNET_CSMACD || row.dwType == IF_TYPE_GIGABITETHERNET)
+						oss << " (Ethernet)";
+
 					net_speed_str = oss.str();
 					break;
 				}
@@ -247,3 +406,47 @@ string NetworkInfo::get_public_ip()
 	WinHttpCloseHandle(hSession);
 	return public_ip;
 }
+
+/*
+================================================================================
+					 NETWORK SPEED FUNCTION DOCUMENTATION
+================================================================================
+
+IMPROVEMENTS MADE TO get_network_speed():
+
+1. **Finds Default Gateway Interface**
+   - Uses GetIpForwardTable() to identify the adapter routing to the internet
+   - Prioritizes this adapter over others
+
+2. **Filters Virtual Adapters**
+   - Excludes VirtualBox, VMware, Hyper-V, VPN, Bluetooth adapters
+   - Only returns physical Ethernet/WiFi adapters
+
+3. **Better Speed Formatting**
+   - Shows "1.0 Gbps" for gigabit+ connections (?1000 Mbps)
+   - Shows "100 Mbps" or "300 Mbps" for sub-gigabit speeds
+   - Adds connection type: "(Ethernet)" or "(WiFi)"
+
+4. **Two-Pass Algorithm**
+   - First pass: Find default gateway adapter (most accurate)
+   - Second pass: Fallback to first operational physical adapter
+
+HELPER FUNCTIONS:
+
+- get_default_gateway_interface(): Returns interface index of default route
+- is_physical_adapter(): Checks if adapter is physical (not virtual)
+- is_virtual_adapter(): Detects virtual adapters by description keywords
+
+INTERFACE TYPES DETECTED:
+- IF_TYPE_ETHERNET_CSMACD (6): Standard Ethernet
+- IF_TYPE_IEEE80211 (71): WiFi/Wireless LAN
+- IF_TYPE_GIGABITETHERNET: Gigabit Ethernet
+
+EXAMPLE OUTPUTS:
+- "1.0 Gbps (Ethernet)" - Gigabit Ethernet connection
+- "2.5 Gbps (Ethernet)" - 2.5 Gigabit connection
+- "300 Mbps (WiFi)" - WiFi connection
+- "100 Mbps (Ethernet)" - Fast Ethernet
+
+================================================================================
+*/
