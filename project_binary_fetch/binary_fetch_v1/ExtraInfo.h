@@ -1,39 +1,26 @@
-
-// ExtraInfo.h
-// ============================
-// Project: BinaryFetch
-// Module: ExtraInfo
-// Description: Provides additional optional system information for BinaryFetch,
-//              including audio devices, power status, running processes, and installed applications.
-// Author: Maruf Hasan
-// Date: 2025-10-14
-// Version: 1.0
-// Dependencies: Windows.h, string, vector, optional Windows APIs
-// ============================
-
 #pragma once
 #include <string>
 #include <vector>
 using namespace std;
 
-class ExtraInfo
-{
-public:
-	// ?? Returns a list of available audio devices.
-	// Includes both input (microphones) and output (speakers/headphones).
-	// Marks which device is currently active.
-	// Example:
-	//   Headphone (High Definition Audio) (active)
-	//   Speaker (High Definition Audio)
-	//   Microphone (High Definition Audio) (active)
-	//   Microphone (DroidCam)
-	string get_audio_devices();
-
-	// ?? Returns the system's current power status.
-	// For desktop PCs ? "Power Status: Wired connection"
-	// For laptops ? "Power Status: Battery powered (85%) (Charging)"
-	//               or "Power Status: Battery powered (62%) (Not Charging)"
-	string get_power_status();
+// Structure to hold audio device information
+struct AudioDevice {
+    string name;        // Device friendly name
+    bool isActive;      // Whether this is the default/active device
+    bool isOutput;      // True for output devices, false for input
 };
 
+// Structure to hold power status information
+struct PowerStatus {
+    bool hasBattery;        // Whether system has a battery
+    int batteryPercent;     // Battery charge percentage (0-100)
+    bool isACOnline;        // Whether AC power is connected
+    bool isCharging;        // Whether battery is currently charging
+};
 
+class ExtraInfo {
+public:
+    vector<AudioDevice> get_output_devices();  // Get all output devices (speakers/headphones)
+    vector<AudioDevice> get_input_devices();   // Get all input devices (microphones)
+    PowerStatus get_power_status();            // Get power status information
+};

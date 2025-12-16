@@ -1,5 +1,4 @@
 #include "ExtraInfo.h"
-#include <iostream>
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <functiondiscoverykeys_devpkey.h>
@@ -8,20 +7,12 @@
 using namespace std;
 
 /**
- * Sets the console text color
- * @param color - Integer representing the color code (e.g., 7=white, 10=green, 12=red)
+ * Retrieves all audio OUTPUT devices (speakers/headphones) on the system
+ * @return Vector of AudioDevice structs containing device info
  */
-void setColor(int color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-}
-
-/**
- * Retrieves and displays all audio devices (output and input) on the system
- * Marks active/default devices with color-coded indicators
- * @return Empty string on success, error message on failure
- */
-string ExtraInfo::get_audio_devices()
+vector<AudioDevice> ExtraInfo::get_output_devices()
 {
+    vector<AudioDevice> devices;
     HRESULT hr;
 
     // Initialize COM library for current thread
@@ -37,10 +28,8 @@ string ExtraInfo::get_audio_devices()
     if (FAILED(hr))
     {
         CoUninitialize();
-        return "Audio Devices: Failed to enumerate.";
+        return devices;
     }
-
-    // ==================== OUTPUT DEVICES (Speakers/Headphones) ====================
 
     // Enumerate all rendering (output) audio devices, both active and disabled
     hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_DISABLED, &pDevices);
@@ -92,17 +81,12 @@ string ExtraInfo::get_audio_devices()
                 CoTaskMemFree(defId);  // Free allocated memory
             }
 
-            // Display device name
-            cout << "  " << deviceName;
-
-            // Mark active device in green
-            if (isActive)
-            {
-                setColor(10); // Green
-                cout << " (active)";
-                setColor(7); // Reset to default color
-            }
-            cout << endl;
+            // Store device information
+            AudioDevice device;
+            device.name = deviceName;
+            device.isActive = isActive;
+            device.isOutput = true;
+            devices.push_back(device);
 
             // Clean up resources for this device
             PropVariantClear(&name);
@@ -116,7 +100,37 @@ string ExtraInfo::get_audio_devices()
         pDevices->Release();
     }
 
-    // ==================== INPUT DEVICES (Microphones) ====================
+    // Release enumerator and uninitialize COM
+    if (pEnum) pEnum->Release();
+    CoUninitialize();
+
+    return devices;
+}
+
+/**
+ * Retrieves all audio INPUT devices (microphones) on the system
+ * @return Vector of AudioDevice structs containing device info
+ */
+vector<AudioDevice> ExtraInfo::get_input_devices()
+{
+    vector<AudioDevice> devices;
+    HRESULT hr;
+
+    // Initialize COM library for current thread
+    CoInitialize(nullptr);
+
+    // Pointers for device enumeration
+    IMMDeviceEnumerator* pEnum = nullptr;
+    IMMDeviceCollection* pDevices = nullptr;
+
+    // Create an instance of the device enumerator
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+        __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        return devices;
+    }
 
     // Enumerate all capture (input) audio devices, both active and disabled
     hr = pEnum->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE | DEVICE_STATE_DISABLED, &pDevices);
@@ -168,21 +182,12 @@ string ExtraInfo::get_audio_devices()
                 CoTaskMemFree(defId);  // Free allocated memory
             }
 
-            // Display device name
-            cout << "  " << deviceName;
-
-            // Mark active device with colored brackets and text
-            if (isActive)
-            {
-                setColor(11); // Sky blue for opening bracket
-                cout << "(";
-                setColor(10); // Green for "active" text
-                cout << "active";
-                setColor(11); // Sky blue for closing bracket
-                cout << ")";
-                setColor(7);  // Reset to default color
-            }
-            cout << endl;
+            // Store device information
+            AudioDevice device;
+            device.name = deviceName;
+            device.isActive = isActive;
+            device.isOutput = false;
+            devices.push_back(device);
 
             // Clean up resources for this device
             PropVariantClear(&name);
@@ -200,64 +205,35 @@ string ExtraInfo::get_audio_devices()
     if (pEnum) pEnum->Release();
     CoUninitialize();
 
-    return "";
+    return devices;
 }
 
 /**
- * Retrieves and displays system power status
- * Shows whether system is on battery or AC power, battery percentage, and charging status
- * @return Empty string on success, error message on failure
+ * Retrieves system power status information
+ * @return PowerStatus struct containing power information
  */
-string ExtraInfo::get_power_status()
+PowerStatus ExtraInfo::get_power_status()
 {
+    PowerStatus status;
     SYSTEM_POWER_STATUS sps;
 
     // Get system power status information
     if (!GetSystemPowerStatus(&sps))
-        return "Power Status: Unknown";
+    {
+        status.hasBattery = false;
+        status.isCharging = false;
+        status.batteryPercent = 0;
+        status.isACOnline = false;
+        return status;
+    }
 
     // Check if system has a battery (BatteryFlag == 128 means no battery)
-    bool hasBattery = (sps.BatteryFlag != 128);
+    status.hasBattery = (sps.BatteryFlag != 128);
+    status.batteryPercent = (int)sps.BatteryLifePercent;
+    status.isACOnline = (sps.ACLineStatus == 1);
+    status.isCharging = status.isACOnline;
 
-    cout << "Power Status: ";
-
-    // Handle desktop systems without battery
-    if (!hasBattery)
-    {
-        setColor(11); // Sky blue
-        cout << "[Wired connection]";
-        setColor(7);  // Reset to default color
-        cout << endl;
-        return "";
-    }
-
-    // Display battery-powered status with percentage
-    cout << "Battery powered ";
-    setColor(11); cout << "(";           // Sky blue opening bracket
-    setColor(14); cout << (int)sps.BatteryLifePercent << "%"; // Orange percentage
-    setColor(11); cout << ")";           // Sky blue closing bracket
-    setColor(7);  // Reset to default color
-
-    // Check and display charging status
-    if (sps.ACLineStatus == 1)  // AC power is online (charging)
-    {
-        cout << " ";
-        setColor(10); cout << "(";       // Green opening bracket
-        setColor(10); cout << "Charging"; // Green "Charging" text
-        setColor(10); cout << ")";       // Green closing bracket
-        setColor(7);  // Reset to default color
-    }
-    else  // AC power is offline (not charging)
-    {
-        cout << " ";
-        setColor(11); cout << "(";           // Sky blue opening bracket
-        setColor(12); cout << "Not Charging"; // Red "Not Charging" text
-        setColor(11); cout << ")";           // Sky blue closing bracket
-        setColor(7);  // Reset to default color
-    }
-
-    cout << endl;
-    return "";
+    return status;
 }
 
 /*
@@ -363,7 +339,18 @@ STRUCTURES USED:
 - PROPVARIANT: Variant data type for property values
   * pwszVal: Wide string value for device names
 
-COLOR CODES USED:
+- AudioDevice: Custom struct for storing device information
+  * name: Device friendly name
+  * isActive: Whether device is the default/active device
+  * isOutput: True for output devices, false for input devices
+
+- PowerStatus: Custom struct for storing power information
+  * hasBattery: Whether system has a battery
+  * batteryPercent: Battery charge percentage (0-100)
+  * isACOnline: Whether AC power is connected
+  * isCharging: Whether battery is charging
+
+COLOR CODES USED (for main.cpp reference):
 - 7  = Light Gray (Default)
 - 10 = Light Green (Active status)
 - 11 = Light Cyan/Sky Blue (Brackets)

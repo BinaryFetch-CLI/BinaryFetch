@@ -696,42 +696,57 @@ int main() {
     // Audio & Power
     {
         cout << endl;
-
-        // Use full audio (ExtraInfo) - it prints directly
         ExtraInfo audio;
 
-        // Redirect cout to a stringstream temporarily
-        std::ostringstream oss;
-        std::streambuf* oldCout = std::cout.rdbuf(oss.rdbuf());
-
-        audio.get_audio_devices(); // prints to oss
         lp.push("#-Audio & Power Info ----------------------------------------------#");
 
-        // Restore cout
-        std::cout.rdbuf(oldCout);
-        lp.push("#-Audio & Power Info ----------------------------------------------#");
-
-        // Push captured lines to LivePrinter
-        std::istringstream iss(oss.str());
-        std::string line;
-        while (std::getline(iss, line)) {
-            lp.push(line);
+        // Get and display OUTPUT devices
+        vector<AudioDevice> outputDevices = audio.get_output_devices();
+        lp.push("Output Devices:");
+        for (const auto& device : outputDevices) {
+            ostringstream oss;
+            oss << "  " << device.name;
+            if (device.isActive) {
+                // You can add color codes here if LivePrinter supports it
+                oss << " (active)";
+            }
+            lp.push(oss.str());
         }
-        lp.push("#-Audio & Power Info ----------------------------------------------#");
 
-
-        // Power info (ExtraInfo already prints directly in your class)
-        std::ostringstream ossPower;
-        oldCout = std::cout.rdbuf(ossPower.rdbuf());
-
-        audio.get_power_status();
-
-        std::cout.rdbuf(oldCout);
-
-        std::istringstream issPower(ossPower.str());
-        while (std::getline(issPower, line)) {
-            lp.push(line);
+        // Get and display INPUT devices
+        vector<AudioDevice> inputDevices = audio.get_input_devices();
+        lp.push("Input Devices:");
+        for (const auto& device : inputDevices) {
+            ostringstream oss;
+            oss << "  " << device.name;
+            if (device.isActive) {
+                oss << " (active)";
+            }
+            lp.push(oss.str());
         }
+
+        lp.push("");  // Empty line for spacing
+
+        // Get and display POWER status
+        PowerStatus power = audio.get_power_status();
+        ostringstream ossPower;
+        ossPower << "Power Status: ";
+
+        if (!power.hasBattery) {
+            ossPower << "[Wired connection]";
+        }
+        else {
+            ossPower << "Battery powered (" << power.batteryPercent << "%)";
+            if (power.isCharging) {
+                ossPower << " (Charging)";
+            }
+            else {
+                ossPower << " (Not Charging)";
+            }
+        }
+        lp.push(ossPower.str());
+
+        lp.push("#-Audio & Power Info ----------------------------------------------#");
     }
 
 
