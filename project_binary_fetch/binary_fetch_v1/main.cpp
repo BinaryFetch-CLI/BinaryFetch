@@ -707,7 +707,7 @@ int main() {
         for (const auto& device : outputDevices) {
             audio_device_count++;
             ostringstream oss;
-            oss << "|-> " << audio_device_count <<" " << device.name;
+            oss << audio_device_count << " - "  << device.name;
             if (device.isActive) {
                 // You can add color codes here if LivePrinter supports it
                 oss << " (active)";
