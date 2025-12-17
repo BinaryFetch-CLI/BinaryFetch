@@ -9,10 +9,10 @@
 #include <netioapi.h>
 #include <wlanapi.h>
 #include <winhttp.h>
-#include <algorithm>  // For std::transform
-#include <vector>     // For std::vector (if needed later)
+#include <algorithm>
+#include <vector>
+#include <chrono>
 
-// Add this before any includes to target Windows Vista or later
 #define WINVER 0x0600
 #define _WIN32_WINNT 0x0600
 
@@ -22,14 +22,13 @@
 #pragma comment(lib, "winhttp.lib")
 
 using namespace std;
+using namespace std::chrono;
 
 //-----------------------------------------get_local_ip--------------------------------//
-//Get local ip address and subnet mask (e.g., "192.168.0.9/24")
 string NetworkInfo::get_local_ip()
 {
 	string result = "Unknown";
 
-	// initialize Winsock
 	WSADATA wsa_data;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0)
 		return result;
@@ -41,11 +40,9 @@ string NetworkInfo::get_local_ip()
 	{
 		for (PIP_ADAPTER_ADDRESSES adapter = adapter_addresses; adapter != NULL; adapter = adapter->Next)
 		{
-			//skip disconnected or loopback adapters
 			if (adapter->OperStatus != IfOperStatusUp || adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
 				continue;
 
-			// iterate through all unicast addresses (IPv4)
 			for (PIP_ADAPTER_UNICAST_ADDRESS ua = adapter->FirstUnicastAddress; ua != NULL; ua = ua->Next)
 			{
 				SOCKADDR_IN* sa_in = (SOCKADDR_IN*)ua->Address.lpSockaddr;
@@ -54,7 +51,7 @@ string NetworkInfo::get_local_ip()
 					char ip_str[INET_ADDRSTRLEN];
 					inet_ntop(AF_INET, &(sa_in->sin_addr), ip_str, sizeof(ip_str));
 
-					int cidr = ua->OnLinkPrefixLength; // prefix length = CIDR bits
+					int cidr = ua->OnLinkPrefixLength;
 					ostringstream oss;
 					oss << ip_str << "/" << cidr;
 
@@ -72,7 +69,6 @@ string NetworkInfo::get_local_ip()
 }
 
 //-----------------------------------------get_mac_address--------------------------------//
-//get Mac address of main (active) adapter
 string NetworkInfo::get_mac_address()
 {
 	string mac = "Unknown";
@@ -83,7 +79,6 @@ string NetworkInfo::get_mac_address()
 	{
 		for (PIP_ADAPTER_ADDRESSES adapter = adapter_addresses; adapter != NULL; adapter = adapter->Next)
 		{
-			// skip disconnected or loopback adapters
 			if (adapter->OperStatus != IfOperStatusUp || adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
 				continue;
 
@@ -102,7 +97,6 @@ string NetworkInfo::get_mac_address()
 }
 
 //-----------------------------------------get_locale--------------------------------//
-// get system locale (e.g., "en-US")
 string NetworkInfo::get_locale()
 {
 	WCHAR locale_name[LOCALE_NAME_MAX_LENGTH];
@@ -115,200 +109,7 @@ string NetworkInfo::get_locale()
 	return "Unknown";
 }
 
-//-----------------------------------------HELPER FUNCTIONS--------------------------------//
-
-/**
- * Helper: Check if adapter name suggests it's virtual
- * @param desc - Adapter description string
- * @return true if adapter appears to be virtual, false otherwise
- */
-static bool is_virtual_adapter(const string& desc)
-{
-	// Common virtual adapter keywords (case-insensitive check)
-	const char* virtualKeywords[] = {
-		"virtual", "vmware", "virtualbox", "hyper-v",
-		"vethernet", "loopback", "tunnel", "vpn",
-		"tap-windows", "tap-win", "bluetooth", "wan miniport",
-		"microsoft wi-fi direct", "teredo", "isatap"
-	};
-
-	string lowerDesc = desc;
-	transform(lowerDesc.begin(), lowerDesc.end(), lowerDesc.begin(), ::tolower);
-
-	for (const auto& keyword : virtualKeywords)
-	{
-		if (lowerDesc.find(keyword) != string::npos)
-			return true;
-	}
-	return false;
-}
-
-/**
- * Helper: Check if adapter type is physical (not virtual/loopback)
- * @param type - Interface type constant
- * @return true if physical adapter, false otherwise
- */
-static bool is_physical_adapter(DWORD type)
-{
-	return (type == IF_TYPE_ETHERNET_CSMACD ||    // Ethernet
-		type == IF_TYPE_IEEE80211 ||           // WiFi
-		type == IF_TYPE_GIGABITETHERNET);      // Gigabit Ethernet
-}
-
-/**
- * Helper: Get default gateway interface index (most likely internet-connected)
- * @return Interface index of default gateway adapter, or 0 if not found
- */
-static DWORD get_default_gateway_interface()
-{
-	DWORD dwSize = 0;
-	DWORD dwRetVal = 0;
-	PMIB_IPFORWARDTABLE pIpForwardTable = NULL;
-
-	// Get the size needed
-	dwRetVal = GetIpForwardTable(NULL, &dwSize, 0);
-	if (dwRetVal == ERROR_INSUFFICIENT_BUFFER)
-	{
-		pIpForwardTable = (MIB_IPFORWARDTABLE*)malloc(dwSize);
-		if (pIpForwardTable)
-		{
-			dwRetVal = GetIpForwardTable(pIpForwardTable, &dwSize, 0);
-			if (dwRetVal == NO_ERROR)
-			{
-				// Find default route (destination 0.0.0.0)
-				for (DWORD i = 0; i < pIpForwardTable->dwNumEntries; i++)
-				{
-					if (pIpForwardTable->table[i].dwForwardDest == 0)
-					{
-						DWORD ifIndex = pIpForwardTable->table[i].dwForwardIfIndex;
-						free(pIpForwardTable);
-						return ifIndex;
-					}
-				}
-			}
-			free(pIpForwardTable);
-		}
-	}
-	return 0;
-}
-
-//-----------------------------------------get_network_speed--------------------------------//
-/**
- * Get the speed of the primary/active network connection
- * Prioritizes the adapter with default gateway (actual internet connection)
- * Filters out virtual adapters (VirtualBox, VMware, VPN, etc.)
- * @return String with speed formatted as "1.0 Gbps (Ethernet)" or "300 Mbps (WiFi)"
- */
-string NetworkInfo::get_network_speed()
-{
-	string net_speed_str = "Unknown";
-	MIB_IFTABLE* ifTable = NULL;
-	DWORD dwSize = 0;
-
-	// Get the interface index of the default gateway (internet connection)
-	DWORD defaultIfIndex = get_default_gateway_interface();
-
-	// First call to get the buffer size
-	if (GetIfTable(NULL, &dwSize, FALSE) == ERROR_INSUFFICIENT_BUFFER)
-	{
-		ifTable = (MIB_IFTABLE*)malloc(dwSize);
-		if (ifTable && GetIfTable(ifTable, &dwSize, FALSE) == NO_ERROR)
-		{
-			// First pass: Try to find the default gateway adapter
-			if (defaultIfIndex != 0)
-			{
-				for (DWORD i = 0; i < ifTable->dwNumEntries; ++i)
-				{
-					MIB_IFROW row = ifTable->table[i];
-
-					// Check if this is the default gateway interface
-					if (row.dwIndex == defaultIfIndex &&
-						row.dwOperStatus == IF_OPER_STATUS_OPERATIONAL &&
-						is_physical_adapter(row.dwType))
-					{
-						string adapterDesc((char*)row.bDescr, row.dwDescrLen);
-
-						// Skip if virtual adapter
-						if (is_virtual_adapter(adapterDesc))
-							continue;
-
-						// Speed is in bits per second, convert to Mbps
-						double speed_mbps = row.dwSpeed / 1e6;
-
-						ostringstream oss;
-						// Format based on speed magnitude
-						if (speed_mbps >= 1000.0)
-						{
-							double speedGbps = speed_mbps / 1000.0;
-							oss << fixed << setprecision(1) << speedGbps << " Gbps";
-						}
-						else
-						{
-							oss << fixed << setprecision(0) << speed_mbps << " Mbps";
-						}
-
-						// Add connection type indicator
-						if (row.dwType == IF_TYPE_IEEE80211)
-							oss << " (WiFi)";
-						else if (row.dwType == IF_TYPE_ETHERNET_CSMACD || row.dwType == IF_TYPE_GIGABITETHERNET)
-							oss << " (Ethernet)";
-
-						net_speed_str = oss.str();
-						free(ifTable);
-						return net_speed_str;
-					}
-				}
-			}
-
-			// Second pass: Fallback to first operational physical adapter
-			for (DWORD i = 0; i < ifTable->dwNumEntries; ++i)
-			{
-				MIB_IFROW row = ifTable->table[i];
-
-				// Check if adapter is operational and has a physical address
-				if (row.dwOperStatus == IF_OPER_STATUS_OPERATIONAL &&
-					row.dwPhysAddrLen != 0 &&
-					is_physical_adapter(row.dwType))
-				{
-					string adapterDesc((char*)row.bDescr, row.dwDescrLen);
-
-					// Skip if virtual adapter
-					if (is_virtual_adapter(adapterDesc))
-						continue;
-
-					// Speed is in bits per second, convert to Mbps
-					double speed_mbps = row.dwSpeed / 1e6;
-
-					ostringstream oss;
-					// Format based on speed magnitude
-					if (speed_mbps >= 1000.0)
-					{
-						double speedGbps = speed_mbps / 1000.0;
-						oss << fixed << setprecision(1) << speedGbps << " Gbps";
-					}
-					else
-					{
-						oss << fixed << setprecision(0) << speed_mbps << " Mbps";
-					}
-
-					// Add connection type indicator
-					if (row.dwType == IF_TYPE_IEEE80211)
-						oss << " (WiFi)";
-					else if (row.dwType == IF_TYPE_ETHERNET_CSMACD || row.dwType == IF_TYPE_GIGABITETHERNET)
-						oss << " (Ethernet)";
-
-					net_speed_str = oss.str();
-					break;
-				}
-			}
-		}
-		if (ifTable) free(ifTable);
-	}
-	return net_speed_str;
-}
-
 //-----------------------------------------get_network_name--------------------------------//
-// get connected network public name (SSID)
 string NetworkInfo::get_network_name()
 {
 	string ssid_str = "Unknown";
@@ -316,7 +117,6 @@ string NetworkInfo::get_network_name()
 	DWORD dwMaxClient = 2;
 	DWORD dwCurVersion = 0;
 
-	// open wlan handle
 	if (WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient) != ERROR_SUCCESS)
 		return ssid_str;
 
@@ -339,7 +139,6 @@ string NetworkInfo::get_network_name()
 				const auto& net = pBssList->Network[j];
 				if (net.dwFlags & WLAN_AVAILABLE_NETWORK_CONNECTED)
 				{
-					// extract SSID name
 					ssid_str = string((char*)net.dot11Ssid.ucSSID, net.dot11Ssid.uSSIDLength);
 					break;
 				}
@@ -354,17 +153,14 @@ string NetworkInfo::get_network_name()
 }
 
 //-----------------------------------------get_public_ip--------------------------------//
-// get public ip of the connected network
 string NetworkInfo::get_public_ip()
 {
 	string public_ip = "Unknown";
 
-	// open HTTP session
 	HINTERNET hSession = WinHttpOpen(L"NetworkInfo/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (!hSession) return public_ip;
 
-	// connect to ipify.org
 	HINTERNET hConnect = WinHttpConnect(hSession, L"api.ipify.org", INTERNET_DEFAULT_HTTP_PORT, 0);
 	if (!hConnect)
 	{
@@ -372,7 +168,6 @@ string NetworkInfo::get_public_ip()
 		return public_ip;
 	}
 
-	// create HTTP request
 	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", NULL, NULL, WINHTTP_NO_REFERER,
 		WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
 	if (!hRequest)
@@ -382,7 +177,6 @@ string NetworkInfo::get_public_ip()
 		return public_ip;
 	}
 
-	// send and receive HTTP data
 	if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
 		WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
 		WinHttpReceiveResponse(hRequest, NULL))
@@ -400,53 +194,244 @@ string NetworkInfo::get_public_ip()
 		}
 	}
 
-	// cleanup handles
 	WinHttpCloseHandle(hRequest);
 	WinHttpCloseHandle(hConnect);
 	WinHttpCloseHandle(hSession);
 	return public_ip;
 }
 
+//-----------------------------------------HELPER: Format Speed--------------------------------//
+static string format_speed(double mbps)
+{
+	ostringstream oss;
+	if (mbps >= 1000.0)
+	{
+		oss << fixed << setprecision(1) << (mbps / 1000.0) << " Gbps";
+	}
+	else if (mbps >= 1.0)
+	{
+		oss << fixed << setprecision(1) << mbps << " Mbps";
+	}
+	else
+	{
+		oss << fixed << setprecision(0) << (mbps * 1000.0) << " Kbps";
+	}
+	return oss.str();
+}
+
+//-----------------------------------------get_network_download_speed--------------------------------//
+/**
+ * Measures actual download speed by downloading test data
+ * Uses a fast, lightweight test (downloads ~1-2MB)
+ * @return Formatted speed string (e.g., "45.3 Mbps", "1.2 Gbps")
+ */
+string NetworkInfo::get_network_download_speed()
+{
+	string speed_str = "Unknown";
+
+	// Fast test: Download ~1MB file from cloudflare CDN (very fast servers)
+	HINTERNET hSession = WinHttpOpen(L"SpeedTest/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS,
+		0);
+
+	if (!hSession) return speed_str;
+
+	// Set timeout to 5 seconds for fast response
+	DWORD timeout = 5000;
+	WinHttpSetOption(hSession, WINHTTP_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
+	WinHttpSetOption(hSession, WINHTTP_OPTION_RECEIVE_TIMEOUT, &timeout, sizeof(timeout));
+
+	// Use cloudflare's speed test file (1MB)
+	HINTERNET hConnect = WinHttpConnect(hSession, L"speed.cloudflare.com", INTERNET_DEFAULT_HTTP_PORT, 0);
+
+	if (!hConnect)
+	{
+		WinHttpCloseHandle(hSession);
+		return speed_str;
+	}
+
+	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/__down?bytes=1000000",
+		NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+
+	if (!hRequest)
+	{
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return speed_str;
+	}
+
+	// Start timing
+	auto start_time = high_resolution_clock::now();
+	DWORD total_bytes = 0;
+
+	if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+		WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
+		WinHttpReceiveResponse(hRequest, NULL))
+	{
+		DWORD bytes_available = 0;
+		char buffer[8192];
+
+		// Read all data
+		while (WinHttpQueryDataAvailable(hRequest, &bytes_available) && bytes_available > 0)
+		{
+			DWORD bytes_read = 0;
+			DWORD to_read = min(bytes_available, sizeof(buffer));
+
+			if (WinHttpReadData(hRequest, buffer, to_read, &bytes_read))
+			{
+				total_bytes += bytes_read;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		// End timing
+		auto end_time = high_resolution_clock::now();
+		auto duration = duration_cast<milliseconds>(end_time - start_time).count();
+
+		if (duration > 0 && total_bytes > 0)
+		{
+			// Calculate speed in Mbps
+			double seconds = duration / 1000.0;
+			double megabits = (total_bytes * 8.0) / 1000000.0;
+			double mbps = megabits / seconds;
+
+			speed_str = format_speed(mbps);
+		}
+	}
+
+	WinHttpCloseHandle(hRequest);
+	WinHttpCloseHandle(hConnect);
+	WinHttpCloseHandle(hSession);
+
+	return speed_str;
+}
+
+//-----------------------------------------get_network_upload_speed--------------------------------//
+/**
+ * Measures actual upload speed by uploading test data
+ * Uses a fast, lightweight test (uploads ~500KB)
+ * @return Formatted speed string (e.g., "23.5 Mbps", "890 Kbps")
+ */
+string NetworkInfo::get_network_upload_speed()
+{
+	string speed_str = "Unknown";
+
+	HINTERNET hSession = WinHttpOpen(L"SpeedTest/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS,
+		0);
+
+	if (!hSession) return speed_str;
+
+	// Set timeout to 5 seconds
+	DWORD timeout = 5000;
+	WinHttpSetOption(hSession, WINHTTP_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
+	WinHttpSetOption(hSession, WINHTTP_OPTION_SEND_TIMEOUT, &timeout, sizeof(timeout));
+
+	// Use cloudflare's speed test endpoint
+	HINTERNET hConnect = WinHttpConnect(hSession, L"speed.cloudflare.com", INTERNET_DEFAULT_HTTP_PORT, 0);
+
+	if (!hConnect)
+	{
+		WinHttpCloseHandle(hSession);
+		return speed_str;
+	}
+
+	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/__up",
+		NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+
+	if (!hRequest)
+	{
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return speed_str;
+	}
+
+	// Create test data (500KB of random data)
+	const DWORD test_size = 500000;
+	char* test_data = new char[test_size];
+
+	// Fill with pattern (faster than random)
+	for (DWORD i = 0; i < test_size; i++)
+	{
+		test_data[i] = (char)(i % 256);
+	}
+
+	// Start timing
+	auto start_time = high_resolution_clock::now();
+
+	// Send request with data
+	BOOL success = WinHttpSendRequest(hRequest,
+		L"Content-Type: application/octet-stream\r\n",
+		-1,
+		test_data,
+		test_size,
+		test_size,
+		0);
+
+	if (success && WinHttpReceiveResponse(hRequest, NULL))
+	{
+		// End timing
+		auto end_time = high_resolution_clock::now();
+		auto duration = duration_cast<milliseconds>(end_time - start_time).count();
+
+		if (duration > 0)
+		{
+			// Calculate speed in Mbps
+			double seconds = duration / 1000.0;
+			double megabits = (test_size * 8.0) / 1000000.0;
+			double mbps = megabits / seconds;
+
+			speed_str = format_speed(mbps);
+		}
+	}
+
+	delete[] test_data;
+	WinHttpCloseHandle(hRequest);
+	WinHttpCloseHandle(hConnect);
+	WinHttpCloseHandle(hSession);
+
+	return speed_str;
+}
+
 /*
 ================================================================================
-					 NETWORK SPEED FUNCTION DOCUMENTATION
+				NETWORK SPEED FUNCTIONS DOCUMENTATION
 ================================================================================
 
-IMPROVEMENTS MADE TO get_network_speed():
+NEW FUNCTIONS:
 
-1. **Finds Default Gateway Interface**
-   - Uses GetIpForwardTable() to identify the adapter routing to the internet
-   - Prioritizes this adapter over others
+1. get_network_download_speed()
+   - Downloads ~1MB test file from Cloudflare CDN
+   - Measures time taken to download
+   - Calculates actual download speed in Mbps/Gbps
+   - Fast execution (~1-2 seconds)
+   - Returns: "45.3 Mbps", "1.2 Gbps", "850 Kbps"
 
-2. **Filters Virtual Adapters**
-   - Excludes VirtualBox, VMware, Hyper-V, VPN, Bluetooth adapters
-   - Only returns physical Ethernet/WiFi adapters
+2. get_network_upload_speed()
+   - Uploads ~500KB test data to Cloudflare endpoint
+   - Measures time taken to upload
+   - Calculates actual upload speed in Mbps/Gbps
+   - Fast execution (~1-2 seconds)
+   - Returns: "23.5 Mbps", "890 Kbps", "1.1 Gbps"
 
-3. **Better Speed Formatting**
-   - Shows "1.0 Gbps" for gigabit+ connections (≥1000 Mbps)
-   - Shows "100 Mbps" or "300 Mbps" for sub-gigabit speeds
-   - Adds connection type: "(Ethernet)" or "(WiFi)"
-
-4. **Two-Pass Algorithm**
-   - First pass: Find default gateway adapter (most accurate)
-   - Second pass: Fallback to first operational physical adapter
-
-HELPER FUNCTIONS:
-
-- get_default_gateway_interface(): Returns interface index of default route
-- is_physical_adapter(): Checks if adapter is physical (not virtual)
-- is_virtual_adapter(): Detects virtual adapters by description keywords
-
-INTERFACE TYPES DETECTED:
-- IF_TYPE_ETHERNET_CSMACD (6): Standard Ethernet
-- IF_TYPE_IEEE80211 (71): WiFi/Wireless LAN
-- IF_TYPE_GIGABITETHERNET: Gigabit Ethernet
+FEATURES:
+- Uses Cloudflare's speed test infrastructure (fast, reliable)
+- 5-second timeout to prevent hanging
+- Automatic unit formatting (Kbps/Mbps/Gbps)
+- Returns "Unknown" if test fails
 
 EXAMPLE OUTPUTS:
-- "1.0 Gbps (Ethernet)" - Gigabit Ethernet connection
-- "2.5 Gbps (Ethernet)" - 2.5 Gigabit connection
-- "300 Mbps (WiFi)" - WiFi connection
-- "100 Mbps (Ethernet)" - Fast Ethernet
+- Download: "85.3 Mbps"
+- Upload: "23.7 Mbps"
+- High-speed: "1.2 Gbps"
+- Low-speed: "450 Kbps"
 
 ================================================================================
 */
