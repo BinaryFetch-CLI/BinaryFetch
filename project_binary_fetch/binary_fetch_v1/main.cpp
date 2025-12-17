@@ -336,37 +336,37 @@ int main() {
         lp.push("#-Network Info-----------------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "Network Name               : " << net.get_network_name();
+            ss << "~ Network Name             : " << net.get_network_name();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Network Type               : " << c_net.get_network_type();
+            ss << "~ Network Type             : " << c_net.get_network_type();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "IP                         : " << net.get_public_ip();
+            ss << "~ IP                       : " << net.get_public_ip();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Locale                     : " << net.get_locale();
+            ss << "~ Locale                   : " << net.get_locale();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Mac address                : " << net.get_mac_address();
+            ss << "~ Mac address              : " << net.get_mac_address();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Network avg upload speed   : " << net.get_network_upload_speed();
+            ss << "~ avg upload speed         : " << net.get_network_upload_speed();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Network avg download speed : " << net.get_network_download_speed();
+            ss << "~ avg download speed       : " << net.get_network_download_speed();
             lp.push(ss.str());
         }
     }
