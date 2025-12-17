@@ -366,7 +366,7 @@ int main() {
         }
         {
             std::ostringstream ss;
-            ss << "Network avg upload speed   : " << net.get_network_upload_speed();
+            ss << "Network avg download speed : " << net.get_network_download_speed();
             lp.push(ss.str());
         }
     }
