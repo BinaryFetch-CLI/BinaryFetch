@@ -422,57 +422,57 @@ int main() {
         lp.push("#-CPU Info --------------------------------------------------------#");
         {
             std::ostringstream ss;
-            ss << "Brand                      : " << cpu.get_cpu_info();
+            ss << "~ Brand                    : " << cpu.get_cpu_info();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Utilization                : " << cpu.get_cpu_utilization() << "%";
+            ss << "~ Utilization              : " << cpu.get_cpu_utilization() << "%";
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Speed                      : " << cpu.get_cpu_speed();
+            ss << "~ Speed                    : " << cpu.get_cpu_speed();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Base Speed                 : " << cpu.get_cpu_base_speed();
+            ss << "~ Base Speed               : " << cpu.get_cpu_base_speed();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Cores                      : " << cpu.get_cpu_cores();
+            ss << "~ Cores                    : " << cpu.get_cpu_cores();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Logical Processors         : " << cpu.get_cpu_logical_processors();
+            ss << "~ Logical Processors       : " << cpu.get_cpu_logical_processors();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Sockets                    : " << cpu.get_cpu_sockets();
+            ss << "~ Sockets                  : " << cpu.get_cpu_sockets();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Virtualization             : " << cpu.get_cpu_virtualization();
+            ss << "~ Virtualization           : " << cpu.get_cpu_virtualization();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L1 Cache                   : " << cpu.get_cpu_l1_cache();
+            ss << "~ L1 Cache                 : " << cpu.get_cpu_l1_cache();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L2 Cache                   : " << cpu.get_cpu_l2_cache();
+            ss << "~ L2 Cache                 : " << cpu.get_cpu_l2_cache();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L3 Cache                   : " << cpu.get_cpu_l3_cache();
+            ss << "~ L3 Cache                 : " << cpu.get_cpu_l3_cache();
             lp.push(ss.str());
         }
     }
