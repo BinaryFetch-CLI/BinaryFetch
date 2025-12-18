@@ -1,4 +1,6 @@
-﻿⠀⠀⠀⠀⣀⡀
+﻿use JetBrains Mono NL font for best view
+
+⠀⠀⠀⠀⣀⡀
 ⠀⠀⠀⠀⣿⠙⣦⠀⠀⠀⠀⠀⠀⣀⣤⡶⠛⠁      ~>> BinaryFetch_____________________________________________________
 ⠀⠀⠀⠀⢻⠀⠈⠳⠀⠀⣀⣴⡾⠛⠁⣠⠂⢠⠇     [OS]  -> Windows 11 10.0 (Build 22631) (64-bit) (uptime: 9h 57m)
 ⠀⠀⠀⠀⠈⢀⣀⠤⢤⡶⠟⠁⢀⣴⣟⠀⠀⣾      [CPU] -> AMD Ryzen 5 5600G with Radeon Graphics (6C/12T) @ 3.89 GHz
