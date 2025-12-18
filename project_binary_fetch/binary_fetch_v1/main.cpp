@@ -44,16 +44,16 @@ using namespace std;
 // ------------------ main (modified to stream output) ------------------
 
 int main() {
+    // ========== SIMPLIFIED ASCII ART LOADING ==========
+        // Just call loadFromFile() - it handles everything automatically!
+        // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
+        // - If missing, copies from Default_Ascii_Art.txt and creates it
+        // - User can modify their art anytime in AppData folder
 
-    // Initialize ASCII Art
     AsciiArt art;
-    if (!art.loadFromFile("DefaultAsciiArt.txt")) {
-        // fallback: a small placeholder art (keeps indentation)
-        std::ofstream tmp("DefaultAsciiArt.txt"); // optional: create a default file
-        tmp << "BinaryFetch\n";
-        tmp.close();
-        art.loadFromFile("DefaultAsciiArt.txt");
-        std::cout << "Note: ASCII art not loaded from file; using placeholder.\n";
+    if (!art.loadFromFile()) {
+        std::cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
+        // Program continues even if art fails to load
     }
 
     // Create LivePrinter

@@ -220,6 +220,9 @@
     <ClCompile Include="compact_disk_info.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="AsciiArtControlEngine.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

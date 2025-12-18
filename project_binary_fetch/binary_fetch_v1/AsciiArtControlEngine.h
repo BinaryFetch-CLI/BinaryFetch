@@ -1,83 +1,38 @@
 #pragma once
-#include <filesystem>
-#include <string>
 #include <vector>
+#include <string>
 
-enum class AsciiGeneratorStatus {
-    Success,               // File exists and is readable
-    FileAlreadyExists,     // User file already present (same as Success semantically)
-    CreatedFromDefault,    // Created new user file from bundled default
-    MissingBundledDefault, // Default_Ascii_Art.txt missing in source/bundle
-    IoError,               // Generic I/O error
-    PermissionDenied,      // Cannot write to target location
-};
-
+/**
+ * AsciiArtControlEngine loads and holds ASCII art lines for rendering.
+ * It ensures the user ASCII art file exists (creating it from a default if missing),
+ * and strips BOM and ANSI codes while calculating display widths.
+ */
 class AsciiArtControlEngine {
 public:
-    AsciiArtControlEngine();
-    ~AsciiArtControlEngine();
+    /** Loads ASCII art from the user file (creating it if needed). */
+    bool loadAsciiArt();
 
-    // Ensure user ASCII file exists (creates directories and copies bundled default if needed).
-    AsciiGeneratorStatus ensureUserAsciiExists(
-        const std::filesystem::path& userPath,
-        const std::filesystem::path& bundledDefaultPath);
+    /** Returns the loaded lines (after BOM/ANSI removal). */
+    const std::vector<std::string>& getLines() const { return lines; }
 
-    // Create the user ASCII file from bundled default (atomic write).
-    AsciiGeneratorStatus createUserAsciiFromDefault(
-        const std::filesystem::path& userPath,
-        const std::filesystem::path& bundledDefaultPath);
+    /** Returns the maximum display width (in columns) among all lines. */
+    int getMaxWidth() const { return maxWidth; }
 
-    // Load ASCII art (reads file, sanitizes first line, computes visible widths)
-    bool loadFromFile(const std::string& filename);
+    /** Returns the number of lines of ASCII art. */
+    int getHeight() const { return static_cast<int>(lines.size()); }
 
-    // Query functions
-    bool isEnabled() const;
-    int getHeight() const;
-    int getMaxWidth() const;
-    const std::string& getLine(int index) const;
-    int getLineWidth(int index) const;
-    int getSpacing() const;
-    void setSpacing(int s);
-    void clear();
+    /** Returns the display width (in columns) of a given line index. */
+    int getLineWidth(int index) const {
+        if (index < 0 || index >= (int)lineWidths.size()) return 0;
+        return lineWidths[index];
+    }
+
+    /** Returns the left indent (spacing) removed from all lines. */
+    int getSpacing() const { return spacing; }
 
 private:
-    // Internal storage
-    std::vector<std::string> artLines;
-    std::vector<int> artWidths;
-    int maxWidth;
-    int height;
-    bool enabled;
-    int spacing;
-
-    // Helpers
-    AsciiGeneratorStatus atomicCopyFile(const std::filesystem::path& src, const std::filesystem::path& dst);
-    static std::string stripAnsiSequences(const std::string& s);
-    static std::wstring utf8_to_wstring(const std::string& s);
-    static int char_display_width(wchar_t wc);
-    static size_t visible_width(const std::string& s);
-    static void sanitizeLeadingInvisible(std::string& s);
+    std::vector<std::string> lines;   // Loaded ASCII art lines
+    std::vector<int> lineWidths;      // Display width of each line
+    int maxWidth = 0;                 // Maximum line width
+    int spacing = 0;                 // Common leading-space indent removed from lines
 };
-
-// LivePrinter: prints info lines aligned to ASCII art
-class LivePrinter {
-public:
-    explicit LivePrinter(const AsciiArtControlEngine& artRef);
-
-    // Push a single info line (printed next to current ASCII art line)
-    void push(const std::string& infoLine);
-
-    // Push a blank line (still respects ASCII art padding)
-    void pushBlank();
-
-    // Finish printing the rest of the ASCII art lines (if info finished early)
-    void finish();
-
-private:
-    const AsciiArtControlEngine& art;
-    int index; // current printed line index
-
-    void printArtAndPad();
-};
-
-// Helper: push multi-line formatted string to LivePrinter
-void pushFormattedLines(LivePrinter& lp, const std::string& s);

@@ -21,7 +21,7 @@ std::string stripAnsiSequences(const std::string& s);
 // Converts UTF-8 text to wide string (needed for width calculation)
 std::wstring utf8_to_wstring(const std::string& s);
 
-// Returns how “wide” a Unicode character appears when printed.
+// Returns how "wide" a Unicode character appears when printed.
 // Some characters take 2 columns (Asian chars, emojis).
 int char_display_width(wchar_t wc);
 
@@ -29,7 +29,7 @@ int char_display_width(wchar_t wc);
 size_t visible_width(const std::string& s);
 
 // Some ASCII art lines may start with invisible ANSI codes.
-// This trims them so alignment doesn’t break.
+// This trims them so alignment doesn't break.
 void sanitizeLeadingInvisible(std::string& s);
 
 
@@ -40,7 +40,8 @@ void sanitizeLeadingInvisible(std::string& s);
  ---------------------------------------------------------
 
   Responsible for:
-   - Loading ASCII art from a .txt file
+   - Loading ASCII art from user's AppData folder
+   - Auto-creating the file from default template if missing
    - Keeping track of line widths
    - Reporting how tall and wide the art is
    - Providing safe access to art lines for real-time display
@@ -52,8 +53,13 @@ class AsciiArt {
 public:
     AsciiArt();
 
-    // Load ASCII art from a file. Returns true on success.
-    bool loadFromFile(const std::string& filename);
+    // Load ASCII art automatically from AppData location.
+    // If file doesn't exist, copies from Default_Ascii_Art.txt
+    // Returns true on success.
+    bool loadFromFile();
+
+    // Advanced: Load from custom path (overrides default behavior)
+    bool loadFromFile(const std::string& customPath);
 
     // Whether ASCII art printing is turned on
     bool isEnabled() const;
@@ -76,6 +82,18 @@ private:
     int height;                            // number of lines
     bool enabled;                          // toggle for showing/hiding the ASCII art
     int spacing;                           // spaces between art and info columns
+
+    // Internal helper: Get the full path to user's ASCII art file
+    std::string getUserArtPath() const;
+
+    // Internal helper: Ensure directory exists
+    bool ensureDirectoryExists(const std::string& path) const;
+
+    // Internal helper: Copy default art to user location
+    bool copyDefaultArt(const std::string& destPath) const;
+
+    // Internal helper: Load art from a specific file path
+    bool loadArtFromPath(const std::string& filepath);
 };
 
 
