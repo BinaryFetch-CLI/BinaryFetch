@@ -1,52 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Header Files\Core">
-      <UniqueIdentifier>{e3b82b4c-e196-4622-9a1f-6bb2c497878b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\OS">
-      <UniqueIdentifier>{3acae55b-872b-40aa-a79c-2277381782d6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\CPU">
-      <UniqueIdentifier>{f95b6725-b502-4d9e-80e6-5774b47f40a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Memory">
-      <UniqueIdentifier>{c932c51c-f311-457e-815f-a146892e8fda}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Storage">
-      <UniqueIdentifier>{eb87bf5d-1481-45b8-98b0-78f016b0b847}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\System">
-      <UniqueIdentifier>{3a6b848a-9f33-4a35-bf8a-986870a853d0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Hardware">
-      <UniqueIdentifier>{2cd07408-adef-4ee0-841b-edd9928a4662}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Display">
-      <UniqueIdentifier>{5fa1b3c7-a01a-4bbf-9fd5-9abd3d6a29e8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Compatibility">
-      <UniqueIdentifier>{82ca36a3-0cad-4bae-a1da-259da70c0785}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\GPU">
-      <UniqueIdentifier>{7c0f34cb-56e9-4c66-9956-fb6fe3e504d0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Utils">
-      <UniqueIdentifier>{48cc23e9-3ff6-49d2-bb06-8358721be7f7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\User">
-      <UniqueIdentifier>{7e237554-596f-4900-a39c-de19ee4e8119}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Network">
-      <UniqueIdentifier>{b69df690-8ee1-43d0-a748-9c781249c4e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Enviornment">
-      <UniqueIdentifier>{552846b6-a3f1-43ea-b153-1eb2a1b99673}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{053fd058-3926-406d-a7b0-8932e6feaa21}</UniqueIdentifier>
     </Filter>
@@ -88,9 +42,6 @@
     </ClInclude>
     <ClInclude Include="NetworkInfo.h">
       <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PerformanceInfo.h">
       <Filter>include</Filter>
@@ -144,6 +95,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="compact_disk_info.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="AsciiArtControlEngine.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
