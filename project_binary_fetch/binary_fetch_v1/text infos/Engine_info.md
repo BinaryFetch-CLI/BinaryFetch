@@ -1,280 +1,158 @@
 ﻿
 
-# BinaryFetch Configuration & ASCII Engine Architecture
-
-## Document Purpose
-
-This document defines the architecture, responsibilities, and execution flow of the **BinaryFetch configuration system**, consisting of two independent engines:
-
-1. **JSON Builder Engine**
-2. **ASCII Art Generator Engine**
-
-These engines ensure BinaryFetch operates reliably on first run, supports persistent user customization, and maintains a clean separation of concerns.
-
----
-
-## Architectural Overview
-
-BinaryFetch is structured around a **central execution engine** that consumes external resources but does not generate them directly.
-
-All file creation and default resource generation are delegated to dedicated engines.
-
-### Engines Summary
-
-| Engine                     | Responsibility                                |
-| -------------------------- | --------------------------------------------- |
-| JSON Builder Engine        | Generates and maintains default configuration |
-| ASCII Art Generator Engine | Generates and maintains ASCII art assets      |
-| Main Engine                | Coordinates execution and renders output      |
-
----
-
-## File System Layout
-
-```
-C:\Users\<USERNAME>\AppData\BinaryFetch\
-│
-├── BinaryFetch.jsonc
-└── AsciiArt.txt
-```
-
----
-
-# 1. JSON Builder Engine
+# ASCII Art Generator Engine — Developer Documentation
 
 ## Purpose
 
-The JSON Builder Engine guarantees the existence of a valid configuration file required for BinaryFetch execution.
-
-Its primary objectives are:
-
-* Provide a safe first-run experience
-* Enable persistent user customization
-* Prevent runtime failures caused by missing configuration
-* Isolate configuration generation logic from the main execution flow
+The ASCII Art Generator Engine is responsible for **ensuring the presence of user ASCII art** in the proper directory and **copying a default bundled version** when needed. This allows BinaryFetch to function reliably on first run, supports user customization, and separates visual assets from program logic.
 
 ---
 
-## Target File
-
-```
-C:\Users\<USERNAME>\AppData\BinaryFetch\BinaryFetch.jsonc
-```
-
----
-
-## Execution Conditions
-
-The JSON Builder Engine executes **only** when one or more of the following conditions are met:
-
-* `BinaryFetch.jsonc` does not exist
-* (Optional extension) Configuration file is malformed
-* (Optional extension) Configuration version mismatch is detected
-
-The engine **does not** execute during normal runs when a valid configuration file is present.
-
----
-
-## Execution Flow
-
-1. Main Engine starts
-2. Configuration Loader checks for `BinaryFetch.jsonc`
-3. If file exists:
-
-   * Control proceeds to configuration parsing
-4. If file is missing:
-
-   * JSON Builder Engine is invoked
-5. JSON Builder Engine:
-
-   * Creates required directories
-   * Writes a default `.jsonc` configuration
-6. Control returns to Main Engine
-7. Configuration Loader re-checks file existence
-8. Execution continues using the generated configuration
-
----
-
-## Generated Configuration Responsibilities
-
-The default configuration defines:
-
-* Display preferences
-* Enabled or disabled sections
-* Output mode (compact / extended)
-* ASCII art usage
-* Future extensibility via versioning
-
-### Example Structure (Conceptual)
-
-```jsonc
-{
-  "config_version": 1,
-
-  "display": {
-    "compact": false,
-    "show_ascii": true
-  },
-
-  "sections": {
-    "os": true,
-    "cpu": true,
-    "gpu": true,
-    "memory": true,
-    "network": true
-  }
-}
-```
-
----
-
-## Design Constraints
-
-The JSON Builder Engine must adhere to the following rules:
-
-* Must not read system information
-* Must not parse JSON
-* Must not perform console output
-* Must only generate default configuration data
-* Must always produce a syntactically valid JSONC file
-
-This intentional simplicity ensures reliability and predictability.
-
----
-
-# 2. ASCII Art Generator Engine
-
-## Purpose
-
-The ASCII Art Generator Engine provides visual assets independently of the executable, allowing customization without recompilation.
-
-Its objectives include:
-
-* Decoupling presentation from logic
-* Supporting user-defined branding
-* Allowing future themes and presets
-* Maintaining consistent rendering behavior
-
----
-
-## Target File
+## Target User File
 
 ```
 C:\Users\<USERNAME>\AppData\BinaryFetch\AsciiArt.txt
 ```
 
----
-
-## Execution Conditions
-
-The ASCII Art Generator Engine executes only when:
-
-* The ASCII art file does not exist
-* (Optional extension) Art reset is requested
-
-The engine does not execute during standard runs when the file is present.
+* All runtime operations interact with this path.
+* The engine **never modifies the bundled default**, only the user copy.
+* Bundled default: `Default_Ascii_Art.txt` is **inside the source code / project assets**.
 
 ---
 
-## Execution Flow
+## Workflow: Detailed Step-by-Step
 
-1. Main Engine requests ASCII art
-2. ASCII Loader checks for `AsciiArt.txt`
-3. If file exists:
+### Step 0 — Initialization
 
-   * Content is loaded and rendered
-4. If file is missing:
+* `main.cpp` prepares `AsciiArt` loader object.
+* Sets path for:
 
-   * ASCII Art Generator Engine is invoked
-5. Generator writes default ASCII art
-6. Control returns to Main Engine
-7. ASCII content is loaded and rendered
+  * User ASCII: `%LOCALAPPDATA%\BinaryFetch\AsciiArt.txt`
+  * Bundled default: `<EXE_DIR>/Default_Ascii_Art.txt`
 
 ---
 
-## Generated Content Responsibilities
-
-The default ASCII art must:
-
-* Preserve spacing and alignment
-* Remain terminal-safe
-* Avoid system-specific assumptions
-
-### Example
-
-```
-  _>> BinaryFetch_____________________________________________________
-```
-
----
-
-## Design Constraints
-
-The ASCII Art Generator Engine must:
-
-* Not access system information
-* Not apply colors or formatting logic
-* Not depend on configuration parsing
-* Only generate ASCII text assets
-* Always produce safe, renderable output
-
----
-
-# 3. Main Engine Coordination
-
-## Role
-
-The Main Engine acts as the coordinator and renderer.
-It does not generate default resources.
-
-Responsibilities include:
-
-* Detecting required resources
-* Invoking engines when necessary
-* Parsing configuration
-* Collecting system information
-* Rendering final output
-
----
-
-## Startup Sequence
+### Step 1 — Main requests ASCII content
 
 ```text
-START
- |
- |-- Check BinaryFetch.jsonc
- |     |-- Exists → Load
- |     |-- Missing → JSON Builder → Load
- |
- |-- Check AsciiArt.txt
- |     |-- Exists → Load
- |     |-- Missing → ASCII Generator → Load
- |
- |-- Parse configuration
- |-- Collect system data
- |-- Render output
- |
-END
+main -> ASCII Engine: load user ASCII at path
+```
+
+* `main` calls engine to check/load `AsciiArt.txt`.
+* Engine attempts to **open the user file**.
+
+---
+
+### Step 2 — Engine reports missing file
+
+```text
+ASCII Engine -> main: file missing
+```
+
+* Engine returns a **status** (e.g., `FileNotFound` or `Missing`) to `main`.
+* Engine does **not** create the file automatically at this stage.
+* `main` now knows that the ASCII asset is absent.
+
+---
+
+### Step 3 — Main commands engine to create file
+
+```text
+main -> ASCII Engine: "Create AsciiArt.txt from default"
+```
+
+* `main` explicitly instructs the engine to generate the missing file.
+* This maintains **centralized control** and allows optional logging or user notification in `main`.
+
+---
+
+### Step 4 — Engine generates the file
+
+1. Engine ensures parent directory exists (`BinaryFetch` in AppData).
+2. Creates `AsciiArt.txt` in that directory.
+3. Opens the **bundled `Default_Ascii_Art.txt`** for reading.
+4. Copies content from default into `AsciiArt.txt`:
+
+   * Use atomic write: write to temp file → flush → rename to `AsciiArt.txt`.
+5. Returns **status** to `main`:
+
+   * `CreatedFromDefault` on success
+   * `IoError` / `PermissionDenied` on failure
+
+---
+
+### Step 5 — Main re-attempts loading
+
+* `main` now tries to load the newly created `AsciiArt.txt`.
+* On success → normal rendering begins.
+* On failure → fallback or error message (optional, in-memory default or console log).
+
+---
+
+### Step 6 — Summary diagram
+
+```text
+main -> ASCII Engine : load user ASCII
+ASCII Engine -> main  : file missing
+main -> ASCII Engine  : create from default
+ASCII Engine -> main  : CreatedFromDefault
+main -> ASCII Engine  : load user ASCII again
+ASCII Engine -> main  : Success -> continue normal execution
 ```
 
 ---
 
-## Architectural Benefits
+## Developer API — Recommended
 
-This design provides:
+### Status Enum
 
-* Self-healing execution
-* First-run stability
-* Persistent customization
-* Clear separation of concerns
-* Minimal runtime overhead
-* Scalable extension paths (flags, themes, plugins)
+```cpp
+enum class AsciiGeneratorStatus {
+    Success,               // File exists or successfully created
+    FileAlreadyExists,     // User file already present
+    CreatedFromDefault,    // Created new user file from bundled default
+    MissingBundledDefault, // Default_Ascii_Art.txt missing in source/bundle
+    IoError,               // Generic I/O error
+    PermissionDenied,      // Cannot write to target location
+};
+```
+
+### Main function interface
+
+```cpp
+// Check or create user ASCII art
+AsciiGeneratorStatus ensureUserAsciiExists(
+    const std::filesystem::path& userPath,
+    const std::filesystem::path& bundledDefaultPath);
+```
+
+* **Input:** user path + bundled default path
+* **Output:** status code
+* **Behavior:** creates file **only when instructed** by `main`.
 
 ---
 
-## Conclusion
+## Implementation Notes
 
-The two-engine architecture establishes BinaryFetch as a robust, extensible, and professional system information tool.
-This foundation supports future enhancements such as command-line flags, configuration migration, theming, and modular extensions without structural refactoring.
+* **Idempotence:** repeated calls must not overwrite existing user files.
+* **Atomic writes:** temp file + rename to avoid partial file corruption.
+* **Error handling:** engine returns error codes; `main` decides how to notify the user.
+* **Bundled default:** always UTF-8, no BOM, and included inside source for compilation.
+* **Directory creation:** engine creates missing directories automatically.
 
+---
+
+## Testing / Edge Cases
+
+1. **User file exists:** status `FileAlreadyExists`; content remains untouched.
+2. **User file missing, default present:** status `CreatedFromDefault`; file matches bundled default.
+3. **Bundled default missing:** status `MissingBundledDefault`; engine does not create user file.
+4. **Permission denied:** engine returns `PermissionDenied`; `main` logs and skips creation.
+5. **Concurrent runs:** temp files should be isolated; rename failures handled gracefully.
+
+---
+
+This structure clearly documents the **request/response workflow** between `main` and the ASCII engine and gives developers a complete blueprint for **first-run ASCII asset creation**.
+
+---
 
