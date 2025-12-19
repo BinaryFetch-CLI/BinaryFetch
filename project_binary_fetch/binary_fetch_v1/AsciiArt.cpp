@@ -146,17 +146,13 @@ bool AsciiArt::ensureDirectoryExists(const std::string& path) const {
 bool AsciiArt::copyDefaultArt(const std::string& destPath) const {
     // Try multiple locations for default art file
     std::vector<std::string> searchPaths = {
-        "Default_Ascii_Art.txt",           // Current working directory
-        "DefaultAsciiArt.txt",             // Alternative naming (no underscores)
-        "./Default_Ascii_Art.txt",         // Explicit current dir
-        "./DefaultAsciiArt.txt",           // Explicit current dir (no underscores)
-        "../Default_Ascii_Art.txt",        // Parent directory
-        "../DefaultAsciiArt.txt",          // Parent directory (no underscores)
-        "../../Default_Ascii_Art.txt",     // Grandparent directory
-        "../../DefaultAsciiArt.txt",       // Grandparent directory (no underscores) - FOR x64/Debug builds
-        "../../../Default_Ascii_Art.txt",  // Great-grandparent
-        "../../../DefaultAsciiArt.txt"     // Great-grandparent (no underscores)
+    "DefaultAsciiArt.txt",          // Current working directory
+    "./DefaultAsciiArt.txt",        // Explicit current dir
+    "../DefaultAsciiArt.txt",       // Parent directory
+    "../../DefaultAsciiArt.txt",    // Grandparent directory (x64/Debug)
+    "../../../DefaultAsciiArt.txt"  // Great-grandparent
     };
+
 
 #ifdef _WIN32
     // Get executable directory on Windows
@@ -166,7 +162,6 @@ bool AsciiArt::copyDefaultArt(const std::string& destPath) const {
         size_t lastSlash = exeDir.find_last_of("\\/");
         if (lastSlash != std::string::npos) {
             exeDir = exeDir.substr(0, lastSlash);
-            searchPaths.push_back(exeDir + "\\Default_Ascii_Art.txt");
             searchPaths.push_back(exeDir + "\\DefaultAsciiArt.txt");
         }
     }
