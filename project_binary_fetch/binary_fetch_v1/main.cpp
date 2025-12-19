@@ -87,7 +87,7 @@ int main() {
     // ---------------- Now stream info line-by-line ----------------
 
     // Header
-    lp.push(""); // keep art line 0 + blank info (or you can push a title)
+    lp.push(""); // keep art line 
     lp.push("~>> BinaryFetch_____________________________________________________");
 
     // Minimal OS
