@@ -1,4 +1,4 @@
-#include "AsciiArt.h"
+﻿#include "AsciiArt.h"
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -374,3 +374,211 @@ void pushFormattedLines(LivePrinter& lp, const std::string& s) {
     }
 }
 
+/*
+================================================
+ASCII ART & LIVE PRINTING MODULE
+================================================
+
+OVERVIEW
+------------------------------------------------
+This module provides a complete ASCII art handling
+and rendering system for BinaryFetch.
+
+It is responsible for:
+- Locating and loading ASCII art files
+- Automatically creating a user-editable art file
+- Preserving correct visual alignment (UTF-8, ANSI, CJK)
+- Streaming system information alongside ASCII art
+  in a synchronized, line-by-line manner
+
+The design separates responsibilities clearly:
+- AsciiArt manages data, files, and layout
+- LivePrinter handles ordered console output
+
+
+================================================
+CLASS: AsciiArt
+================================================
+
+ROLE
+------------------------------------------------
+Manages ASCII art loading, storage, width calculation,
+and automatic user file provisioning.
+
+The class ensures that:
+- ASCII art is always available if a default exists
+- User-customized art is stored in a persistent location
+- UTF-8 characters and ANSI color codes do not break layout
+- Art width and height are precomputed for fast rendering
+
+
+PUBLIC INTERFACE
+------------------------------------------------
+
+bool loadFromFile()
+    Loads ASCII art from the user-specific location.
+
+    Behavior:
+    - Checks for a user ASCII art file
+    - If missing, copies Default_Ascii_Art.txt automatically
+    - Loads the resulting file into memory
+
+    Returns:
+    - true  → art successfully loaded
+    - false → art unavailable or unreadable
+
+
+bool loadFromFile(const std::string& customPath)
+    Loads ASCII art from a custom file path.
+
+    Intended for advanced usage or testing.
+
+    Returns:
+    - true if the file was successfully loaded
+
+
+bool isEnabled() const
+    Indicates whether ASCII art is currently active.
+
+
+void setEnabled(bool enable)
+    Enables or disables ASCII art rendering
+    without clearing loaded data.
+
+
+void clear()
+    Clears all loaded ASCII art data and resets
+    width and height calculations.
+
+
+int getMaxWidth() const
+    Returns the maximum visible width of all
+    ASCII art lines (ANSI-safe, UTF-8 aware).
+
+
+int getHeight() const
+    Returns the total number of ASCII art lines.
+
+
+const std::string& getLine(int index) const
+    Returns the ASCII art line at the given index.
+
+
+int getLineWidth(int index) const
+    Returns the visible width of the specified line.
+
+
+int getSpacing() const
+    Returns the horizontal spacing between
+    ASCII art and information output.
+
+
+PRIVATE INTERNAL HELPERS
+------------------------------------------------
+
+std::string getUserArtPath() const
+    Resolves the platform-specific location
+    for storing the user ASCII art file.
+
+    Windows:
+        %APPDATA%\BinaryFetch\BinaryArt.txt
+
+    Linux/macOS:
+        ~/.config/BinaryFetch/BinaryArt.txt
+
+
+bool ensureDirectoryExists(const std::string& path) const
+    Creates required directories for the target
+    ASCII art file path if they do not exist.
+
+
+bool copyDefaultArt(const std::string& destPath) const
+    Searches for Default_Ascii_Art.txt in multiple
+    common locations and copies it to the user
+    art path.
+
+
+bool loadArtFromPath(const std::string& filepath)
+    Loads ASCII art from a specific file path,
+    sanitizes invisible characters, and calculates
+    visual widths for alignment.
+
+
+================================================
+CLASS: LivePrinter
+================================================
+
+ROLE
+------------------------------------------------
+Handles synchronized, line-by-line printing of
+ASCII art alongside system information.
+
+LivePrinter ensures:
+- ASCII art and info lines stay vertically aligned
+- Padding is applied dynamically
+- Remaining ASCII art is printed when data ends
+
+
+PUBLIC INTERFACE
+------------------------------------------------
+
+LivePrinter(const AsciiArt& artRef)
+    Initializes the printer with a reference
+    to a loaded AsciiArt instance.
+
+
+void push(const std::string& infoLine)
+    Prints one line of system information
+    aligned with the corresponding ASCII
+    art line.
+
+
+void pushBlank()
+    Prints an empty information line while
+    maintaining ASCII art alignment.
+
+
+void finish()
+    Outputs any remaining ASCII art lines
+    after all information lines have been printed.
+
+
+================================================
+UTILITY / HELPER FUNCTIONS
+================================================
+
+std::string stripAnsiSequences(const std::string& s)
+    Removes ANSI escape sequences so visual width
+    calculations remain accurate.
+
+
+std::wstring utf8_to_wstring(const std::string& s)
+    Converts UTF-8 encoded strings to wide strings
+    for character width analysis.
+
+
+int char_display_width(wchar_t wc)
+    Determines the display width of a character,
+    including support for full-width CJK characters.
+
+
+size_t visible_width(const std::string& s)
+    Calculates the visible width of a UTF-8 string,
+    ignoring ANSI escape sequences.
+
+
+void sanitizeLeadingInvisible(std::string& s)
+    Removes UTF-8 BOMs and zero-width characters
+    from the beginning of lines to prevent
+    alignment issues.
+
+
+void pushFormattedLines(LivePrinter& lp, const std::string& s)
+    Splits a multi-line string and streams each
+    line through LivePrinter with proper alignment.
+
+
+================================================
+END OF DOCUMENTATION
+================================================
+*/
