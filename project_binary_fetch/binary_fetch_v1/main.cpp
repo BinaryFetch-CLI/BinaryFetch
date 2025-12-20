@@ -650,17 +650,17 @@ int main() {
                 }
                 {
                     std::ostringstream ss;
-                    ss << "~ " << "Brand                    : " << m.brand_name;
+                    ss << "~ " << "Brand                    " << ": " << m.brand_name;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "~ " << "Resolution               : " << m.resolution;
+                    ss << "~ " << "Resolution               " << ": " << m.resolution;
                     lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "~ " << "Refresh Rate             : " << m.refresh_rate << " Hz";
+                    ss << "~ " << "Refresh Rate             " << ": " << m.refresh_rate << " Hz";
                     lp.push(ss.str());
                 }
             }
@@ -677,27 +677,27 @@ int main() {
 
         {
             std::ostringstream ss;
-            ss << "~ " << "Bios Vendor              : " << sys.get_bios_vendor();
+            ss << "~ " << "Bios Vendor              " << ": " << sys.get_bios_vendor();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "~ Bios Version             : " << sys.get_bios_version();
+            ss << "~ " << "Bios Version             " << ": " << sys.get_bios_version();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "~ Bios Date                : " << sys.get_bios_date();
+            ss << "~ " << "Bios Date                " << ": " << sys.get_bios_date();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "~ Motherboard Model        : " << sys.get_motherboard_model();
+            ss << "~ " << "Motherboard Model        " << ": " << sys.get_motherboard_model();
             lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "~ Motherboard Manufacturer : " << sys.get_motherboard_manufacturer();
+            ss << "~ " << "Motherboard Manufacturer " << ": " << sys.get_motherboard_manufacturer();
             lp.push(ss.str());
         }
     }
