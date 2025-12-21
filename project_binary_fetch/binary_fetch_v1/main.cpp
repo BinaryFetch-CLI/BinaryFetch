@@ -423,7 +423,7 @@ int main() {
 
     // OS Info
     {
-        cout << endl;
+        lp.push("");
         std::ostringstream ss;
         ss << "#- " << "Operating System " << "-----------------------------------------------#";
         lp.push(ss.str());
@@ -634,7 +634,7 @@ int main() {
 
     // Display Info
     {
-        cout << endl;
+        lp.push("");
         //lp.push("#-Display----------------------------------------------------------#");
         auto monitors = display.get_all_displays();
         if (monitors.empty()) {
@@ -670,7 +670,7 @@ int main() {
 
     // BIOS & Motherboard Info
     {
-        cout << endl;
+        lp.push("");
         std::ostringstream ss;
         ss << "#- " << "BIOS & Motherboard Info " << "----------------------------------------#";
         lp.push(ss.str());
@@ -705,8 +705,7 @@ int main() {
 
     // User Info
     {
-        cout << endl;
-
+        lp.push("");
         std::ostringstream ss;
         ss << "#- " << "User Info " << "------------------------------------------------------#";
         lp.push(ss.str());
@@ -736,7 +735,7 @@ int main() {
 
     // Performance Info
     {
-        cout << endl;
+        lp.push("");
 
         std::ostringstream ss;
         ss << "#- " << "Performance Info " << "-----------------------------------------------#";
@@ -773,7 +772,7 @@ int main() {
 
     // Audio & Power
     {
-        cout << endl;
+        lp.push("");
         ExtraInfo audio;
 
        
