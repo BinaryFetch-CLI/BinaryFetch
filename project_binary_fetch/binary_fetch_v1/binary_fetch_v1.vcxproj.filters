@@ -118,6 +118,7 @@
     <Text Include="Art_Collections.txt">
       <Filter>Resources</Filter>
     </Text>
+    <Text Include="text infos\developement_note.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version_info.rc">
