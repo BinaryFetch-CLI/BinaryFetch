@@ -90,7 +90,7 @@ const std::string reset = "\033[0m";
 // This ensures that after printing colored text, subsequent output
 // returns to the terminal's default style.
 // ---------------------------------------------------------------------------
-    const std::string reset = "\033[0m";
+    
 
     const std::string red = "\033[31m";
     const std::string green = "\033[32m";
@@ -167,21 +167,23 @@ const std::string reset = "\033[0m";
     // Minimal OS
     {
         std::ostringstream ss;
-        ss << "[OS]  -> " << c_os.getOSName()
-            << c_os.getOSBuild()
-            << " (" << c_os.getArchitecture() << ")"
-            << " (uptime: " << c_os.getUptime() << ")";
+        ss << red << "[OS]" << reset << "  -> "
+            << green << c_os.getOSName() << reset
+            << yellow << c_os.getOSBuild() << reset
+            << " (" << cyan << c_os.getArchitecture() << reset << ")"
+            << " (uptime: " << magenta << c_os.getUptime() << reset << ")";
         lp.push(ss.str());
     }
 
     // Minimal CPU
     {
         std::ostringstream ss;
-        ss << "[CPU] -> " << c_cpu.getCPUName() << " ("
-            << c_cpu.getCPUCores() << "C/"
-            << c_cpu.getCPUThreads() << "T)"
+        ss << red << "[CPU]" << reset << " -> "
+            << green << c_cpu.getCPUName() << reset
+            << " (" << yellow << c_cpu.getCPUCores() << "C/"
+            << c_cpu.getCPUThreads() << "T" << reset << ")"
             << std::fixed << std::setprecision(2)
-            << " @ " << c_cpu.getClockSpeed() << " GHz ";
+            << " @ " << cyan << c_cpu.getClockSpeed() << " GHz" << reset;
         lp.push(ss.str());
     }
 
@@ -190,14 +192,15 @@ const std::string reset = "\033[0m";
         auto screens = c_screen.get_screens();
         int idx = 1;
         if (screens.empty()) {
-            lp.push("[Display] -> No displays detected");
+            lp.push(red + "[Display]" + reset + " -> No displays detected");
         }
         else {
             for (const auto& s : screens) {
                 std::ostringstream ss;
-                ss << "[Display " << idx++ << "] -> "
-                    << s.brand_name << " (" << s.resolution << ") @"
-                    << s.refresh_rate << "Hz";
+                ss << red << "[Display " << idx++ << "]" << reset << " -> "
+                    << green << s.brand_name << reset
+                    << " (" << yellow << s.resolution << reset << ") @"
+                    << cyan << s.refresh_rate << "Hz" << reset;
                 lp.push(ss.str());
             }
         }
@@ -206,104 +209,114 @@ const std::string reset = "\033[0m";
     // Memory minimal
     {
         std::ostringstream ss;
-        ss << "[Memory] -> " << "(total: " << c_memory.get_total_memory() << " GB)"
-            << " (free: " << c_memory.get_free_memory() << " GB)"
-            << " ( " << c_memory.get_used_memory_percent() << "% ) ";
+        ss << red << "[Memory]" << reset << " -> "
+            << "(total: " << green << c_memory.get_total_memory() << " GB" << reset << ")"
+            << " (free: " << yellow << c_memory.get_free_memory() << " GB" << reset << ")"
+            << " (" << magenta << c_memory.get_used_memory_percent() << "%" << reset << ")";
         lp.push(ss.str());
     }
 
     // Audio
     {
         std::ostringstream ss1, ss2;
-        ss1 << "[Audio Input] -> " << c_audio.active_audio_input() << c_audio.active_audio_input_status();
-        ss2 << "[Audio Output] -> " << c_audio.active_audio_output() << c_audio.active_audio_output_status();
+        ss1 << red << "[Audio Input]" << reset << " -> "
+            << green << c_audio.active_audio_input() << reset
+            << yellow << c_audio.active_audio_input_status() << reset;
+        ss2 << red << "[Audio Output]" << reset << " -> "
+            << green << c_audio.active_audio_output() << reset
+            << yellow << c_audio.active_audio_output_status() << reset;
         lp.push(ss1.str());
         lp.push(ss2.str());
     }
 
-    // BIOS & Motherboard (compact) - safe concatenation via ostringstream
+    // BIOS & Motherboard (compact)
     {
         std::ostringstream ss1;
-        ss1 << "[BIOS] -> " << c_system.getBIOSInfo();
+        ss1 << red << "[BIOS]" << reset << " -> " << green << c_system.getBIOSInfo() << reset;
         lp.push(ss1.str());
         std::ostringstream ss2;
-        ss2 << "[Motherboard] -> " << c_system.getMotherboardInfo();
+        ss2 << red << "[Motherboard]" << reset << " -> " << green << c_system.getMotherboardInfo() << reset;
         lp.push(ss2.str());
     }
 
     // GPU minimal
     {
         std::ostringstream ss;
-        ss << "[GPU] -> " << c_gpu.getGPUName()
-            << " (" << c_gpu.getGPUUsagePercent() << "%)"
-            << " (" << c_gpu.getVRAMGB() << " GB)"
-            << " (@" << c_gpu.getGPUFrequency() << ") ";
+        ss << red << "[GPU]" << reset << " -> " << green << c_gpu.getGPUName() << reset
+            << " (" << yellow << c_gpu.getGPUUsagePercent() << "%" << reset << ")"
+            << " (" << cyan << c_gpu.getVRAMGB() << " GB" << reset << ")"
+            << " (@" << magenta << c_gpu.getGPUFrequency() << reset << ")";
         lp.push(ss.str());
     }
 
     // Minimal Performance
     {
         std::ostringstream ss;
-        ss << "[Performance] -> "
-            << "(CPU: " << c_perf.getCPUUsage() << "%) "
-            << "(GPU: " << c_perf.getGPUUsage() << "%) "
-            << "(RAM: " << c_perf.getRAMUsage() << "%) "
-            << "(Disk: " << c_perf.getDiskUsage() << "%) ";
+        ss << red << "[Performance]" << reset << " -> "
+            << "(CPU: " << green << c_perf.getCPUUsage() << "%" << reset << ") "
+            << "(GPU: " << yellow << c_perf.getGPUUsage() << "%" << reset << ") "
+            << "(RAM: " << cyan << c_perf.getRAMUsage() << "%" << reset << ") "
+            << "(Disk: " << magenta << c_perf.getDiskUsage() << "%" << reset << ")";
         lp.push(ss.str());
     }
 
     // User
     {
         std::ostringstream ss;
-        ss << "[User] -> @" << c_user.getUsername()
-            << " -> "<<"(Domain: " << c_user.getDomain() << ")"
-            << " -> " << "(Type: " << c_user.isAdmin() << ")";
+        ss << red << "[User]" << reset << " -> @" << green << c_user.getUsername() << reset
+            << " -> (Domain: " << yellow << c_user.getDomain() << reset << ")"
+            << " -> (Type: " << cyan << c_user.isAdmin() << reset << ")";
         lp.push(ss.str());
     }
 
     //------------------------------------------------------------------------------------
-    /* temporary minimal network's ip hiding due to privacy concerns
-    // Network minimal
+    // Temporary minimal network's IP hiding due to privacy concerns
+    /*
+    Network minimal (commented)
     {
         std::ostringstream ss;
-        ss << "[network] -> " << "(Name: " << c_net.get_network_name()
-            << ")" << " (Type: " << c_net.get_network_type()
-            << ")" << " (ip: " << c_net.get_network_ip() << ") ";
+        ss << red << "[network]" << reset << " -> "
+           << "(Name: " << green << c_net.get_network_name() << reset << ") "
+           << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
+           << "(ip: " << magenta << c_net.get_network_ip() << reset << ")";
         lp.push(ss.str());
     }
-    
     */
 
-	// Network minimal (with dummy IP for privacy)
+    // Network minimal (with dummy IP for privacy)
     {
         std::ostringstream ss;
-        ss << "[network] -> " << "(Name: " << "Interblink"
-            << ")" << " (Type: " << c_net.get_network_type()
-            << ")" << " (ip: " << "123.23.423.1" << ") ";
+        ss << red << "[network]" << reset << " -> "
+            << "(Name: " << green << "Interblink" << reset << ") "
+            << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
+            << "(ip: " << magenta << "123.23.423.1" << reset << ")";
         lp.push(ss.str());
     }
-    //------------------------------------------------------------------------------------
-    
 
     // Disk usage (compact)
     {
         auto disks = disk.getAllDiskUsage();
         std::ostringstream ss;
-        ss << "[Disk] -> ";
+        ss << cyan << "[Disk]" << reset << " -> ";
         for (const auto& d : disks) {
-            ss << "(" << d.first[0] << ": "
-                << std::fixed << std::setprecision(1)
-                << d.second << "%) ";
+            ss << white << "(" << d.first[0] << ": " << reset
+                << green << std::fixed << std::setprecision(1) << d.second << "%" << reset << ") ";
         }
         lp.push(ss.str());
 
-        // capacities
+        // Disk capacities
         auto caps = disk.getDiskCapacity();
         std::ostringstream sc;
-        sc << "[Disk Cap] -> ";
-        for (const auto& c : caps) sc << "(" << c.first[0] << "-" << c.second << "GB)";
+        sc << cyan << "[Disk Cap]" << reset << " -> ";
+        for (const auto& c : caps) {
+            sc << white << "(" << c.first[0] << "-" << reset
+                << green << c.second << "GB" << reset << ")";
+        }
         lp.push(sc.str());
     }
+
+
+    //-------------------------------------end of compact section---------------------------------
 
     // Full detailed section (Memory Info)
     {
@@ -319,10 +332,11 @@ const std::string reset = "\033[0m";
 
 
             std::ostringstream ss;
-            ss << "(Total: " << ram.getTotal() << " GB) "
-                << "(Free: " << ram.getFree() << " GB) "
-                << "(Used: " << ram.getUsedPercentage() << "%)";
+            ss << "(Total: " << green << ram.getTotal() << " GB" << reset << ") "
+                << "(Free: " << cyan << ram.getFree() << " GB" << reset << ") "
+                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ")";
             lp.push(ss.str());
+
         }
 
         const auto& modules = ram.getModules();
@@ -336,15 +350,16 @@ const std::string reset = "\033[0m";
             capOut << std::setw(2) << std::setfill('0') << num << "GB";
 
             std::ostringstream ss;
-            ss << "Memory " << i << ": "
-                << "(Used: " << ram.getUsedPercentage() << "%) "
-                << capOut.str() << " "
-                << modules[i].type << " "
-                << modules[i].speed;
+            ss << magenta << "Memory " << i << reset << ": "
+                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ") "
+                << green << capOut.str() << reset << " "
+                << cyan << modules[i].type << reset << " "
+                << yellow << modules[i].speed << reset;
             lp.push(ss.str());
+
         }
     }
-    //-------------------------------------end of compact section---------------------------------
+   
 
 
 
@@ -394,13 +409,17 @@ const std::string reset = "\033[0m";
 
             // Build and push SUMMARY line immediately
             std::ostringstream ss;
-            ss << d.storage_type << " " << d.drive_letter
-                << " [ (Used) " << fmt_storage(d.used_space)
-                << " GiB /" << fmt_storage(d.total_space)
-                << " GiB  " << d.used_percentage
-                << " - " << d.file_system << " "
-                << (d.is_external ? "Ext ]" : "Int ]");
+            ss << yellow << d.storage_type << reset << " "
+                << cyan << d.drive_letter << reset
+                << " [ (Used) " << green << fmt_storage(d.used_space) << reset
+                << " GiB /" << green << fmt_storage(d.total_space) << reset
+                << " GiB  " << red << d.used_percentage << reset
+                << " - " << magenta << d.file_system << reset << " "
+                << (d.is_external ? blue : white)
+                << (d.is_external ? "Ext ]" : "Int ]")
+                << reset;
             lp.push(ss.str());
+
             });
 
         // Now print performance sections using captured data
