@@ -1,0 +1,225 @@
+{
+  "header": {
+    "enabled": true,
+    "colors": {
+      "prefix": "red",
+      "title": "green",
+      "filler": "red"
+    }
+  },
+  "compact_os": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "name": "green",
+      "build": "yellow",
+      "arch": "cyan",
+      "uptime": "magenta"
+    }
+  },
+  "compact_cpu": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "name": "green",
+      "cores_threads": "yellow",
+      "clock": "cyan"
+    }
+  },
+  "compact_display": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "brand": "green",
+      "resolution": "yellow",
+      "refresh": "cyan"
+    }
+  },
+  "compact_memory": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "total": "green",
+      "free": "yellow",
+      "percent": "magenta"
+    }
+  },
+  "compact_audio": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "device": "green",
+      "status": "yellow"
+    }
+  },
+  "compact_bios": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "value": "green"
+    }
+  },
+  "compact_motherboard": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "value": "green"
+    }
+  },
+  "compact_gpu": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "name": "green",
+      "usage": "yellow",
+      "vram": "cyan",
+      "frequency": "magenta"
+    }
+  },
+  "compact_performance": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "cpu": "green",
+      "gpu": "yellow",
+      "ram": "cyan",
+      "disk": "magenta"
+    }
+  },
+  "compact_user": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "username": "green",
+      "domain": "yellow",
+      "type": "cyan"
+    }
+  },
+  "compact_network": {
+    "enabled": true,
+    "colors": {
+      "label": "red",
+      "name": "green",
+      "type": "yellow",
+      "ip": "magenta"
+    }
+  },
+  "compact_disk": {
+    "enabled": true,
+    "colors": {
+      "label": "cyan",
+      "drive": "white",
+      "usage": "green"
+    }
+  },
+  "detailed_memory": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "total": "green",
+      "free": "cyan",
+      "used": "red",
+      "module_index": "magenta",
+      "capacity": "green",
+      "type": "cyan",
+      "speed": "yellow"
+    }
+  },
+  "detailed_storage": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "type": "yellow",
+      "drive": "cyan",
+      "used": "green",
+      "total": "green",
+      "percent": "red",
+      "filesystem": "magenta",
+      "external": "blue",
+      "internal": "white"
+    }
+  },
+  "detailed_network": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_os": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_cpu": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_gpu": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "gpu_index": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_display": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_bios": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_user": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_performance": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "label": "white",
+      "value": "white"
+    }
+  },
+  "detailed_audio": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "index": "white",
+      "device": "white",
+      "active": "green"
+    }
+  },
+  "power": {
+    "enabled": true,
+    "colors": {
+      "header": "white",
+      "wired": "white",
+      "battery": "white",
+      "charging": "green"
+    }
+  }
+}

@@ -42,19 +42,70 @@
 using namespace std;
 
 // ------------------ main (modified to stream output) ------------------
+/*
+Before you try to implement modifications inside the main() function:
+
+- main() is intended to act as an orchestrator/controller, not a logic container.
+- Avoid adding heavy logic, calculations, or system queries directly here.
+- All feature logic should live inside their respective modules/classes.
+- main() should only:
+    - initialize components
+    - control execution order
+    - format and stream output using LivePrinter (lp.push)
+
+Why this matters:
+- Keeps the codebase maintainable as the project scales
+- Prevents main.cpp from becoming unreadable and error-prone
+- Makes testing, refactoring, and debugging significantly easier
+
+If you feel the need to add complex logic here,
+it is a sign that the logic should be moved into a new module.
+*/
+
 
 int main() {
+    // ========== SIMPLIFIED ASCII ART LOADING ==========
+        // Just call loadFromFile() - it handles everything automatically!
+        // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
+        // - If missing, copies from Default_Ascii_Art.txt and creates it
+        // - User can modify their art anytime in AppData folder
 
-    // Initialize ASCII Art
     AsciiArt art;
-    if (!art.loadFromFile("AsciiArt.txt")) {
-        // fallback: a small placeholder art (keeps indentation)
-        std::ofstream tmp("AsciiArt.txt"); // optional: create a default file
-        tmp << "BinaryFetch\n";
-        tmp.close();
-        art.loadFromFile("AsciiArt.txt");
-        std::cout << "Note: ASCII art not loaded from file; using placeholder.\n";
+    if (!art.loadFromFile()) {
+        std::cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
+        // Program continues even if art fails to load
     }
+
+
+// ANSI color definitions---------------------------------------------------
+
+const std::string reset = "\033[0m";
+// -----------------------------
+// ANSI RESET CODE
+// -----------------------------
+// The 'reset' string holds the ANSI escape sequence to reset
+// all terminal text formatting, including colors, bold, underline, etc.
+// Usage:
+//     std::cout << "\033[31mRed Text" << reset << " Normal Text\n";
+// This ensures that after printing colored text, subsequent output
+// returns to the terminal's default style.
+// ---------------------------------------------------------------------------
+    
+
+    const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
+    const std::string yellow = "\033[33m";
+    const std::string blue = "\033[34m";
+    const std::string magenta = "\033[35m";
+    const std::string cyan = "\033[36m";
+    const std::string white = "\033[37m";
+    const std::string bright_red = "\033[91m";
+    const std::string bright_green = "\033[92m";
+    const std::string bright_yellow = "\033[93m";
+    const std::string bright_blue = "\033[94m";
+    const std::string bright_magenta = "\033[95m";
+    const std::string bright_cyan = "\033[96m";
+    const std::string bright_white = "\033[97m";
 
     // Create LivePrinter
     LivePrinter lp(art);
@@ -85,29 +136,54 @@ int main() {
     DiskInfo disk;
 
     // ---------------- Now stream info line-by-line ----------------
+    // please don't use "cout" directly - use lp.push() instead!
+    // "cout" could break the ascii art alignment.
+	// Each lp.push() call prints the next art line + info line.
+	// Don't use: cout << "some info" << endl;
+    // Instead use: (example)
+    // {
+    //    std::ostringstream ss;
+    //    ss << "~>> " << "BinaryFetch" << "_____________________________________________________";
+    //    lp.push(ss.str());
+    // }
 
     // Header
-    lp.push(""); // keep art line 0 + blank info (or you can push a title)
-    lp.push("_>> BinaryFetch____________________________________________________");
+    //lp.push(""); // keep art line similar as cout << endl; 
 
+
+    //comment the previous header of binaryfetch
+    //lp.push("~>> BinaryFetch_____________________________________________________");
+
+    //BinaryFetch Header-----------------------------------------------#
+    {
+        // Colored header
+        std::ostringstream ss;
+        ss << red << "~>> " << reset
+            << green << "BinaryFetch" << reset
+            << red << "_____________________________________________________" << reset;
+        lp.push(ss.str());
+    }
+    //---------------------beginning of compact section-----------------------
     // Minimal OS
     {
         std::ostringstream ss;
-        ss << "[OS]  -> " << c_os.getOSName()
-            << c_os.getOSBuild()
-            << " (" << c_os.getArchitecture() << ")"
-            << " (uptime: " << c_os.getUptime() << ")";
+        ss << red << "[OS]" << reset << "  -> "
+            << green << c_os.getOSName() << reset
+            << yellow << c_os.getOSBuild() << reset
+            << " (" << cyan << c_os.getArchitecture() << reset << ")"
+            << " (uptime: " << magenta << c_os.getUptime() << reset << ")";
         lp.push(ss.str());
     }
 
     // Minimal CPU
     {
         std::ostringstream ss;
-        ss << "[CPU] -> " << c_cpu.getCPUName() << " ("
-            << c_cpu.getCPUCores() << "C/"
-            << c_cpu.getCPUThreads() << "T)"
+        ss << red << "[CPU]" << reset << " -> "
+            << green << c_cpu.getCPUName() << reset
+            << " (" << yellow << c_cpu.getCPUCores() << "C/"
+            << c_cpu.getCPUThreads() << "T" << reset << ")"
             << std::fixed << std::setprecision(2)
-            << " @ " << c_cpu.getClockSpeed() << " GHz ";
+            << " @ " << cyan << c_cpu.getClockSpeed() << " GHz" << reset;
         lp.push(ss.str());
     }
 
@@ -116,14 +192,15 @@ int main() {
         auto screens = c_screen.get_screens();
         int idx = 1;
         if (screens.empty()) {
-            lp.push("[Display] -> No displays detected");
+            lp.push(red + "[Display]" + reset + " -> No displays detected");
         }
         else {
             for (const auto& s : screens) {
                 std::ostringstream ss;
-                ss << "[Display " << idx++ << "] -> "
-                    << s.brand_name << " (" << s.resolution << ") @"
-                    << s.refresh_rate << "Hz";
+                ss << red << "[Display " << idx++ << "]" << reset << " -> "
+                    << green << s.brand_name << reset
+                    << " (" << yellow << s.resolution << reset << ") @"
+                    << cyan << s.refresh_rate << "Hz" << reset;
                 lp.push(ss.str());
             }
         }
@@ -132,67 +209,87 @@ int main() {
     // Memory minimal
     {
         std::ostringstream ss;
-        ss << "[Memory] -> " << "(total: " << c_memory.get_total_memory() << " GB)"
-            << " (free: " << c_memory.get_free_memory() << " GB)"
-            << " ( " << c_memory.get_used_memory_percent() << "% ) ";
+        ss << red << "[Memory]" << reset << " -> "
+            << "(total: " << green << c_memory.get_total_memory() << " GB" << reset << ")"
+            << " (free: " << yellow << c_memory.get_free_memory() << " GB" << reset << ")"
+            << " (" << magenta << c_memory.get_used_memory_percent() << "%" << reset << ")";
         lp.push(ss.str());
     }
 
     // Audio
     {
         std::ostringstream ss1, ss2;
-        ss1 << "[Audio Input] -> " << c_audio.active_audio_input() << c_audio.active_audio_input_status();
-        ss2 << "[Audio Output] -> " << c_audio.active_audio_output() << c_audio.active_audio_output_status();
+        ss1 << red << "[Audio Input]" << reset << " -> "
+            << green << c_audio.active_audio_input() << reset
+            << yellow << c_audio.active_audio_input_status() << reset;
+        ss2 << red << "[Audio Output]" << reset << " -> "
+            << green << c_audio.active_audio_output() << reset
+            << yellow << c_audio.active_audio_output_status() << reset;
         lp.push(ss1.str());
         lp.push(ss2.str());
     }
 
-    // BIOS & Motherboard (compact) - safe concatenation via ostringstream
+    // BIOS & Motherboard (compact)
     {
         std::ostringstream ss1;
-        ss1 << "[BIOS] -> " << c_system.getBIOSInfo();
+        ss1 << red << "[BIOS]" << reset << " -> " << green << c_system.getBIOSInfo() << reset;
         lp.push(ss1.str());
         std::ostringstream ss2;
-        ss2 << "[Motherboard] -> " << c_system.getMotherboardInfo();
+        ss2 << red << "[Motherboard]" << reset << " -> " << green << c_system.getMotherboardInfo() << reset;
         lp.push(ss2.str());
     }
 
     // GPU minimal
     {
         std::ostringstream ss;
-        ss << "[GPU] -> " << c_gpu.getGPUName()
-            << " (" << c_gpu.getGPUUsagePercent() << "%)"
-            << " (" << c_gpu.getVRAMGB() << " GB)"
-            << " (@" << c_gpu.getGPUFrequency() << ") ";
+        ss << red << "[GPU]" << reset << " -> " << green << c_gpu.getGPUName() << reset
+            << " (" << yellow << c_gpu.getGPUUsagePercent() << "%" << reset << ")"
+            << " (" << cyan << c_gpu.getVRAMGB() << " GB" << reset << ")"
+            << " (@" << magenta << c_gpu.getGPUFrequency() << reset << ")";
         lp.push(ss.str());
     }
 
     // Minimal Performance
     {
         std::ostringstream ss;
-        ss << "[Performance] -> "
-            << "(CPU: " << c_perf.getCPUUsage() << "%) "
-            << "(GPU: " << c_perf.getGPUUsage() << "%) "
-            << "(RAM: " << c_perf.getRAMUsage() << "%) "
-            << "(Disk: " << c_perf.getDiskUsage() << "%) ";
+        ss << red << "[Performance]" << reset << " -> "
+            << "(CPU: " << green << c_perf.getCPUUsage() << "%" << reset << ") "
+            << "(GPU: " << yellow << c_perf.getGPUUsage() << "%" << reset << ") "
+            << "(RAM: " << cyan << c_perf.getRAMUsage() << "%" << reset << ") "
+            << "(Disk: " << magenta << c_perf.getDiskUsage() << "%" << reset << ")";
         lp.push(ss.str());
     }
 
     // User
     {
         std::ostringstream ss;
-        ss << "[User] -> @" << c_user.getUsername()
-            << " -> (Domain: " << c_user.getDomain() << ")"
-            << " -> (Type: " << c_user.isAdmin() << ")";
+        ss << red << "[User]" << reset << " -> @" << green << c_user.getUsername() << reset
+            << " -> (Domain: " << yellow << c_user.getDomain() << reset << ")"
+            << " -> (Type: " << cyan << c_user.isAdmin() << reset << ")";
         lp.push(ss.str());
     }
 
-    // Network minimal
+    //------------------------------------------------------------------------------------
+    // Temporary minimal network's IP hiding due to privacy concerns
+    /*
+    Network minimal (commented)
     {
         std::ostringstream ss;
-        ss << "[network] -> " << "(Name: " << c_net.get_network_name()
-            << ") (Type: " << c_net.get_network_type()
-            << ") (ip: " << c_net.get_network_ip() << ") ";
+        ss << red << "[network]" << reset << " -> "
+           << "(Name: " << green << c_net.get_network_name() << reset << ") "
+           << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
+           << "(ip: " << magenta << c_net.get_network_ip() << reset << ")";
+        lp.push(ss.str());
+    }
+    */
+
+    // Network minimal (with dummy IP for privacy)
+    {
+        std::ostringstream ss;
+        ss << red << "[network]" << reset << " -> "
+            << "(Name: " << green << "Interblink" << reset << ") "
+            << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
+            << "(ip: " << magenta << "123.23.423.1" << reset << ")";
         lp.push(ss.str());
     }
 
@@ -200,32 +297,46 @@ int main() {
     {
         auto disks = disk.getAllDiskUsage();
         std::ostringstream ss;
-        ss << "[Disk] -> ";
+        ss << cyan << "[Disk]" << reset << " -> ";
         for (const auto& d : disks) {
-            ss << "(" << d.first[0] << ": "
-                << std::fixed << std::setprecision(1)
-                << d.second << "%) ";
+            ss << white << "(" << d.first[0] << ": " << reset
+                << green << std::fixed << std::setprecision(1) << d.second << "%" << reset << ") ";
         }
         lp.push(ss.str());
 
-        // capacities
+        // Disk capacities
         auto caps = disk.getDiskCapacity();
         std::ostringstream sc;
-        sc << "[Disk Cap] -> ";
-        for (const auto& c : caps) sc << "(" << c.first[0] << "-" << c.second << "GB)";
+        sc << cyan << "[Disk Cap]" << reset << " -> ";
+        for (const auto& c : caps) {
+            sc << white << "(" << c.first[0] << "-" << reset
+                << green << c.second << "GB" << reset << ")";
+        }
         lp.push(sc.str());
     }
+
+
+    //-------------------------------------end of compact section---------------------------------
 
     // Full detailed section (Memory Info)
     {
         lp.push(""); // blank line
-        lp.push("---------------Memory Info--------------");
         {
+            {
+                std::ostringstream ss;
+                ss << "---------------" << "Memory Info" << "--------------";
+                lp.push(ss.str());
+
+            }
+            
+
+
             std::ostringstream ss;
-            ss << "(Total: " << ram.getTotal() << " GB) "
-                << "(Free: " << ram.getFree() << " GB) "
-                << "(Used: " << ram.getUsedPercentage() << "%)";
+            ss << "(Total: " << green << ram.getTotal() << " GB" << reset << ") "
+                << "(Free: " << cyan << ram.getFree() << " GB" << reset << ") "
+                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ")";
             lp.push(ss.str());
+
         }
 
         const auto& modules = ram.getModules();
@@ -239,19 +350,31 @@ int main() {
             capOut << std::setw(2) << std::setfill('0') << num << "GB";
 
             std::ostringstream ss;
-            ss << "Memory " << i << ": "
-                << "(Used: " << ram.getUsedPercentage() << "%) "
-                << capOut.str() << " "
-                << modules[i].type << " "
-                << modules[i].speed;
+            ss << magenta << "Memory " << i << reset << ": "
+                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ") "
+                << green << capOut.str() << reset << " "
+                << cyan << modules[i].type << reset << " "
+                << yellow << modules[i].speed << reset;
             lp.push(ss.str());
+
         }
     }
+   
+
+
+
+
+
 
     // Storage Info (detailed) - STREAMING VERSION
     {
         lp.push("");
-        lp.push("------------------------- STORAGE SUMMARY --------------------------");
+        {
+            std::ostringstream ss;
+            ss << "------------------------- " << "STORAGE SUMMARY" << " --------------------------";
+            lp.push(ss.str());
+        }
+        
 
         auto fmt_storage = [](const std::string& s) -> std::string {
             std::ostringstream oss;
@@ -286,19 +409,29 @@ int main() {
 
             // Build and push SUMMARY line immediately
             std::ostringstream ss;
-            ss << d.storage_type << " " << d.drive_letter
-                << " [ (Used) " << fmt_storage(d.used_space)
-                << " GiB / " << fmt_storage(d.total_space)
-                << " GiB " << d.used_percentage
-                << " - " << d.file_system << " "
-                << (d.is_external ? "Ext ]" : "Int ]");
+            ss << yellow << d.storage_type << reset << " "
+                << cyan << d.drive_letter << reset
+                << " [ (Used) " << green << fmt_storage(d.used_space) << reset
+                << " GiB /" << green << fmt_storage(d.total_space) << reset
+                << " GiB  " << red << d.used_percentage << reset
+                << " - " << magenta << d.file_system << reset << " "
+                << (d.is_external ? blue : white)
+                << (d.is_external ? "Ext ]" : "Int ]")
+                << reset;
             lp.push(ss.str());
+
             });
 
         // Now print performance sections using captured data
         if (!all_disks_captured.empty()) {
             lp.push("");
-            lp.push("-------------------- DISK PERFORMANCE & DETAILS --------------------");
+
+            {
+                std::ostringstream ss;
+                ss << "-------------------- " << "DISK PERFORMANCE & DETAILS" << " --------------------";
+                lp.push(ss.str());
+            }
+            
 
             for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
@@ -312,15 +445,20 @@ int main() {
             }
 
             lp.push("");
-            lp.push("----------------- DISK PERFORMANCE & DETAILS (Predicted) ---------------");
+            {
+                std::ostringstream ss;
+                ss << "---------------- " << "DISK PERFORMANCE & DETAILS (Predicted)" << " ------------";
+                lp.push(ss.str());
+            }
+            
 
             for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
-                ss << d.drive_letter << " [ Read: ("
+                ss << d.drive_letter << " [ Read: "
                     << fmt_speed(d.predicted_read_speed)
-                    << " MB/s) | Write: ("
+                    << " MB/s | Write: "
                     << fmt_speed(d.predicted_write_speed)
-                    << " MB/s) | " << d.serial_number
+                    << " MB/s | " << d.serial_number
                     << (d.is_external ? " Ext ]" : " Int ]");
                 lp.push(ss.str());
             }
@@ -328,224 +466,278 @@ int main() {
         else {
             lp.push("No drives detected.");
         }
-    }  
+    }
 
     // Network (Compact + Extra)
     {
-         
-        cout << endl;
-        lp.push("--- Network Info (Compact + Extra) ---");
+        
+        std::ostringstream ss;
+        ss << "#- " << "Network Info" << "----------------------------------------------------#";
+        lp.push(ss.str());
+
         {
             std::ostringstream ss;
-            ss << "Network Name: " << c_net.get_network_name(); lp.push(ss.str());
+            ss << "~ " << "Network Name             " << ": " << net.get_network_name();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Network Type: " << c_net.get_network_type(); lp.push(ss.str());
+            ss << "~ " << "Network Type             " << ": " << c_net.get_network_type();
+            lp.push(ss.str());
+        }
+
+        /* temporary hide public ip due to privacy concerns
+        {
+            std::ostringstream ss;
+            ss << "~ " << "IP                       " << ": " << net.get_public_ip();
+            lp.push(ss.str());
+        }
+        */
+        {   
+            // dummy public ip for testing and privacy
+            lp.push("~ IP                       : 12.23.34.5.345"); 
+        }
+        
+        {
+            std::ostringstream ss;
+            ss << "~ " << "Locale                   " << ": " << net.get_locale();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "IP (compact): " << c_net.get_network_ip(); lp.push(ss.str());
+            ss << "~ " << "Mac address              " << ": " << net.get_mac_address();
+            lp.push(ss.str());
         }
-
-
-
+        {
+            std::ostringstream ss;
+            ss << "~ " << "avg upload speed         " << ": " << net.get_network_upload_speed();
+            lp.push(ss.str());
+        }
+        {
+            std::ostringstream ss;
+            ss << "~ " << "avg download speed       " << ": " << net.get_network_download_speed();
+            lp.push(ss.str());
+        }
     }
 
-    // Audio & Power
-    {
-        cout << endl;
-        lp.push("--- Audio & Power Info ---");
-
-        // Use full audio (ExtraInfo) - it prints directly
-        ExtraInfo audio;
-
-        // Redirect cout to a stringstream temporarily
-        std::ostringstream oss;
-        std::streambuf* oldCout = std::cout.rdbuf(oss.rdbuf());
-
-        audio.get_audio_devices(); // prints to oss
-
-        // Restore cout
-        std::cout.rdbuf(oldCout);
-
-        // Push captured lines to LivePrinter
-        std::istringstream iss(oss.str());
-        std::string line;
-        while (std::getline(iss, line)) {
-            lp.push(line);
-        }
-
-        // Power info (ExtraInfo already prints directly in your class)
-        std::ostringstream ossPower;
-        oldCout = std::cout.rdbuf(ossPower.rdbuf());
-
-        audio.get_power_status();
-
-        std::cout.rdbuf(oldCout);
-
-        std::istringstream issPower(ossPower.str());
-        while (std::getline(issPower, line)) {
-            lp.push(line);
-        }
-    }
 
 
 
     // OS Info
     {
-        cout << endl;
-        lp.push("--- OS Info ---");
+        lp.push("");
+        std::ostringstream ss;
+        ss << "#- " << "Operating System " << "-----------------------------------------------#";
+        lp.push(ss.str());
+
         {
             std::ostringstream ss;
-            ss << "Name: " << os.GetOSName(); lp.push(ss.str());
+            ss << "~ " << "Name                     " << ": " << os.GetOSName();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Version: " << os.GetOSVersion(); lp.push(ss.str());
+            ss << "~ " << "Build                    " << ": " << os.GetOSVersion();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Architecture: " << os.GetOSArchitecture(); lp.push(ss.str());
+            ss << "~ " << "Architecture             " << ": " << os.GetOSArchitecture();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Kernel: " << os.get_os_kernel_info(); lp.push(ss.str());
+            ss << "~ " << "Kernel                   " << ": " << os.get_os_kernel_info();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Uptime: " << os.get_os_uptime(); lp.push(ss.str());
+            ss << "~ " << "Uptime                   " << ": " << os.get_os_uptime();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Install Date: " << os.get_os_install_date(); lp.push(ss.str());
+            ss << "~ " << "Install Date             " << ": " << os.get_os_install_date();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Serial: " << os.get_os_serial_number(); lp.push(ss.str());
+            ss << "~ " << "Serial                   " << ": " << os.get_os_serial_number();
+            lp.push(ss.str());
         }
     }
+
 
     // CPU Info
     {
         cout << endl;
-        lp.push("--- CPU Info ---");
+        std::ostringstream ss;
+        ss << "#- " << "CPU Info " << "-------------------------------------------------------#";
+        lp.push(ss.str());
+
         {
             std::ostringstream ss;
-            ss << "Brand: " << cpu.get_cpu_info(); lp.push(ss.str());
+            ss << "~ " << "Brand                    " << ": " << cpu.get_cpu_info();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Utilization: " << cpu.get_cpu_utilization() << "%"; lp.push(ss.str());
+            ss << "~ " << "Utilization              " << ": " << cpu.get_cpu_utilization() << "%";
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Speed: " << cpu.get_cpu_speed(); lp.push(ss.str());
+            ss << "~ " << "Speed                    " << ": " << cpu.get_cpu_speed();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Base Speed: " << cpu.get_cpu_base_speed(); lp.push(ss.str());
+            ss << "~ " << "Base Speed               " << ": " << cpu.get_cpu_base_speed();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Cores: " << cpu.get_cpu_cores(); lp.push(ss.str());
+            ss << "~ " << "Cores                    " << ": " << cpu.get_cpu_cores();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Logical Processors: " << cpu.get_cpu_logical_processors(); lp.push(ss.str());
+            ss << "~ " << "Logical Processors       " << ": " << cpu.get_cpu_logical_processors();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Sockets: " << cpu.get_cpu_sockets(); lp.push(ss.str());
+            ss << "~ " << "Sockets                  " << ": " << cpu.get_cpu_sockets();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Virtualization: " << cpu.get_cpu_virtualization(); lp.push(ss.str());
+            ss << "~ " << "Virtualization           " << ": " << cpu.get_cpu_virtualization();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L1 Cache: " << cpu.get_cpu_l1_cache(); lp.push(ss.str());
+            ss << "~ " << "L1 Cache                 " << ": " << cpu.get_cpu_l1_cache();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L2 Cache: " << cpu.get_cpu_l2_cache(); lp.push(ss.str());
+            ss << "~ " << "L2 Cache                 " << ": " << cpu.get_cpu_l2_cache();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "L3 Cache: " << cpu.get_cpu_l3_cache(); lp.push(ss.str());
+            ss << "~ " << "L3 Cache                 " << ": " << cpu.get_cpu_l3_cache();
+            lp.push(ss.str());
         }
     }
 
-    // GPU Info (detailed)
+
+    // GPU Info (detailed)-------------------------------------------------------------
     {
         cout << endl;
         auto all_gpu_info = obj_gpu.get_all_gpu_info();
         if (all_gpu_info.empty()) {
-            lp.push("--- GPU Info ---");
+
+            std::ostringstream ss;
+            ss << "#- " << "GPU Info " << "--------------------------------------------------------#";
+            lp.push(ss.str());
+
             lp.push("No GPU detected.");
         }
         else {
-            lp.push("--- GPU Info ---");
+            std::ostringstream ss;
+            ss << "#- " << "GPU Info " << "-------------------------------------------------------#";
+            lp.push(ss.str());
             for (size_t i = 0; i < all_gpu_info.size(); ++i) {
                 auto& g = all_gpu_info[i];
+
+                // GPU index line (dynamic length handled to meet 27-char rule)
+                {
+                    std::ostringstream label;
+                    if (i == 0)
+                    {
+                        label << "GPU " << (i + 1);
+                    }
+                    else {
+                        label << "#-" << "GPU " << (i + 1) << "------------------------------------------------------------#";
+                    }
+                    
+                    std::string lbl = label.str();
+                    if (lbl.length() < 27) lbl += std::string(27 - lbl.length(), ' ');
+                    std::ostringstream ss;
+                    ss << lbl ;
+                    lp.push(ss.str());
+                }
+
                 {
                     std::ostringstream ss;
-                    ss << "GPU " << (i + 1) << ":"; lp.push(ss.str());
+                    ss << "|-> " << "Name                   " << ": " << g.gpu_name;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Name: " << g.gpu_name; lp.push(ss.str());
+                    ss << "|-> " << "Memory                 " << ": " << g.gpu_memory;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Memory: " << g.gpu_memory; lp.push(ss.str());
+                    ss << "|-> " << "Usage                  " << ": " << g.gpu_usage << "%";
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Usage: " << g.gpu_usage << "%"; lp.push(ss.str());
+                    ss << "|-> " << "Vendor                 " << ": " << g.gpu_vendor;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Vendor: " << g.gpu_vendor; lp.push(ss.str());
+                    ss << "|-> " << "Driver Version         " << ": " << g.gpu_driver_version;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Driver Version: " << g.gpu_driver_version; lp.push(ss.str());
+                    ss << "|-> " << "Temperature            " << ": " << g.gpu_temperature << " C";
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Temperature: " << g.gpu_temperature << " C"; lp.push(ss.str());
-                }
-                {
-                    std::ostringstream ss;
-                    ss << "  Core Count: " << g.gpu_core_count; lp.push(ss.str());
+                    ss << "#-> " << "Core Count             " << ": " << g.gpu_core_count;
+                    lp.push(ss.str());
                 }
             }
 
             auto primary = detailed_gpu_info.primary_gpu_info();
             {
+                
                 std::ostringstream ss;
-                ss << "Primary GPU Details:"; lp.push(ss.str());
+                ss << "#- " << "Primary GPU Details" << "---------------------------------------------#";
+                lp.push(ss.str());
+                
             }
             {
                 std::ostringstream ss;
-                ss << "  Name: " << primary.name; lp.push(ss.str());
+                ss << "|-> " << "Name                   " << ": " << primary.name;
+                lp.push(ss.str());
             }
             {
                 std::ostringstream ss;
-                ss << "  VRAM: " << primary.vram_gb << " GiB"; lp.push(ss.str());
+                ss << "|-> " << "VRAM                   " << ": " << primary.vram_gb << " GiB";
+                lp.push(ss.str());
             }
             {
                 std::ostringstream ss;
-                ss << "  Frequency: " << primary.frequency_ghz << " GHz"; lp.push(ss.str());
+                ss << "#-> " << "Frequency              " << ": " << primary.frequency_ghz << " GHz";
+                lp.push(ss.str());
             }
         }
     }
 
+
     // Display Info
     {
-        cout << endl;
-        lp.push("--- Display Info ---");
+        lp.push("");
+        //lp.push("#-Display----------------------------------------------------------#");
         auto monitors = display.get_all_displays();
         if (monitors.empty()) {
             lp.push("No monitors detected.");
@@ -555,97 +747,200 @@ int main() {
                 auto& m = monitors[i];
                 {
                     std::ostringstream ss;
-                    ss << "Monitor " << (i + 1) << ":"; lp.push(ss.str());
+                    ss << "#-Monitor " << (i + 1) << "--------------------------------------------------------#";
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Brand: " << m.brand_name; lp.push(ss.str());
+                    ss << "~ " << "Brand                    " << ": " << m.brand_name;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Resolution: " << m.resolution; lp.push(ss.str());
+                    ss << "~ " << "Resolution               " << ": " << m.resolution;
+                    lp.push(ss.str());
                 }
                 {
                     std::ostringstream ss;
-                    ss << "  Refresh Rate: " << m.refresh_rate << " Hz"; lp.push(ss.str());
+                    ss << "~ " << "Refresh Rate             " << ": " << m.refresh_rate << " Hz";
+                    lp.push(ss.str());
                 }
             }
         }
     }
 
+
     // BIOS & Motherboard Info
     {
-        cout << endl;
-        lp.push("--- BIOS & Motherboard Info ---");
+        lp.push("");
+        std::ostringstream ss;
+        ss << "#- " << "BIOS & Motherboard Info " << "----------------------------------------#";
+        lp.push(ss.str());
+
         {
             std::ostringstream ss;
-            ss << "Bios Vendor: " << sys.get_bios_vendor(); lp.push(ss.str());
+            ss << "~ " << "Bios Vendor              " << ": " << sys.get_bios_vendor();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Bios Version: " << sys.get_bios_version(); lp.push(ss.str());
+            ss << "~ " << "Bios Version             " << ": " << sys.get_bios_version();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Bios Date: " << sys.get_bios_date(); lp.push(ss.str());
+            ss << "~ " << "Bios Date                " << ": " << sys.get_bios_date();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Motherboard Model: " << sys.get_motherboard_model(); lp.push(ss.str());
+            ss << "~ " << "Motherboard Model        " << ": " << sys.get_motherboard_model();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Motherboard Manufacturer: " << sys.get_motherboard_manufacturer(); lp.push(ss.str());
+            ss << "~ " << "Motherboard Manufacturer " << ": " << sys.get_motherboard_manufacturer();
+            lp.push(ss.str());
         }
     }
+
 
     // User Info
     {
-        cout << endl;
-        lp.push("--- User Info ---");
+        lp.push("");
+        std::ostringstream ss;
+        ss << "#- " << "User Info " << "------------------------------------------------------#";
+        lp.push(ss.str());
+
         {
             std::ostringstream ss;
-            ss << "Username: " << user.get_username(); lp.push(ss.str());
+            ss << "~ "<<" Username                 " << ": " << user.get_username();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Computer Name: " << user.get_computer_name(); lp.push(ss.str());
+            ss << "~ " << "Computer Name            " << ": " << user.get_computer_name();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Domain: " << user.get_domain_name(); lp.push(ss.str());
+            ss << "~ " << "Domain                   " << ": " << user.get_domain_name();
+            lp.push(ss.str());
         }
         {
-            std::ostringstream ss;
-            ss << "Groups: " << user.get_user_groups(); lp.push(ss.str());
+           //std::ostringstream ss;
+           // ss << "Groups                     "<<": " << user.get_user_groups();
+           // lp.push(ss.str());
         }
     }
 
+
     // Performance Info
     {
-        cout << endl;
-        lp.push("--- Performance Info ---");
+        lp.push("");
+
+        std::ostringstream ss;
+        ss << "#- " << "Performance Info " << "-----------------------------------------------#";
+        lp.push(ss.str());
+
+
         {
             std::ostringstream ss;
-            ss << "System Uptime: " << perf.get_system_uptime(); lp.push(ss.str());
+            ss << "~ " << "System Uptime            " << ": " << perf.get_system_uptime();
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "CPU Usage: " << perf.get_cpu_usage_percent() << "%"; lp.push(ss.str());
+            ss << "~ " << "CPU Usage                " << ": " << perf.get_cpu_usage_percent() << "%";
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "RAM Usage: " << perf.get_ram_usage_percent() << "%"; lp.push(ss.str());
+            ss << "~ " << "RAM Usage                " << ": " << perf.get_ram_usage_percent() << "%";
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "Disk Usage: " << perf.get_disk_usage_percent() << "%"; lp.push(ss.str());
+            ss << "~ " << "Disk Usage               " << ": " << perf.get_disk_usage_percent() << "%";
+            lp.push(ss.str());
         }
         {
             std::ostringstream ss;
-            ss << "GPU Usage: " << perf.get_gpu_usage_percent() << "%"; lp.push(ss.str());
+            ss << "~ " << "GPU Usage                " << ": " << perf.get_gpu_usage_percent() << "%";
+            lp.push(ss.str());
         }
     }
+
+
+    // Audio & Power
+    {
+        lp.push("");
+        ExtraInfo audio;
+
+       
+
+        // Get and display OUTPUT devices
+        vector<AudioDevice> outputDevices = audio.get_output_devices();
+        
+        std::ostringstream ss;
+        ss << "#- " << "Audio Output " << "---------------------------------------------------#";
+        lp.push(ss.str());
+
+        int audio_output_device_count = 0;
+        for (const auto& device : outputDevices) {
+            audio_output_device_count++;
+            ostringstream oss;
+            oss << "~ " << audio_output_device_count   << " " << device.name;
+            if (device.isActive) {
+                // You can add color codes here if LivePrinter supports it
+                oss << " (active)";
+            }
+            lp.push(oss.str());
+        }
+
+        // Get and display INPUT devices
+        vector<AudioDevice> inputDevices = audio.get_input_devices();
+        lp.push("#-Audio Input -----------------------------------------------------#");
+        int audio_input_device_count = 0;
+        for (const auto& device : inputDevices) {
+            audio_input_device_count++;
+            ostringstream oss;
+            oss << "~ "<< audio_input_device_count << " " << device.name;
+            if (device.isActive) {
+                oss << " (active)";
+            }
+            lp.push(oss.str());
+        }
+
+        lp.push("");  // Empty line for spacing
+
+        // Get and display POWER status
+        PowerStatus power = audio.get_power_status();
+        ostringstream ossPower;
+        {
+            std::ostringstream ss;
+            ss << "#- " << "Power  " << "---------------------------------------------------------#";
+            lp.push(ss.str()); 
+        }
+
+
+        if (!power.hasBattery) {
+            ossPower << "[Wired connection]";
+        }
+        else {
+            ossPower << "Battery powered (" << power.batteryPercent << "%)";
+            if (power.isCharging) {
+                ossPower << " (Charging)";
+            }
+            else {
+                ossPower << " (Not Charging)";
+            }
+        }
+        lp.push(ossPower.str());
+
+        
+    }
+
 
     // ---------------- End of info lines ----------------
 
@@ -654,7 +949,7 @@ int main() {
 
     std::cout << std::endl;
     return 0;
-}
+} 
 
 
 /*  main.cpp documentation:

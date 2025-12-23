@@ -100,6 +100,7 @@
     <ClInclude Include="AsciiArtControlEngine.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="nolhmann\json.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DefaultAsciiArt.txt">
@@ -233,5 +234,8 @@
     <None Include="text infos\locations.md" />
     <None Include="text infos\BinaryFetch Community.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
+    <None Include="nolhmann\BinaryFetch_config.json">
+      <Filter>Config/</Filter>
+    </None>
   </ItemGroup>
 </Project>

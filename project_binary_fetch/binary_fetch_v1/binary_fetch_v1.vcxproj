@@ -39,6 +39,7 @@
     <ClInclude Include="json.hpp" />
     <ClInclude Include="MemoryInfo.h" />
     <ClInclude Include="NetworkInfo.h" />
+    <ClInclude Include="nolhmann\json.hpp" />
     <ClInclude Include="OSInfo.h" />
     <ClInclude Include="PerformanceInfo.h" />
     <ClInclude Include="personalization_info.h" />
@@ -102,6 +103,7 @@
   <ItemGroup>
     <None Include="config.json" />
     <None Include="Documentation\BinaryFetch documentation.md" />
+    <None Include="nolhmann\BinaryFetch_config.json" />
     <None Include="text infos\BinaryFetch Community.md" />
     <None Include="text infos\Current_Status_of_BinaryFetch.txt" />
     <None Include="text infos\Engine_info.md" />

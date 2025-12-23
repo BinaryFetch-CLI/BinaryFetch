@@ -77,20 +77,20 @@ int main() {
     }
 
 
-// ANSI color definitions---------------------------------------------------
+    // ANSI color definitions---------------------------------------------------
 
-const std::string reset = "\033[0m";
-// -----------------------------
-// ANSI RESET CODE
-// -----------------------------
-// The 'reset' string holds the ANSI escape sequence to reset
-// all terminal text formatting, including colors, bold, underline, etc.
-// Usage:
-//     std::cout << "\033[31mRed Text" << reset << " Normal Text\n";
-// This ensures that after printing colored text, subsequent output
-// returns to the terminal's default style.
-// ---------------------------------------------------------------------------
-    
+    const std::string reset = "\033[0m";
+    // -----------------------------
+    // ANSI RESET CODE
+    // -----------------------------
+    // The 'reset' string holds the ANSI escape sequence to reset
+    // all terminal text formatting, including colors, bold, underline, etc.
+    // Usage:
+    //     std::cout << "\033[31mRed Text" << reset << " Normal Text\n";
+    // This ensures that after printing colored text, subsequent output
+    // returns to the terminal's default style.
+    // ---------------------------------------------------------------------------
+
 
     const std::string red = "\033[31m";
     const std::string green = "\033[32m";
@@ -138,8 +138,8 @@ const std::string reset = "\033[0m";
     // ---------------- Now stream info line-by-line ----------------
     // please don't use "cout" directly - use lp.push() instead!
     // "cout" could break the ascii art alignment.
-	// Each lp.push() call prints the next art line + info line.
-	// Don't use: cout << "some info" << endl;
+    // Each lp.push() call prints the next art line + info line.
+    // Don't use: cout << "some info" << endl;
     // Instead use: (example)
     // {
     //    std::ostringstream ss;
@@ -148,7 +148,7 @@ const std::string reset = "\033[0m";
     // }
 
     // Header
-    lp.push(""); // keep art line similar as cout << endl; 
+    //lp.push(""); // keep art line similar as cout << endl; 
 
 
     //comment the previous header of binaryfetch
@@ -164,26 +164,26 @@ const std::string reset = "\033[0m";
         lp.push(ss.str());
     }
     //---------------------beginning of compact section-----------------------
-    // Minimal OS
+// Minimal OS
     {
         std::ostringstream ss;
-        ss << red << "[OS]" << reset << "  -> "
-            << green << c_os.getOSName() << reset
+        ss << red << "[OS]" << reset << blue << "  -> " << reset
+            << green << c_os.getOSName() << reset << " "
             << yellow << c_os.getOSBuild() << reset
-            << " (" << cyan << c_os.getArchitecture() << reset << ")"
-            << " (uptime: " << magenta << c_os.getUptime() << reset << ")";
+            << green << " (" << reset << cyan << c_os.getArchitecture() << reset << green << ")" << reset
+            << green << " (" << reset << green << "uptime: " << reset << magenta << c_os.getUptime() << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
     // Minimal CPU
     {
         std::ostringstream ss;
-        ss << red << "[CPU]" << reset << " -> "
+        ss << red << "[CPU]" << reset << blue << " -> " << reset
             << green << c_cpu.getCPUName() << reset
-            << " (" << yellow << c_cpu.getCPUCores() << "C/"
-            << c_cpu.getCPUThreads() << "T" << reset << ")"
+            << green << " (" << reset << yellow << c_cpu.getCPUCores() << reset << green << "C" << reset << green << "/" << reset
+            << yellow << c_cpu.getCPUThreads() << reset << green << "T" << reset << green << ")" << reset
             << std::fixed << std::setprecision(2)
-            << " @ " << cyan << c_cpu.getClockSpeed() << " GHz" << reset;
+            << green << " @" << reset << cyan << " " << c_cpu.getClockSpeed() << " GHz" << reset;
         lp.push(ss.str());
     }
 
@@ -192,15 +192,15 @@ const std::string reset = "\033[0m";
         auto screens = c_screen.get_screens();
         int idx = 1;
         if (screens.empty()) {
-            lp.push(red + "[Display]" + reset + " -> No displays detected");
+            lp.push(red + "[Display]" + reset + blue + " -> " + reset + "No displays detected");
         }
         else {
             for (const auto& s : screens) {
                 std::ostringstream ss;
-                ss << red << "[Display " << idx++ << "]" << reset << " -> "
+                ss << red << "[Display " << idx++ << "]" << reset << blue << " -> " << reset
                     << green << s.brand_name << reset
-                    << " (" << yellow << s.resolution << reset << ") @"
-                    << cyan << s.refresh_rate << "Hz" << reset;
+                    << green << " (" << reset << yellow << s.resolution << reset << green << ") " << reset
+                    << green << "@" << reset << cyan << s.refresh_rate << "Hz" << reset;
                 lp.push(ss.str());
             }
         }
@@ -209,63 +209,55 @@ const std::string reset = "\033[0m";
     // Memory minimal
     {
         std::ostringstream ss;
-        ss << red << "[Memory]" << reset << " -> "
-            << "(total: " << green << c_memory.get_total_memory() << " GB" << reset << ")"
-            << " (free: " << yellow << c_memory.get_free_memory() << " GB" << reset << ")"
-            << " (" << magenta << c_memory.get_used_memory_percent() << "%" << reset << ")";
+        ss << red << "[Memory]" << reset << blue << " -> " << reset
+            << green << "(" << reset << green << "total: " << reset << green << c_memory.get_total_memory() << " GB" << reset << green << ")" << reset
+            << green << " (" << reset << green << "free: " << reset << yellow << c_memory.get_free_memory() << " GB" << reset << green << ")" << reset
+            << green << " (" << reset << magenta << c_memory.get_used_memory_percent() << "%" << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
     // Audio
     {
         std::ostringstream ss1, ss2;
-        ss1 << red << "[Audio Input]" << reset << " -> "
-            << green << c_audio.active_audio_input() << reset
-            << yellow << c_audio.active_audio_input_status() << reset;
-        ss2 << red << "[Audio Output]" << reset << " -> "
-            << green << c_audio.active_audio_output() << reset
-            << yellow << c_audio.active_audio_output_status() << reset;
+        ss1 << red << "[Audio Input]" << reset << blue << " -> " << reset
+            << green << c_audio.active_audio_input() << reset << " "
+            << green << "[" << reset << yellow << c_audio.active_audio_input_status() << reset << green << "]" << reset;
+        ss2 << red << "[Audio Output]" << reset << blue << " -> " << reset
+            << green << c_audio.active_audio_output() << reset << " "
+            << green << "[" << reset << yellow << c_audio.active_audio_output_status() << reset << green << "]" << reset;
         lp.push(ss1.str());
-        lp.push(ss2.str());
-    }
-
-    // BIOS & Motherboard (compact)
-    {
-        std::ostringstream ss1;
-        ss1 << red << "[BIOS]" << reset << " -> " << green << c_system.getBIOSInfo() << reset;
-        lp.push(ss1.str());
-        std::ostringstream ss2;
-        ss2 << red << "[Motherboard]" << reset << " -> " << green << c_system.getMotherboardInfo() << reset;
         lp.push(ss2.str());
     }
 
     // GPU minimal
     {
         std::ostringstream ss;
-        ss << red << "[GPU]" << reset << " -> " << green << c_gpu.getGPUName() << reset
-            << " (" << yellow << c_gpu.getGPUUsagePercent() << "%" << reset << ")"
-            << " (" << cyan << c_gpu.getVRAMGB() << " GB" << reset << ")"
-            << " (@" << magenta << c_gpu.getGPUFrequency() << reset << ")";
+        ss << red << "[GPU]" << reset << blue << " -> " << reset
+            << green << c_gpu.getGPUName() << reset
+            << green << " (" << reset << yellow << c_gpu.getGPUUsagePercent() << "%" << reset << green << ")" << reset
+            << green << " (" << reset << cyan << c_gpu.getVRAMGB() << " GB" << reset << green << ")" << reset
+            << green << " (" << reset << green << "@" << reset << magenta << c_gpu.getGPUFrequency() << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
     // Minimal Performance
     {
         std::ostringstream ss;
-        ss << red << "[Performance]" << reset << " -> "
-            << "(CPU: " << green << c_perf.getCPUUsage() << "%" << reset << ") "
-            << "(GPU: " << yellow << c_perf.getGPUUsage() << "%" << reset << ") "
-            << "(RAM: " << cyan << c_perf.getRAMUsage() << "%" << reset << ") "
-            << "(Disk: " << magenta << c_perf.getDiskUsage() << "%" << reset << ")";
+        ss << red << "[Performance]" << reset << blue << " -> " << reset
+            << green << "(" << reset << green << "CPU: " << reset << green << c_perf.getCPUUsage() << "%" << reset << green << ") " << reset
+            << green << "(" << reset << green << "GPU: " << reset << yellow << c_perf.getGPUUsage() << "%" << reset << green << ") " << reset
+            << green << "(" << reset << green << "RAM: " << reset << cyan << c_perf.getRAMUsage() << "%" << reset << green << ") " << reset
+            << green << "(" << reset << green << "Disk: " << reset << magenta << c_perf.getDiskUsage() << "%" << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
     // User
     {
         std::ostringstream ss;
-        ss << red << "[User]" << reset << " -> @" << green << c_user.getUsername() << reset
-            << " -> (Domain: " << yellow << c_user.getDomain() << reset << ")"
-            << " -> (Type: " << cyan << c_user.isAdmin() << reset << ")";
+        ss << red << "[User]" << reset << blue << " -> " << reset
+            << green << "@" << c_user.getUsername() << reset
+            << blue << " -> " << reset << green << "(" << reset << green << "Domain: " << reset << yellow << c_user.getDomain() << reset << green << ")" << reset
+            << blue << " -> " << reset << green << "(" << reset << green << "Type: " << reset << cyan << c_user.isAdmin()   << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
@@ -275,10 +267,10 @@ const std::string reset = "\033[0m";
     Network minimal (commented)
     {
         std::ostringstream ss;
-        ss << red << "[network]" << reset << " -> "
-           << "(Name: " << green << c_net.get_network_name() << reset << ") "
-           << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
-           << "(ip: " << magenta << c_net.get_network_ip() << reset << ")";
+        ss << red << "[network]" << reset << blue << " -> " << reset
+           << green << "(" << reset << green << "Name: " << reset << green << c_net.get_network_name() << reset << green << ") " << reset
+           << green << "(" << reset << green << "Type: " << reset << yellow << c_net.get_network_type() << reset << green << ") " << reset
+           << green << "(" << reset << green << "ip: " << reset << magenta << c_net.get_network_ip() << reset << green << ")" << reset;
         lp.push(ss.str());
     }
     */
@@ -286,10 +278,10 @@ const std::string reset = "\033[0m";
     // Network minimal (with dummy IP for privacy)
     {
         std::ostringstream ss;
-        ss << red << "[network]" << reset << " -> "
-            << "(Name: " << green << "Interblink" << reset << ") "
-            << "(Type: " << yellow << c_net.get_network_type() << reset << ") "
-            << "(ip: " << magenta << "123.23.423.1" << reset << ")";
+        ss << red << "[network]" << reset << blue << " -> " << reset
+            << green << "(" << reset << green << "Name: " << reset << green << "Interblink" << reset << green << ") " << reset
+            << green << "(" << reset << green << "Type: " << reset << yellow << c_net.get_network_type() << reset << green << ") " << reset
+            << green << "(" << reset << green << "ip: " << reset << magenta << "123.23.423.1" << reset << green << ")" << reset;
         lp.push(ss.str());
     }
 
@@ -297,24 +289,23 @@ const std::string reset = "\033[0m";
     {
         auto disks = disk.getAllDiskUsage();
         std::ostringstream ss;
-        ss << cyan << "[Disk]" << reset << " -> ";
+        ss << red << "[Disk]" << reset << blue << " -> " << reset;
         for (const auto& d : disks) {
-            ss << white << "(" << d.first[0] << ": " << reset
-                << green << std::fixed << std::setprecision(1) << d.second << "%" << reset << ") ";
+            ss << green << "(" << reset << green << d.first[0] << ":" << reset
+                << " " << yellow << std::fixed << std::setprecision(1) << d.second << "%" << reset << green << ") " << reset;
         }
         lp.push(ss.str());
 
         // Disk capacities
         auto caps = disk.getDiskCapacity();
         std::ostringstream sc;
-        sc << cyan << "[Disk Cap]" << reset << " -> ";
+        sc << red << "[Disk Cap]" << reset << blue << " -> " << reset;
         for (const auto& c : caps) {
-            sc << white << "(" << c.first[0] << "-" << reset
-                << green << c.second << "GB" << reset << ")";
+            sc << green << "(" << reset << green << c.first[0] << reset << green << "-" << reset
+                << yellow << c.second << "GB" << reset << green << ") " << reset;
         }
         lp.push(sc.str());
     }
-
 
     //-------------------------------------end of compact section---------------------------------
 
@@ -328,14 +319,18 @@ const std::string reset = "\033[0m";
                 lp.push(ss.str());
 
             }
-            
 
 
-            std::ostringstream ss;
-            ss << "(Total: " << green << ram.getTotal() << " GB" << reset << ") "
-                << "(Free: " << cyan << ram.getFree() << " GB" << reset << ") "
-                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ")";
-            lp.push(ss.str());
+
+            // RAM minimal
+            {
+                std::ostringstream ss;
+                ss << red << "[RAM]" << reset << blue << " -> " << reset
+                    << green << "(" << reset << green << "Total: " << reset << green << ram.getTotal() << " GB" << reset << green << ") " << reset
+                    << green << "(" << reset << green << "Free: " << reset << cyan << ram.getFree() << " GB" << reset << green << ") " << reset
+                    << green << "(" << reset << green << "Used: " << reset << red << ram.getUsedPercentage() << "%" << reset << green << ")" << reset;
+                lp.push(ss.str());
+            }
 
         }
 
@@ -350,16 +345,16 @@ const std::string reset = "\033[0m";
             capOut << std::setw(2) << std::setfill('0') << num << "GB";
 
             std::ostringstream ss;
-            ss << magenta << "Memory " << i << reset << ": "
-                << "(Used: " << red << ram.getUsedPercentage() << "%" << reset << ") "
-                << green << capOut.str() << reset << " "
+            ss << red << "[Memory " << i << "]" << reset << blue << " -> " << reset
+                << green << "(" << reset << green << "Used: " << reset << red << ram.getUsedPercentage() << "%" << reset << green << ") " << reset
+                << green << "[" << reset << green << capOut.str() << reset << green << "]" << reset << " "
                 << cyan << modules[i].type << reset << " "
-                << yellow << modules[i].speed << reset;
+                << yellow << modules[i].speed << reset << green << "MHz" << reset;
             lp.push(ss.str());
 
         }
     }
-   
+
 
 
 
@@ -374,7 +369,7 @@ const std::string reset = "\033[0m";
             ss << "------------------------- " << "STORAGE SUMMARY" << " --------------------------";
             lp.push(ss.str());
         }
-        
+
 
         auto fmt_storage = [](const std::string& s) -> std::string {
             std::ostringstream oss;
@@ -431,7 +426,7 @@ const std::string reset = "\033[0m";
                 ss << "-------------------- " << "DISK PERFORMANCE & DETAILS" << " --------------------";
                 lp.push(ss.str());
             }
-            
+
 
             for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
@@ -450,7 +445,7 @@ const std::string reset = "\033[0m";
                 ss << "---------------- " << "DISK PERFORMANCE & DETAILS (Predicted)" << " ------------";
                 lp.push(ss.str());
             }
-            
+
 
             for (const auto& d : all_disks_captured) {
                 std::ostringstream ss;
@@ -470,7 +465,7 @@ const std::string reset = "\033[0m";
 
     // Network (Compact + Extra)
     {
-        
+
         std::ostringstream ss;
         ss << "#- " << "Network Info" << "----------------------------------------------------#";
         lp.push(ss.str());
@@ -493,11 +488,11 @@ const std::string reset = "\033[0m";
             lp.push(ss.str());
         }
         */
-        {   
+        {
             // dummy public ip for testing and privacy
-            lp.push("~ IP                       : 12.23.34.5.345"); 
+            lp.push("~ IP                       : 12.23.34.5.345");
         }
-        
+
         {
             std::ostringstream ss;
             ss << "~ " << "Locale                   " << ": " << net.get_locale();
@@ -662,11 +657,11 @@ const std::string reset = "\033[0m";
                     else {
                         label << "#-" << "GPU " << (i + 1) << "------------------------------------------------------------#";
                     }
-                    
+
                     std::string lbl = label.str();
                     if (lbl.length() < 27) lbl += std::string(27 - lbl.length(), ' ');
                     std::ostringstream ss;
-                    ss << lbl ;
+                    ss << lbl;
                     lp.push(ss.str());
                 }
 
@@ -709,11 +704,11 @@ const std::string reset = "\033[0m";
 
             auto primary = detailed_gpu_info.primary_gpu_info();
             {
-                
+
                 std::ostringstream ss;
                 ss << "#- " << "Primary GPU Details" << "---------------------------------------------#";
                 lp.push(ss.str());
-                
+
             }
             {
                 std::ostringstream ss;
@@ -814,7 +809,7 @@ const std::string reset = "\033[0m";
 
         {
             std::ostringstream ss;
-            ss << "~ "<<" Username                 " << ": " << user.get_username();
+            ss << "~ " << " Username                 " << ": " << user.get_username();
             lp.push(ss.str());
         }
         {
@@ -828,9 +823,9 @@ const std::string reset = "\033[0m";
             lp.push(ss.str());
         }
         {
-           //std::ostringstream ss;
-           // ss << "Groups                     "<<": " << user.get_user_groups();
-           // lp.push(ss.str());
+            //std::ostringstream ss;
+            // ss << "Groups                     "<<": " << user.get_user_groups();
+            // lp.push(ss.str());
         }
     }
 
@@ -877,11 +872,11 @@ const std::string reset = "\033[0m";
         lp.push("");
         ExtraInfo audio;
 
-       
+
 
         // Get and display OUTPUT devices
         vector<AudioDevice> outputDevices = audio.get_output_devices();
-        
+
         std::ostringstream ss;
         ss << "#- " << "Audio Output " << "---------------------------------------------------#";
         lp.push(ss.str());
@@ -890,7 +885,7 @@ const std::string reset = "\033[0m";
         for (const auto& device : outputDevices) {
             audio_output_device_count++;
             ostringstream oss;
-            oss << "~ " << audio_output_device_count   << " " << device.name;
+            oss << "~ " << audio_output_device_count << " " << device.name;
             if (device.isActive) {
                 // You can add color codes here if LivePrinter supports it
                 oss << " (active)";
@@ -905,7 +900,7 @@ const std::string reset = "\033[0m";
         for (const auto& device : inputDevices) {
             audio_input_device_count++;
             ostringstream oss;
-            oss << "~ "<< audio_input_device_count << " " << device.name;
+            oss << "~ " << audio_input_device_count << " " << device.name;
             if (device.isActive) {
                 oss << " (active)";
             }
@@ -920,7 +915,7 @@ const std::string reset = "\033[0m";
         {
             std::ostringstream ss;
             ss << "#- " << "Power  " << "---------------------------------------------------------#";
-            lp.push(ss.str()); 
+            lp.push(ss.str());
         }
 
 
@@ -938,7 +933,7 @@ const std::string reset = "\033[0m";
         }
         lp.push(ossPower.str());
 
-        
+
     }
 
 
@@ -949,7 +944,7 @@ const std::string reset = "\033[0m";
 
     std::cout << std::endl;
     return 0;
-} 
+}
 
 
 /*  main.cpp documentation:
