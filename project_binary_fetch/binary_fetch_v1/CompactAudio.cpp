@@ -39,7 +39,7 @@ std::string CompactAudio::active_audio_output() {
 }
 
 std::string CompactAudio::active_audio_output_status() {
-    return "(Active)"; // Currently only fetching default active device
+    return "Active"; // Currently only fetching default active device
 }
 
 std::string CompactAudio::active_audio_input() {
@@ -47,5 +47,5 @@ std::string CompactAudio::active_audio_input() {
 }
 
 std::string CompactAudio::active_audio_input_status() {
-    return "(Active)"; // Currently only fetching default active device
+    return "Active"; // Currently only fetching default active device
 }

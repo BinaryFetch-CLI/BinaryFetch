@@ -77,35 +77,7 @@ int main() {
     }
 
 
-    // ANSI color definitions---------------------------------------------------
 
-    const std::string reset = "\033[0m";
-    // -----------------------------
-    // ANSI RESET CODE
-    // -----------------------------
-    // The 'reset' string holds the ANSI escape sequence to reset
-    // all terminal text formatting, including colors, bold, underline, etc.
-    // Usage:
-    //     std::cout << "\033[31mRed Text" << reset << " Normal Text\n";
-    // This ensures that after printing colored text, subsequent output
-    // returns to the terminal's default style.
-    // ---------------------------------------------------------------------------
-
-
-    const std::string red = "\033[31m";
-    const std::string green = "\033[32m";
-    const std::string yellow = "\033[33m";
-    const std::string blue = "\033[34m";
-    const std::string magenta = "\033[35m";
-    const std::string cyan = "\033[36m";
-    const std::string white = "\033[37m";
-    const std::string bright_red = "\033[91m";
-    const std::string bright_green = "\033[92m";
-    const std::string bright_yellow = "\033[93m";
-    const std::string bright_blue = "\033[94m";
-    const std::string bright_magenta = "\033[95m";
-    const std::string bright_cyan = "\033[96m";
-    const std::string bright_white = "\033[97m";
 
     // Create LivePrinter
     LivePrinter lp(art);
@@ -154,11 +126,42 @@ int main() {
     //comment the previous header of binaryfetch
     //lp.push("~>> BinaryFetch_____________________________________________________");
 
+    // ANSI color definitions---------------------------------------------------
+
+    const std::string reset = "\033[0m";
+    // -----------------------------
+    // ANSI RESET CODE
+    // -----------------------------
+    // The 'reset' string holds the ANSI escape sequence to reset
+    // all terminal text formatting, including colors, bold, underline, etc.
+    // Usage:
+    //     std::cout << "\033[31mRed Text" << reset << " Normal Text\n";
+    // This ensures that after printing colored text, subsequent output
+    // returns to the terminal's default style.
+    // ---------------------------------------------------------------------------
+
+
+    const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
+    const std::string yellow = "\033[33m";
+    const std::string blue = "\033[34m";
+    const std::string magenta = "\033[35m";
+    const std::string cyan = "\033[36m";
+    const std::string white = "\033[37m";
+    const std::string bright_red = "\033[91m";
+    const std::string bright_green = "\033[92m";
+    const std::string bright_yellow = "\033[93m";
+    const std::string bright_blue = "\033[94m";
+    const std::string bright_magenta = "\033[95m";
+    const std::string bright_cyan = "\033[96m";
+    const std::string bright_white = "\033[97m";
+
+
     //BinaryFetch Header-----------------------------------------------#
     {
         // Colored header
         std::ostringstream ss;
-        ss << red << "~>> " << reset
+        ss << bright_red << "~>> " << reset
             << green << "BinaryFetch" << reset
             << red << "_____________________________________________________" << reset;
         lp.push(ss.str());
@@ -233,7 +236,7 @@ int main() {
     {
         std::ostringstream ss;
         ss << red << "[GPU]" << reset << blue << " -> " << reset
-            << green << c_gpu.getGPUName() << reset
+            << blue << c_gpu.getGPUName() << reset
             << red << " (" << reset << yellow << c_gpu.getGPUUsagePercent() << "%" << reset << red << ")" << reset
             << red << " (" << reset << cyan << c_gpu.getVRAMGB() << " GB" << reset << red << ")" << reset
             << red << " (" << reset << green << "@" << reset << magenta << c_gpu.getGPUFrequency() << reset << red << ")" << reset;
@@ -303,7 +306,7 @@ int main() {
         sc << red << "[Disk Cap]" << reset << blue << " -> " << reset;
         for (const auto& c : caps) {
             sc << red << "(" << reset << green << c.first[0] << reset << blue << "-" << reset
-                << yellow << c.second << "GB" << reset << red << ") " << reset;
+                << yellow << c.second << "GB" << reset << red << ")" << reset;
         }
         lp.push(sc.str());
     }
@@ -626,7 +629,7 @@ int main() {
 
     // CPU Info
     {
-        cout << endl;
+        lp.push("");
         {
             std::ostringstream ss;
             ss << blue << "#- " << reset << green << "CPU Info " << reset
@@ -705,7 +708,7 @@ int main() {
    
 // GPU Info (detailed)-------------------------------------------------------------
     {
-        cout << endl;
+        lp.push("");
         auto all_gpu_info = obj_gpu.get_all_gpu_info();
         if (all_gpu_info.empty()) {
             std::ostringstream ss;
