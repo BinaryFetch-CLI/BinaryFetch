@@ -249,20 +249,20 @@ int main() {
     }
 
     // Compact Audio
-    if (isEnabled("audio")) {
+    if (isEnabled("compact_audio")) {
         std::ostringstream ss1, ss2;
-        ss1 << getColor("audio", "bracket_color", "red") << "[Audio Input]" << r
-            << getColor("audio", "arrow_color", "blue") << " -> " << r
-            << getColor("audio", "device_color", "green") << c_audio.active_audio_input() << r << " "
-            << getColor("audio", "bracket_color", "red") << "[" << r
-            << getColor("audio", "status_color", "yellow") << c_audio.active_audio_input_status() << r
-            << getColor("audio", "bracket_color", "red") << "]" << r;
-        ss2 << getColor("audio", "bracket_color", "red") << "[Audio Output]" << r
-            << getColor("audio", "arrow_color", "blue") << " -> " << r
-            << getColor("audio", "device_color", "green") << c_audio.active_audio_output() << r << " "
-            << getColor("audio", "bracket_color", "red") << "[" << r
-            << getColor("audio", "status_color", "yellow") << c_audio.active_audio_output_status() << r
-            << getColor("audio", "bracket_color", "red") << "]" << r;
+        ss1 << getColor("compact_audio", "bracket_color", "red") << "[Audio Input]" << r
+            << getColor("compact_audio", "arrow_color", "blue") << " -> " << r
+            << getColor("compact_audio", "device_color", "green") << c_audio.active_audio_input() << r << " "
+            << getColor("compact_audio", "bracket_color", "red") << "[" << r
+            << getColor("compact_audio", "status_color", "yellow") << c_audio.active_audio_input_status() << r
+            << getColor("compact_audio", "bracket_color", "red") << "]" << r;
+        ss2 << getColor("compact_audio", "bracket_color", "red") << "[Audio Output]" << r
+            << getColor("compact_audio", "arrow_color", "blue") << " -> " << r
+            << getColor("compact_audio", "device_color", "green") << c_audio.active_audio_output() << r << " "
+            << getColor("compact_audio", "bracket_color", "red") << "[" << r
+            << getColor("compact_audio", "status_color", "yellow") << c_audio.active_audio_output_status() << r
+            << getColor("compact_audio", "bracket_color", "red") << "]" << r;
         lp.push(ss1.str());
         lp.push(ss2.str());
     }

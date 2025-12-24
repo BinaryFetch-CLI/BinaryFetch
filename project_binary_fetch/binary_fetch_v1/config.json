@@ -45,12 +45,12 @@
     "free_color": "cyan",
     "percent_color": "cyan"
   },
-  "audio": {
+  "compact_audio": {
     "enabled": true,
-    "bracket_color": "bright_blue",
-    "arrow_color": "bright_red",
-    "device_color": "bright_white",
-    "status_color": "cyan"
+    "bracket_color": "yellow",
+    "arrow_color": "yellow",
+    "device_color": "yellow",
+    "status_color": "yellow"
   },
   "gpu": {
     "enabled": true,
