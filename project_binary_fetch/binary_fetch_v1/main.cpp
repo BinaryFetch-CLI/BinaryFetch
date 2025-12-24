@@ -287,26 +287,26 @@ int main() {
     }
 
     // Compact Performance
-    if (isEnabled("performance")) {
+    if (isEnabled("compact_performance")) {
         std::ostringstream ss;
-        ss << getColor("performance", "bracket_color", "red") << "[Performance]" << r
-            << getColor("performance", "arrow_color", "blue") << " -> " << r
-            << getColor("performance", "bracket_color", "red") << "(" << r
-            << getColor("performance", "label_color", "green") << "CPU: " << r
-            << getColor("performance", "cpu_color", "green") << c_perf.getCPUUsage() << "%" << r
-            << getColor("performance", "bracket_color", "red") << ") " << r
-            << getColor("performance", "bracket_color", "red") << "(" << r
-            << getColor("performance", "label_color", "green") << "GPU: " << r
-            << getColor("performance", "gpu_color", "yellow") << c_perf.getGPUUsage() << "%" << r
-            << getColor("performance", "bracket_color", "red") << ") " << r
-            << getColor("performance", "bracket_color", "red") << "(" << r
-            << getColor("performance", "label_color", "green") << "RAM: " << r
-            << getColor("performance", "ram_color", "cyan") << c_perf.getRAMUsage() << "%" << r
-            << getColor("performance", "bracket_color", "red") << ") " << r
-            << getColor("performance", "bracket_color", "red") << "(" << r
-            << getColor("performance", "label_color", "green") << "Disk: " << r
-            << getColor("performance", "disk_color", "magenta") << c_perf.getDiskUsage() << "%" << r
-            << getColor("performance", "bracket_color", "red") << ")" << r;
+        ss << getColor("compact_performance", "bracket_color", "red") << "[Performance]" << r
+            << getColor("compact_performance", "arrow_color", "blue") << " -> " << r
+            << getColor("compact_performance", "bracket_color", "red") << "(" << r
+            << getColor("compact_performance", "label_color", "green") << "CPU: " << r
+            << getColor("compact_performance", "cpu_color", "green") << c_perf.getCPUUsage() << "%" << r
+            << getColor("compact_performance", "bracket_color", "red") << ") " << r
+            << getColor("compact_performance", "bracket_color", "red") << "(" << r
+            << getColor("compact_performance", "label_color", "green") << "GPU: " << r
+            << getColor("compact_performance", "gpu_color", "yellow") << c_perf.getGPUUsage() << "%" << r
+            << getColor("compact_performance", "bracket_color", "red") << ") " << r
+            << getColor("compact_performance", "bracket_color", "red") << "(" << r
+            << getColor("compact_performance", "label_color", "green") << "RAM: " << r
+            << getColor("compact_performance", "ram_color", "cyan") << c_perf.getRAMUsage() << "%" << r
+            << getColor("compact_performance", "bracket_color", "red") << ") " << r
+            << getColor("compact_performance", "bracket_color", "red") << "(" << r
+            << getColor("compact_performance", "label_color", "green") << "Disk: " << r
+            << getColor("compact_performance", "disk_color", "magenta") << c_perf.getDiskUsage() << "%" << r
+            << getColor("compact_performance", "bracket_color", "red") << ")" << r;
         lp.push(ss.str());
     }
 

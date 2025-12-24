@@ -62,15 +62,15 @@
     "at_symbol_color": "green",
     "freq_color": "green"
   },
-  "performance": {
+  "compact_performance": {
     "enabled": true,
-    "bracket_color": "bright_blue",
-    "arrow_color": "bright_red",
-    "label_color": "cyan",
-    "cpu_color": "bright_red",
-    "gpu_color": "bright_blue",
-    "ram_color": "bright_white",
-    "disk_color": "white"
+    "bracket_color": "red",
+    "arrow_color": "red",
+    "label_color": "red",
+    "cpu_color": "red",
+    "gpu_color": "red",
+    "ram_color": "red",
+    "disk_color": "red"
   },
   "user": {
     "enabled": true,
