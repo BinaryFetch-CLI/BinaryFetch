@@ -7,6 +7,10 @@
   },
   "compact_os": {
     "enabled": true,
+    "show_name": true,
+    "show_build": true,
+    "show_arch": true,
+    "show_uptime": true,
     "bracket_color": "blue",
     "arrow_color": "blue",
     "name_color": "blue",
@@ -17,6 +21,10 @@
   },
   "compact_cpu": {
     "enabled": true,
+    "show_name": true,
+    "show_cores": true,
+    "show_threads": true,
+    "show_clock": true,
     "bracket_color": "red",
     "arrow_color": "red",
     "name_color": "red",
@@ -29,6 +37,8 @@
   },
   "compact_display": {
     "enabled": true,
+    "show_resolution": true,
+    "show_refresh": true,
     "bracket_color": "green",
     "arrow_color": "green",
     "name_color": "green",
@@ -38,6 +48,9 @@
   },
   "compact_memory": {
     "enabled": true,
+    "show_total": true,
+    "show_free": true,
+    "show_percent": true,
     "bracket_color": "cyan",
     "arrow_color": "cyan",
     "label_color": "cyan",
@@ -47,6 +60,8 @@
   },
   "compact_audio": {
     "enabled": true,
+    "show_input": true,
+    "show_output": true,
     "bracket_color": "yellow",
     "arrow_color": "yellow",
     "device_color": "yellow",
@@ -54,6 +69,9 @@
   },
   "compact_gpu": {
     "enabled": true,
+    "show_usage": true,
+    "show_vram": true,
+    "show_freq": true,
     "bracket_color": "magenta",
     "arrow_color": "magenta",
     "name_color": "magenta",
@@ -64,6 +82,10 @@
   },
   "compact_performance": {
     "enabled": true,
+    "show_cpu": true,
+    "show_gpu": true,
+    "show_ram": true,
+    "show_disk": true,
     "bracket_color": "bright_white",
     "arrow_color": "bright_white",
     "label_color": "bright_white",
@@ -74,6 +96,9 @@
   },
   "compact_user": {
     "enabled": true,
+    "show_username": true,
+    "show_domain": true,
+    "show_type": true,
     "bracket_color": "bright_magenta",
     "arrow_color": "bright_magenta",
     "username_color": "bright_magenta",
@@ -83,6 +108,9 @@
   },
   "compact_network": {
     "enabled": true,
+    "show_name": true,
+    "show_type": true,
+    "show_ip": true,
     "bracket_color": "bright_cyan",
     "arrow_color": "bright_cyan",
     "label_color": "bright_cyan",
@@ -92,6 +120,8 @@
   },
   "compact_disk": {
     "enabled": true,
+    "show_usage": true,
+    "show_capacity": true,
     "bracket_color": "bright_yellow",
     "arrow_color": "bright_yellow",
     "letter_color": "bright_yellow",
