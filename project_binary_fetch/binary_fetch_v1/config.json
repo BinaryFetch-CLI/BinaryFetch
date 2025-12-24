@@ -1,102 +1,102 @@
 {
   "header": {
     "enabled": true,
-    "prefix_color": "bright_cyan",
-    "title_color": "white",
-    "line_color": "bright_blue"
+    "prefix_color": "yellow",
+    "title_color": "bright_white",
+    "line_color": "green"
   },
   "os": {
     "enabled": true,
-    "bracket_color": "magenta",
-    "arrow_color": "white",
-    "name_color": "bright_magenta",
-    "build_color": "white",
-    "arch_color": "bright_cyan",
-    "uptime_label_color": "cyan",
-    "uptime_value_color": "bright_white"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "name_color": "white",
+    "build_color": "yellow",
+    "arch_color": "cyan",
+    "uptime_label_color": "green",
+    "uptime_value_color": "white"
   },
   "cpu": {
     "enabled": true,
-    "bracket_color": "bright_cyan",
-    "arrow_color": "bright_magenta",
-    "name_color": "bright_green",
-    "core_color": "bright_yellow",
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "name_color": "bright_white",
+    "core_color": "yellow",
     "thread_color": "yellow",
-    "text_color": "white",
-    "separator_color": "cyan",
-    "at_symbol_color": "magenta",
-    "clock_color": "bright_white"
+    "text_color": "green",
+    "separator_color": "white",
+    "at_symbol_color": "yellow",
+    "clock_color": "cyan"
   },
   "display": {
     "enabled": true,
-    "bracket_color": "blue",
-    "arrow_color": "bright_cyan",
+    "bracket_color": "yellow",
+    "arrow_color": "green",
     "name_color": "white",
-    "resolution_color": "bright_green",
-    "at_symbol_color": "bright_magenta",
-    "refresh_color": "bright_yellow"
+    "resolution_color": "yellow",
+    "at_symbol_color": "green",
+    "refresh_color": "cyan"
   },
   "memory": {
     "enabled": true,
-    "bracket_color": "magenta",
-    "arrow_color": "white",
-    "label_color": "bright_cyan",
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "label_color": "green",
     "total_color": "white",
-    "free_color": "bright_green",
-    "percent_color": "bright_yellow"
+    "free_color": "yellow",
+    "percent_color": "magenta"
   },
   "audio": {
     "enabled": true,
-    "bracket_color": "bright_red",
-    "arrow_color": "white",
-    "device_color": "bright_white",
-    "status_color": "bright_cyan"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "device_color": "white",
+    "status_color": "yellow"
   },
   "gpu": {
     "enabled": true,
-    "bracket_color": "bright_green",
-    "arrow_color": "bright_white",
-    "name_color": "bright_cyan",
-    "usage_color": "bright_yellow",
-    "vram_color": "bright_magenta",
-    "at_symbol_color": "white",
-    "freq_color": "cyan"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "name_color": "white",
+    "usage_color": "yellow",
+    "vram_color": "cyan",
+    "at_symbol_color": "green",
+    "freq_color": "magenta"
   },
   "performance": {
     "enabled": true,
-    "bracket_color": "white",
-    "arrow_color": "bright_blue",
-    "label_color": "bright_magenta",
-    "cpu_color": "bright_cyan",
-    "gpu_color": "bright_green",
-    "ram_color": "bright_yellow",
-    "disk_color": "bright_red"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "label_color": "green",
+    "cpu_color": "white",
+    "gpu_color": "yellow",
+    "ram_color": "cyan",
+    "disk_color": "magenta"
   },
   "user": {
     "enabled": true,
-    "bracket_color": "bright_cyan",
-    "arrow_color": "white",
-    "username_color": "bright_green",
-    "label_color": "bright_white",
-    "domain_color": "bright_blue",
-    "type_color": "bright_magenta"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "username_color": "bright_white",
+    "label_color": "green",
+    "domain_color": "yellow",
+    "type_color": "cyan"
   },
   "network": {
     "enabled": true,
-    "bracket_color": "blue",
-    "arrow_color": "bright_cyan",
-    "label_color": "white",
-    "name_color": "bright_green",
-    "type_color": "bright_yellow",
-    "ip_color": "bright_white"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "label_color": "green",
+    "name_color": "white",
+    "type_color": "yellow",
+    "ip_color": "magenta"
   },
   "disk": {
     "enabled": true,
-    "bracket_color": "bright_magenta",
-    "arrow_color": "white",
-    "letter_color": "bright_cyan",
-    "percent_color": "bright_yellow",
-    "separator_color": "bright_blue",
-    "capacity_color": "bright_white"
+    "bracket_color": "yellow",
+    "arrow_color": "green",
+    "letter_color": "white",
+    "percent_color": "yellow",
+    "separator_color": "green",
+    "capacity_color": "cyan"
   }
 }
