@@ -140,4 +140,33 @@
     "separator_color": "bright_yellow",
     "capacity_color": "bright_yellow"
   }
+},
+  "detailed_memory": {
+    "enabled": true,
+    "show_header": true,
+    "show_summary": true,
+    "show_total": true,
+    "show_free": true,
+    "show_used_percent": true,
+    "show_modules": true,
+    "show_module_used": true,
+    "show_module_capacity": true,
+    "show_module_type": true,
+    "show_module_speed": true,
+    "divider_color": "blue",
+    "header_color": "red",
+    "bracket_color": "blue",
+    "label_color": "green",
+    "total_color": "yellow",
+    "free_color": "cyan",
+    "used_percent_color": "red",
+    "percent_symbol_color": "red",
+    "unit_color": "green",
+    "module_marker_color": "blue",
+    "module_label_color": "magenta",
+    "colon_color": "blue",
+    "module_capacity_color": "green",
+    "module_type_color": "cyan",
+    "module_speed_color": "yellow"
+  }
 }

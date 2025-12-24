@@ -570,6 +570,53 @@ int main() {
             lp.push(sc.str());
         }
     }
+    // Individual Memory Modules
+    if (isEnabled("detailed_memory", "show_modules")) {
+        const auto& modules = ram.getModules();
+        for (size_t i = 0; i < modules.size(); ++i) {
+            // Zero-pad capacity
+            std::string cap = modules[i].capacity;
+            int num = 0;
+            try { num = std::stoi(cap); }
+            catch (...) { num = 0; }
+            std::ostringstream capOut;
+            capOut << std::setw(2) << std::setfill('0') << num << "GB";
+
+            std::ostringstream ss;
+
+            // Module marker and label
+            ss << getColor("detailed_memory", "module_marker_color", "blue") << "~ " << r
+                << getColor("detailed_memory", "module_label_color", "magenta") << "Memory " << i << r
+                << getColor("detailed_memory", "colon_color", "blue") << ": " << r;
+
+            // Used percentage for this module
+            if (isEnabled("detailed_memory", "show_module_used")) {
+                ss << getColor("detailed_memory", "bracket_color", "blue") << "(" << r
+                    << getColor("detailed_memory", "label_color", "green") << "Used: " << r
+                    << getColor("detailed_memory", "used_percent_color", "red") << ram.getUsedPercentage() << r
+                    << getColor("detailed_memory", "percent_symbol_color", "red") << "%" << r
+                    << getColor("detailed_memory", "bracket_color", "blue") << ") " << r;
+            }
+
+            // Capacity
+            if (isEnabled("detailed_memory", "show_module_capacity")) {
+                ss << getColor("detailed_memory", "module_capacity_color", "green") << capOut.str() << r << " ";
+            }
+
+            // Type
+            if (isEnabled("detailed_memory", "show_module_type")) {
+                ss << getColor("detailed_memory", "module_type_color", "cyan") << modules[i].type << r << " ";
+            }
+
+            // Speed
+            if (isEnabled("detailed_memory", "show_module_speed")) {
+                ss << getColor("detailed_memory", "module_speed_color", "yellow") << modules[i].speed << r;
+            }
+
+            lp.push(ss.str());
+        }
+    }
+
 
     //----------------- END OF JSON-CONTROLLED COMPACT SECTIONS -----------------//
 
