@@ -140,5 +140,31 @@
     "percent_color": "bright_yellow",
     "separator_color": "bright_yellow",
     "capacity_color": "bright_yellow"
+  },
+  "detailed_memory": {
+    "enabled": true,
+
+    "show_header": true,
+    "show_summary": true,
+    "show_modules": true,
+
+    "(": "blue",
+    ")": "blue",
+    "~": "blue",
+    ":": "blue",
+    "header_line_color": "blue",
+    "header_title_color": "yellow",
+
+    "label_color": "green",
+    "total_color": "yellow",
+    "free_color": "cyan",
+    "used_color": "red",
+
+    "module_label_color": "magenta",
+    "capacity_color": "green",
+    "type_color": "cyan",
+    "speed_color": "yellow"
   }
+
+
 }

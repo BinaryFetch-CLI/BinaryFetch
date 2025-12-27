@@ -425,6 +425,90 @@ int main() {
             lp.push(sc.str());
         }
     }
+    //-----------------------------start of detailed modules----------------------//
+
+    // ----------------- DETAILED MEMORY SECTION ----------------- //
+    if (isEnabled("detailed_memory")) {
+
+        lp.push(""); // blank line
+
+        std::string r = colors["reset"];
+
+        // ---------- HEADER ----------
+        if (isSubEnabled("detailed_memory", "show_header")) {
+            std::ostringstream ss;
+            ss << getColor("detailed_memory", "header_line_color", "blue")
+                << "----------------"
+                << r
+                << getColor("detailed_memory", "header_title_color", "red")
+                << "Memory Info"
+                << r
+                << getColor("detailed_memory", "header_line_color", "blue")
+                << "---------------"
+                << r;
+            lp.push(ss.str());
+        }
+
+        // ---------- SUMMARY ----------
+        if (isSubEnabled("detailed_memory", "show_summary")) {
+            std::ostringstream ss;
+
+            ss << getColor("detailed_memory", "(", "blue") << "(" << r
+                << getColor("detailed_memory", "label_color", "green") << "Total: " << r
+                << getColor("detailed_memory", "total_color", "yellow") << ram.getTotal() << " GB" << r
+                << getColor("detailed_memory", ")", "blue") << ") " << r;
+
+            ss << getColor("detailed_memory", "(", "blue") << "(" << r
+                << getColor("detailed_memory", "label_color", "green") << "Free: " << r
+                << getColor("detailed_memory", "free_color", "cyan") << ram.getFree() << " GB" << r
+                << getColor("detailed_memory", ")", "blue") << ") " << r;
+
+            ss << getColor("detailed_memory", "(", "blue") << "(" << r
+                << getColor("detailed_memory", "label_color", "green") << "Used: " << r
+                << getColor("detailed_memory", "used_color", "red") << ram.getUsedPercentage() << "%" << r
+                << getColor("detailed_memory", ")", "blue") << ")" << r;
+
+            lp.push(ss.str());
+        }
+
+        // ---------- MODULES ----------
+        if (isSubEnabled("detailed_memory", "show_modules")) {
+            const auto& modules = ram.getModules();
+
+            for (size_t i = 0; i < modules.size(); ++i) {
+
+                // zero-pad capacity
+                int num = 0;
+                try { num = std::stoi(modules[i].capacity); }
+                catch (...) { num = 0; }
+
+                std::ostringstream capOut;
+                capOut << std::setw(2) << std::setfill('0') << num << "GB";
+
+                std::ostringstream ss;
+
+                ss << getColor("detailed_memory", "~", "blue") << "~ " << r
+                    << getColor("detailed_memory", "module_label_color", "magenta")
+                    << "Memory " << i << r
+                    << getColor("detailed_memory", ":", "blue") << ": " << r;
+
+                ss << getColor("detailed_memory", "(", "blue") << "(" << r
+                    << getColor("detailed_memory", "label_color", "green") << "Used: " << r
+                    << getColor("detailed_memory", "used_color", "red") << ram.getUsedPercentage() << "%" << r
+                    << getColor("detailed_memory", ")", "blue") << ") " << r;
+
+                ss << getColor("detailed_memory", "capacity_color", "green") << capOut.str() << r << " "
+                    << getColor("detailed_memory", "type_color", "cyan") << modules[i].type << r << " "
+                    << getColor("detailed_memory", "speed_color", "yellow") << modules[i].speed << r;
+
+                lp.push(ss.str());
+            }
+        }
+    }
+    // ----------------- END DETAILED MEMORY ----------------- //
+
+
+
     //----------------- END OF JSON-CONTROLLED COMPACT SECTIONS -----------------//
 
 
