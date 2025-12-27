@@ -1,9 +1,4 @@
-Alright — this **deserves** a real, professional README.
-What you’ve built is not a toy, and the documentation should reflect that.
 
-Below is a **complete GitHub-ready README** you can paste directly into your BinaryFetch repo and adjust names/links later.
-
----
 
 # 🧬 BinaryFetch
 
