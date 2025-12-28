@@ -165,9 +165,109 @@
         "capacity": "red",
         "type": "red",
         "speed": "red"
-      }
-    }
-  
+     
+    },
 
+  
+    "detailed_storage": {
+      "enabled": true,
+      "sections": {
+        "storage_summary": true,
+        "disk_performance": true,
+        "disk_performance_predicted": true
+      },
+      "storage_summary": {
+        "header": {
+          "show_header": true,
+          "line_color": "red",
+          "title_color": "blue"
+        },
+        "show_storage_type": true,
+        "storage_type_color": "yellow",
+        "show_drive_letter": true,
+        "drive_letter_color": "cyan",
+        "show_used_label": true,
+        "used_label_color": "green",
+        "show_used_space": true,
+        "used_space_color": "green",
+        "show_total_space": true,
+        "total_space_color": "green",
+        "show_used_percentage": true,
+        "used_percentage_color": "red",
+        "show_file_system": true,
+        "file_system_color": "magenta",
+        "show_external_status": true,
+        "external_text_color": "blue",
+        "internal_text_color": "white",
+        "brackets_color": "green",
+        "separator_color": "green",
+        "unit_color": "green"
+      },
+      "disk_performance": {
+        "header": {
+          "show_header": true,
+          "line_color": "red",
+          "title_color": "blue"
+        },
+        "show_drive_letter": true,
+        "drive_letter_color": "cyan",
+        "show_read_speed": true,
+        "read_label_color": "green",
+        "read_speed_color": "yellow",
+        "show_write_speed": true,
+        "write_label_color": "green",
+        "write_speed_color": "yellow",
+        "show_serial_number": true,
+        "serial_number_color": "magenta",
+        "show_external_status": true,
+        "speed_unit_color": "green",
+        "pipe_color": "green"
+      },
+      "disk_performance_predicted": {
+        "header": {
+          "show_header": true,
+          "line_color": "red",
+          "title_color": "blue"
+        },
+        "show_drive_letter": true,
+        "drive_letter_color": "cyan",
+        "show_read_speed": true,
+        "read_label_color": "green",
+        "read_speed_color": "yellow",
+        "show_write_speed": true,
+        "write_label_color": "green",
+        "write_speed_color": "yellow",
+        "show_serial_number": true,
+        "serial_number_color": "magenta",
+        "show_external_status": true,
+        "speed_unit_color": "green",
+        "pipe_color": "green"
+      }
+    },
+    "network_info": {
+      "enabled": true,
+      "show_header": true,
+      "header_prefix_color": "blue",
+      "header_title_color": "green",
+      "header_line_color": "blue",
+      "show_network_name": true,
+      "network_name_color": "yellow",
+      "show_network_type": true,
+      "network_type_color": "yellow",
+      "show_ip": true,
+      "ip_color": "magenta",
+      "show_locale": true,
+      "locale_color": "cyan",
+      "show_mac_address": true,
+      "mac_color": "cyan",
+      "show_upload_speed": true,
+      "upload_speed_color": "yellow",
+      "show_download_speed": true,
+      "download_speed_color": "yellow",
+      "prefix_color": "blue",
+      "label_color": "green",
+      "colon_color": "blue"
+    }
+  }
 
 }
