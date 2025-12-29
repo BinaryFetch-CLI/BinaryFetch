@@ -661,7 +661,7 @@ int main() {
                         ss << getNestedColor("storage_summary.total_space_color", "green") << fmt_storage(d.total_space) << r;
                     }
 
-                    ss << getNestedColor("storage_summary.unit_color", "green") << " GiB  " << r;
+                    ss << getNestedColor("storage_summary.total_GIB", "green") << " GiB  " << r;
 
                     // Percentage
                     if (getNestedBool("storage_summary.show_used_percentage", true)) {

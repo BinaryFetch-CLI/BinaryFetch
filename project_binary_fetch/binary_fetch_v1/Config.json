@@ -203,7 +203,7 @@
       "/": "bright_black",
       "-": "green",
       "used_GIB": "blue",
-      "total_GIB":"green"
+      "total_GIB":"blue"
     },
     "disk_performance": {
       "header": {
