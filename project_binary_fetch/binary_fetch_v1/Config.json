@@ -151,20 +151,20 @@
       "modules": true
     },
     "colors": {
-      ">>~": "magenta",
-      "header_title": "bright_cyan",
-      "-------------------------#": "magenta",
-      "label": "cyan",
-      "total_value": "bright_yellow",
-      "free_value": "bright_green",
-      "used_value": "bright_red",
-      "brackets": "white",
-      "~": "magenta",
-      "module_label": "bright_magenta",
+      ">>~": "green",
+      "header_title": "bright_white",
+      "-------------------------#": "green",
+      "label": "green",
+      "total_value": "bright_green",
+      "free_value": "cyan",
+      "used_value": "yellow",
+      "brackets": "green",
+      "~": "bright_green",
+      "module_label": "bright_green",
       " : ": "white",
-      "capacity": "bright_yellow",
-      "type": "cyan",
-      "speed": "bright_green"
+      "capacity": "yellow",
+      "type": "white",
+      "speed": "cyan"
     }
   },
   "detailed_storage": {
