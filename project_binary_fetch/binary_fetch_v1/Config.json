@@ -159,7 +159,7 @@
       "free_value": "red",
       "used_value": "red",
       "brackets": "red",
-      "~": "red",
+      "~": "green",
       "module_label": "red",
       " : ": "red",
       "capacity": "red",
