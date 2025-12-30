@@ -190,7 +190,7 @@
       "show_external_status": true,
       "storage_type_color": "cyan",
       "drive_letter_color": "blue",
-      "used_label_color": "green",
+      "used_label_color": "red",
       "used_space_color": "bright_green",
       "total_space_color": "white",
       "used_percentage_color": "bright_yellow",
@@ -225,7 +225,8 @@
       "speed_unit_color": "blue",
       "]": "red",
       "[": "red",
-      "(": "green",
+      "(": "cyan",
+      ")": "cyan",
       "/": "red",
       "-": "green",
       "|": "green"
