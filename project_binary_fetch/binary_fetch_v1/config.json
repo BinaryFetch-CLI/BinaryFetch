@@ -213,7 +213,7 @@
       "]": "red",
       "(": "cyan",
       ")": "cyan",
-      "/": "red", 
+      "/": "red",
       "-": "cyan",
       "used_GIB": "red",
       "total_GIB": "blue"
@@ -270,5 +270,65 @@
       "GIB": "green",
       "|": "green"
     }
+  },
+
+  "network_info": {
+    "enabled": true,
+
+    "show_header": true,
+    "show_name": true,
+    "show_type": true,
+    "show_ip": true,
+    "show_locale": true,
+    "show_mac": true,
+    "show_upload": true,
+    "show_download": true,
+
+    "#-": "blue",
+    "~": "blue",
+    ":": "blue",
+    "separator_line": "red",
+
+    "header_text_color": "blue",
+    "label_color": "blue",
+
+    "name_value_color": "blue",
+    "type_value_color": "blue",
+    "ip_value_color": "blue",
+    "locale_value_color": "cyan",
+    "mac_value_color": "cyan",
+    "upload_value_color": "blue",
+    "download_value_color": "blue"
+  },
+
+  "os_info": {
+    "enabled": true,
+
+    "show_header": true,
+    "show_name": true,
+    "show_build": true,
+    "show_architecture": true,
+    "show_kernel": true,
+    "show_uptime": true,
+    "show_install_date": true,
+    "show_serial": true,
+
+    "#-": "blue",
+    "~": "blue",
+    ":": "blue",
+    "separator_line": "blue",
+
+    "header_text_color": "green",
+    "label_color": "green",
+
+    "name_value_color": "yellow",
+    "build_value_color": "yellow",
+    "arch_value_color": "cyan",
+    "kernel_value_color": "cyan",
+    "uptime_value_color": "magenta",
+    "install_date_value_color": "magenta",
+    "serial_value_color": "yellow"
   }
+
+
 }
