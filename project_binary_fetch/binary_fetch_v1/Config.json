@@ -287,7 +287,7 @@
     "#-": "blue",
     "~": "blue",
     ":": "blue",
-    "separator_line": "blue",
+    "separator_line": "red",
 
     "header_text_color": "blue",
     "label_color": "blue",

@@ -837,7 +837,7 @@ int main() {
                 ss << getColor("network_info", "#-", "blue") << "#- " << r
                     << getColor("network_info", "header_text_color", "green") << "Network Info " << r
                     << getColor("network_info", "separator_line", "blue")
-                    << "----------------------------------------------------#" << r;
+                    << "---------------------------------------------------#" << r;
                 lp.push(ss.str());
             }
 
