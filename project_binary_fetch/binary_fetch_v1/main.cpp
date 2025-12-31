@@ -1016,7 +1016,135 @@ int main() {
             }
         }
 
+		//end of the OS info section////////////////////////////////////////////////
 
+        // CPU Info (JSON Driven)
+        if (isEnabled("cpu_info")) {
+            lp.push("");
+
+            // Header
+            if (isSubEnabled("cpu_info", "show_header")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "#-", "white") << "#- " << r
+                    << getColor("cpu_info", "header_text_color", "white") << "CPU Info " << r
+                    << getColor("cpu_info", "separator_line", "white")
+                    << "-------------------------------------------------------#" << r;
+                lp.push(ss.str());
+            }
+
+            // Brand
+            if (isSubEnabled("cpu_info", "show_brand")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Brand                    " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "brand_value_color", "white") << cpu.get_cpu_info() << r;
+                lp.push(ss.str());
+            }
+
+            // Utilization
+            if (isSubEnabled("cpu_info", "show_utilization")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Utilization              " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "utilization_value_color", "white") << cpu.get_cpu_utilization() << r
+                    << getColor("cpu_info", "%", "white") << "%" << r;
+                lp.push(ss.str());
+            }
+
+            // Speed
+            if (isSubEnabled("cpu_info", "show_speed")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Speed                    " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "speed_value_color", "white") << cpu.get_cpu_speed() << r;
+                lp.push(ss.str());
+            }
+
+            // Base Speed
+            if (isSubEnabled("cpu_info", "show_base_speed")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Base Speed               " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "base_speed_value_color", "white") << cpu.get_cpu_base_speed() << r;
+                lp.push(ss.str());
+            }
+
+            // Cores
+            if (isSubEnabled("cpu_info", "show_cores")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Cores                    " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "cores_value_color", "white") << cpu.get_cpu_cores() << r;
+                lp.push(ss.str());
+            }
+
+            // Logical Processors
+            if (isSubEnabled("cpu_info", "show_logical_processors")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Logical Processors       " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "logical_processors_value_color", "white") << cpu.get_cpu_logical_processors() << r;
+                lp.push(ss.str());
+            }
+
+            // Sockets
+            if (isSubEnabled("cpu_info", "show_sockets")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Sockets                  " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "sockets_value_color", "white") << cpu.get_cpu_sockets() << r;
+                lp.push(ss.str());
+            }
+
+            // Virtualization
+            if (isSubEnabled("cpu_info", "show_virtualization")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "Virtualization           " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "virtualization_value_color", "white") << cpu.get_cpu_virtualization() << r;
+                lp.push(ss.str());
+            }
+
+            // L1 Cache
+            if (isSubEnabled("cpu_info", "show_l1_cache")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "L1 Cache                 " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "l1_cache_value_color", "white") << cpu.get_cpu_l1_cache() << r;
+                lp.push(ss.str());
+            }
+
+            // L2 Cache
+            if (isSubEnabled("cpu_info", "show_l2_cache")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "L2 Cache                 " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "l2_cache_value_color", "white") << cpu.get_cpu_l2_cache() << r;
+                lp.push(ss.str());
+            }
+
+            // L3 Cache
+            if (isSubEnabled("cpu_info", "show_l3_cache")) {
+                std::ostringstream ss;
+                ss << getColor("cpu_info", "~", "white") << "~ " << r
+                    << getColor("cpu_info", "label_color", "white") << "L3 Cache                 " << r
+                    << getColor("cpu_info", ":", "white") << ": " << r
+                    << getColor("cpu_info", "l3_cache_value_color", "white") << cpu.get_cpu_l3_cache() << r;
+                lp.push(ss.str());
+            }
+        }
+
+        //end of the CPU info section////////////////////////////////////////////////
  
 
 	lp.push(""); // blank line

@@ -328,7 +328,47 @@
     "uptime_value_color": "cyan",
     "install_date_value_color": "cyan",
     "serial_value_color": "cyan"
+  },
+
+
+  "cpu_info": {
+    "enabled": true,
+
+    "show_header": true,
+    "show_brand": true,
+    "show_utilization": true,
+    "show_speed": true,
+    "show_base_speed": true,
+    "show_cores": true,
+    "show_logical_processors": true,
+    "show_sockets": true,
+    "show_virtualization": true,
+    "show_l1_cache": true,
+    "show_l2_cache": true,
+    "show_l3_cache": true,
+
+    "#-": "cyan",
+    "~": "cyan",
+    ":": "cyan",
+    "%": "cyan",
+    "separator_line": "cyan",
+
+    "header_text_color": "cyan",
+    "label_color": "cyan",
+
+    "brand_value_color": "cyan",
+    "utilization_value_color": "cyan",
+    "speed_value_color": "cyan",
+    "base_speed_value_color": "cyan",
+    "cores_value_color": "cyan",
+    "logical_processors_value_color": "cyan",
+    "sockets_value_color": "cyan",
+    "virtualization_value_color": "cyan",
+    "l1_cache_value_color": "cyan",
+    "l2_cache_value_color": "cyan",
+    "l3_cache_value_color": "cyan"
   }
+
 
 
 }
