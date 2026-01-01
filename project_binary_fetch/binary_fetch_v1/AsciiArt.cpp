@@ -1,4 +1,5 @@
 ﻿
+
 #include "AsciiArt.h"
 #include <iostream>
 #include <fstream>
@@ -7,6 +8,7 @@
 #include <codecvt>
 #include <cwchar>
 #include <sstream>
+#include <map>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -18,12 +20,68 @@
 #include <pwd.h>
 #endif
 
+// ---------------- Color Map ----------------
+static const std::map<int, std::string> colorMap = {
+    {1, "\033[31m"},    // red
+    {2, "\033[32m"},    // green
+    {3, "\033[33m"},    // yellow
+    {4, "\033[34m"},    // blue
+    {5, "\033[35m"},    // magenta
+    {6, "\033[36m"},    // cyan
+    {7, "\033[37m"},    // white
+    {8, "\033[91m"},    // bright_red
+    {9, "\033[92m"},    // bright_green
+    {10, "\033[93m"},   // bright_yellow
+    {11, "\033[94m"},   // bright_blue
+    {12, "\033[95m"},   // bright_magenta
+    {13, "\033[96m"},   // bright_cyan
+    {14, "\033[97m"},   // bright_white
+    {15, "\033[0m"}     // reset
+};
+
 // ---------------- Helper functions for AsciiArt ----------------
 
 // Remove ANSI color/format sequences (like "\x1b[31m") from a string
 std::string stripAnsiSequences(const std::string& s) {
     static const std::regex ansi_re("\x1B\\[[0-9;]*[A-Za-z]");
     return std::regex_replace(s, ansi_re, "");
+}
+
+// Process color codes ($1, $2, etc.) in a line
+std::string processColorCodes(const std::string& line) {
+    std::string result = line;
+
+    // Regex to match $n where n is a number (1-15)
+    std::regex colorCodeRegex("\\$(\\d+)");
+    std::smatch match;
+
+    std::string processed;
+    std::string remaining = result;
+
+    while (std::regex_search(remaining, match, colorCodeRegex)) {
+        // Add the part before the match
+        processed += match.prefix();
+
+        // Get the color number
+        int colorNum = std::stoi(match[1].str());
+
+        // Add the corresponding ANSI color code if valid
+        auto it = colorMap.find(colorNum);
+        if (it != colorMap.end()) {
+            processed += it->second;
+        }
+
+        // Continue with the rest of the string
+        remaining = match.suffix();
+    }
+
+    // Add any remaining text
+    processed += remaining;
+
+    // Add reset at the end of the line to prevent color bleeding
+    processed += "\033[0m";
+
+    return processed;
 }
 
 // Convert UTF-8 string to wide string (wstring)
@@ -240,8 +298,13 @@ bool AsciiArt::loadArtFromPath(const std::string& filepath) {
             isFirstLine = false;
         }
 
-        artLines.push_back(line);
-        size_t vlen = visible_width(line);
+        // Process color codes in the line
+        std::string processedLine = processColorCodes(line);
+
+        artLines.push_back(processedLine);
+
+        // Calculate visible width (ANSI codes don't count)
+        size_t vlen = visible_width(processedLine);
         artWidths.push_back((int)vlen);
         if (static_cast<int>(vlen) > maxWidth) maxWidth = static_cast<int>(vlen);
     }
@@ -370,10 +433,25 @@ void pushFormattedLines(LivePrinter& lp, const std::string& s) {
 }
 
 /*
-Old path: C:\Users\{Username}\AppData\Roaming\BinaryFetch\BinaryArt.txt
-New path: C:\Users\Users\AppData\Local\BinaryFetch\BinaryArt.txt
-*/
+Color Code Feature:
+Use $n in BinaryArt.txt to set colors (n = 1-15):
+$1 = red              $8 = bright_red
+$2 = green            $9 = bright_green
+$3 = yellow           $10 = bright_yellow
+$4 = blue             $11 = bright_blue
+$5 = magenta          $12 = bright_magenta
+$6 = cyan             $13 = bright_cyan
+$7 = white            $14 = bright_white
+$15 = reset
 
+Example:
+$1⠀⣄⠀⠀⠏⣤⣤⣀⡀  // This line will be red
+⠀⠀⣻⠃⠀⣰⡿⠛⠁  // This line will be white (default)
+$2⠀⡠⠋$3⢀⠐⠁⠀  // This line will be green, then yellow
+
+Old path: C:\Users\{Username}\AppData\Roaming\BinaryFetch\BinaryArt.txt
+New path: C:\Users\Default\AppData\Local\BinaryFetch\BinaryArt.txt
+*/
 
 
 
