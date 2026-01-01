@@ -187,7 +187,7 @@
     "colors": {
       ">>~": "blue",
       "header_title": "bright_magenta",
-      "-------------------------#": "blue",
+      "-------------------------*": "blue",
       "label": "magenta",
       "total_value": "bright_blue",
       "free_value": "bright_cyan",

@@ -453,7 +453,7 @@ int main() {
                 std::ostringstream ss;
                 ss << getColor("detailed_memory", ">>~", "blue") << ">>~ " << r
                     << getColor("detailed_memory", "header_title", "red") << "Memory Info" << r
-                    << getColor("detailed_memory", "-------------------------#", "blue") << " -------------------------#" << r;
+                    << getColor("detailed_memory", "-------------------------*", "blue") << " -------------------------*" << r;
                 lp.push(ss.str());
             }
 
