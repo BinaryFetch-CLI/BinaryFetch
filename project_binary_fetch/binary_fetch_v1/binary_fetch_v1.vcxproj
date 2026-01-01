@@ -105,6 +105,7 @@
     <None Include="AsciiArt_Documentation.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
     <None Include="Default_BinaryFetch_Config.json" />
+    <None Include="Standalone Json File management.md" />
     <None Include="text infos\BinaryFetch Community.md" />
     <None Include="text infos\Current_Status_of_BinaryFetch.txt" />
     <None Include="text infos\Engine_info.md" />

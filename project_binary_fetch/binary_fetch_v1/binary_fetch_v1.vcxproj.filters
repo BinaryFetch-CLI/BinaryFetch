@@ -238,5 +238,8 @@
     <None Include="AsciiArt_Documentation.md">
       <Filter>Resources</Filter>
     </None>
+    <None Include="Standalone Json File management.md">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
 </Project>
