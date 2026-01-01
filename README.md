@@ -15,7 +15,8 @@ Built for Windows. Built to last. Built to be shared.
 * Modular, scalable design
 * Clean separation between *data*, *logic*, and *presentation*
 
----
+![Alt text](BinaryFetch1.png)
+
 
 ## 🚀 What Makes BinaryFetch Different?
 
