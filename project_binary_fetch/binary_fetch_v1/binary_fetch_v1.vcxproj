@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsciiArt.h" />
-    <ClInclude Include="AsciiArtControlEngine.h" />
     <ClInclude Include="CompactAudio.h" />
     <ClInclude Include="CompactCPU.h" />
     <ClInclude Include="CompactDisplay.h" />
@@ -70,7 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AsciiArt.cpp" />
-    <ClCompile Include="AsciiArtControlEngine.cpp" />
     <ClCompile Include="CompactAudio.cpp" />
     <ClCompile Include="CompactDisplay.cpp" />
     <ClCompile Include="CompactGPU.cpp" />

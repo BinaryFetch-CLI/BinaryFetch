@@ -30,7 +30,7 @@
     "show_threads": true,
     "show_clock": true,
     "colors": {
-      "[cpu]": "red",
+      "[CPU]": "blue",
       "(": "red",
       ")": "red",
       "->": "red",

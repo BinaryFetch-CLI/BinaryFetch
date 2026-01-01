@@ -9,7 +9,9 @@
 #include <string>
 #include <fstream>
 #include <regex>
-
+#include <windows.h>
+#include <shlobj.h>
+#include <direct.h>
 // ASCII Art functionality
 #include "AsciiArt.h"
 
@@ -40,6 +42,9 @@
 #include "CompactUser.h"        // Lightweight user info
 #include "CompactNetwork.h"     // Lightweight network info
 #include "compact_disk_info.h"  // Lightweight storage/disk info (compact mode)
+
+
+
 
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -84,6 +89,37 @@ int main() {
 
 
 
+    // ========== AUTO CONFIG FILE SETUP (Windows only) ==========
+    std::string userConfigPath;
+    std::string configDir;
+
+    // Windows: C:\Users\Default\AppData\Local\BinaryFetch\BinaryFetch_Config.json
+    configDir = "C:\\Users\\Default\\AppData\\Local\\BinaryFetch";
+    userConfigPath = configDir + "\\BinaryFetch_Config.json";
+
+    // Create directory if it doesn't exist
+    DWORD attribs = GetFileAttributesA(configDir.c_str());
+    bool dirExists = (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
+    if (!dirExists) {
+        _mkdir(configDir.c_str());
+    }
+
+    // Check if user config exists, if not copy from default
+    std::ifstream checkConfig(userConfigPath);
+    bool userConfigExists = checkConfig.good();
+    checkConfig.close();
+
+    if (!userConfigExists) {
+        std::ifstream defaultConfig("Default_BinaryFetch_Config.json", std::ios::binary);
+        if (defaultConfig.is_open()) {
+            std::ofstream userConfig(userConfigPath, std::ios::binary);
+            if (userConfig.is_open()) {
+                userConfig << defaultConfig.rdbuf();
+                userConfig.close();
+            }
+            defaultConfig.close();
+        }
+    }
 
     // Create LivePrinter
     LivePrinter lp(art);
@@ -113,70 +149,69 @@ int main() {
     CompactNetwork c_net;
     DiskInfo disk;
 
+    //----------------- JSON CONFIG SYSTEM -----------------//
+    // 1. Color Map
+    std::map<std::string, std::string> colors = {
+        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
+        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
+        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
+        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
+        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
+        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
+    };
 
+    // 2. Load Config from USER LOCATION (not Default_ file)
+    std::ifstream config_file(userConfigPath);
+    json config;
+    bool config_loaded = false;
+    if (config_file.is_open()) {
+        try {
+            config = json::parse(config_file);
+            config_loaded = true;
+        }
+        catch (const std::exception& e) {}
+        config_file.close();
+    }
 
-        //----------------- JSON CONFIG SYSTEM -----------------//
-        // 1. Color Map
-        std::map<std::string, std::string> colors = {
-            {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-            {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-            {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-            {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-            {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-            {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-        };
+    // 3. Helper functions - FIXED VERSION
+    auto getColor = [&](const std::string& section, const std::string& key, const std::string& defaultColor = "white") -> std::string {
+        if (!config_loaded || !config.contains(section)) return colors[defaultColor];
 
-        // 2. Load Config
-        std::ifstream config_file("Default_BinaryFetch_Config.json");
-        json config;
-        bool config_loaded = false;
-        if (config_file.is_open()) {
-            try {
-                config = json::parse(config_file);
-                config_loaded = true;
-            }
-            catch (const std::exception& e) {}
-            config_file.close();
+        // First, try to find color in "colors" sub-object (for detailed_memory style)
+        if (config[section].contains("colors") && config[section]["colors"].contains(key)) {
+            std::string colorName = config[section]["colors"][key].get<std::string>();
+            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
         }
 
-        // 3. Helper functions - FIXED VERSION
-        auto getColor = [&](const std::string& section, const std::string& key, const std::string& defaultColor = "white") -> std::string {
-            if (!config_loaded || !config.contains(section)) return colors[defaultColor];
+        // Otherwise, look for color directly under section (for compact modules style)
+        if (config[section].contains(key)) {
+            std::string colorName = config[section][key].get<std::string>();
+            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
+        }
 
-            // First, try to find color in "colors" sub-object (for detailed_memory style)
-            if (config[section].contains("colors") && config[section]["colors"].contains(key)) {
-                std::string colorName = config[section]["colors"][key].get<std::string>();
-                return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-            }
+        return colors[defaultColor];
+        };
 
-            // Otherwise, look for color directly under section (for compact modules style)
-            if (config[section].contains(key)) {
-                std::string colorName = config[section][key].get<std::string>();
-                return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-            }
+    auto isEnabled = [&](const std::string& section) -> bool {
+        if (!config_loaded || !config.contains(section)) return true;
+        return config[section].value("enabled", true);
+        };
 
-            return colors[defaultColor];
-            };
+    // Helper for sub-module toggles
+    auto isSubEnabled = [&](const std::string& section, const std::string& key) -> bool {
+        if (!config_loaded || !config.contains(section)) return true;
+        return config[section].value(key, true);
+        };
 
-        auto isEnabled = [&](const std::string& section) -> bool {
-            if (!config_loaded || !config.contains(section)) return true;
-            return config[section].value("enabled", true);
-            };
+    // Helper for sections toggles (for detailed modules)
+    auto isSectionEnabled = [&](const std::string& module, const std::string& section) -> bool {
+        if (!config_loaded || !config.contains(module)) return true;
+        if (!config[module].contains("sections")) return true;
+        return config[module]["sections"].value(section, true);
+        };
 
-        // Helper for sub-module toggles
-        auto isSubEnabled = [&](const std::string& section, const std::string& key) -> bool {
-            if (!config_loaded || !config.contains(section)) return true;
-            return config[section].value(key, true);
-            };
+    std::string r = colors["reset"];
 
-        // Helper for sections toggles (for detailed modules)
-        auto isSectionEnabled = [&](const std::string& module, const std::string& section) -> bool {
-            if (!config_loaded || !config.contains(module)) return true;
-            if (!config[module].contains("sections")) return true;
-            return config[module]["sections"].value(section, true);
-            };
-
-        std::string r = colors["reset"];
 
         //----------------- SECTIONS -----------------//
 
@@ -269,7 +304,7 @@ int main() {
         // Compact Memory
         if (isEnabled("compact_memory")) {
             std::ostringstream ss;
-            ss << getColor("compact_memory", "[memory]", "red") << "[Memory]" << r
+            ss << getColor("compact_memory", "[Memory]", "red") << "[Memory]" << r
                 << getColor("compact_memory", "->", "blue") << " -> " << r;
 
             if (isSubEnabled("compact_memory", "show_total")) {
