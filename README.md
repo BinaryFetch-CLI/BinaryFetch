@@ -1,13 +1,10 @@
 
 
-# 🧬 BinaryFetch
+# 🧬 BinaryFetch-CLI based fully customizable system information tool 
+An advanced Windows system information fetcher written in C++ — featuring self-healing configuration, modular architecture, compact & detailed modes, and extreme customization.
 
-> **A modular system information fetcher for Windows — engineered for reliability, customization, and community-driven profiles.**
+Built for Windows. Built to last. Built to be shared.
 
-BinaryFetch is not “another neofetch clone.”
-It is a **systems engineering project** focused on **clean architecture**, **self-healing configuration**, and **extreme customization with minimal user effort**.
-
----
 
 ## ✨ Key Philosophy
 
@@ -42,18 +39,55 @@ No user intervention.
 ---
 
 ## 🗂️ User Customization (Only 2 Files)
+you can modify and customize them safely from,
 
+`C:\Users\Default\AppData\Local\BinaryFetch\`
 | File               | Purpose                         |
 | ------------------ | ------------------------------- |
 | `BinaryArt.txt`    | User ASCII art (fully editable, copy-paste-done !) |
-| `BinaryFetch.json` | Module configuration & layout   |
+| `BinaryFetch_Config.json` | Module configuration & layout   |
 
 That’s it.
 
 No profiles.
 No databases.
 No complex formats.
+## Color Code System
 
+### And also you can customize each character's Color of your `BinaryArt.txt`
+
+Use `$n` in your `BinaryArt.txt` file where `n` is the color number:
+
+| Code | Color | ANSI Code | Code | Color | ANSI Code |
+|------|-------|-----------|------|-------|-----------|
+| `$1` | Red | `\033[31m` | `$8` | Bright Red | `\033[91m` |
+| `$2` | Green | `\033[32m` | `$9` | Bright Green | `\033[92m` |
+| `$3` | Yellow | `\033[33m` | `$10` | Bright Yellow | `\033[93m` |
+| `$4` | Blue | `\033[34m` | `$11` | Bright Blue | `\033[94m` |
+| `$5` | Magenta | `\033[35m` | `$12` | Bright Magenta | `\033[95m` |
+| `$6` | Cyan | `\033[36m` | `$13` | Bright Cyan | `\033[96m` |
+| `$7` | White | `\033[37m` | `$14` | Bright White | `\033[97m` |
+|      |       |           | `$15` | Reset | `\033[0m` |
+
+### Color Code Examples
+
+**Single color per line:**
+```
+$1⠀⣄⠀⠀⠏⣤⣤⣀⡀⠀⠀⠀⠀⠀⠾⢯⣀
+```
+Output: Entire line in red
+
+**Multiple colors per line:**
+```
+$2⠀⡠⠋⡤⠠$3⢀⠐⠁⠀⠈$1⣙⢯⡃⠀⢈⡻⣦
+```
+Output: Green → Yellow → Red
+
+**No color (default white):**
+```
+⠀⠀⣻⠃⠀⣰⡿⠛⠁⠀⠀⠀⢤⣀⡀⠀⠺⣿⡟⠛⠁
+```
+Output: Standard white text
 ---
 
 ## 🧩 Core Features Overview
