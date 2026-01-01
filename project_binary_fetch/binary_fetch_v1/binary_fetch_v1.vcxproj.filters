@@ -238,7 +238,7 @@
     <None Include="text infos\locations.md" />
     <None Include="text infos\BinaryFetch Community.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
-    <None Include="Config.json">
+    <None Include="Default_BinaryFetch_Config.json">
       <Filter>Config</Filter>
     </None>
     <None Include="AsciiArt_Documentation.md">

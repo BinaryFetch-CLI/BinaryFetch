@@ -127,7 +127,7 @@ int main() {
         };
 
         // 2. Load Config
-        std::ifstream config_file("Config.json");
+        std::ifstream config_file("Default_BinaryFetch_Config.json");
         json config;
         bool config_loaded = false;
         if (config_file.is_open()) {
