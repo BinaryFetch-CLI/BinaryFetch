@@ -1,6 +1,6 @@
 
 ![Alt text](123456.png)
-# 🧬 BinaryFetch-CLI based fully customizable system information tool 
+# 🍁 BinaryFetch-CLI based fully customizable system information tool 
 An advanced Windows system information fetcher written in C++ — featuring self-healing configuration, modular architecture, compact & detailed modes, and extreme customization.
 
 Built for Windows. Built to last. Built to be shared.
