@@ -296,32 +296,30 @@ int main(){
                 return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
                 };
 
-
-
             // ---------- TIME SECTION ----------
-            if (isSubEnabled("compact_time", "time_section.enabled")) {
+            if (isNestedEnabled("compact_time", "time_section", "enabled")) {
                 ss << getTimeColor("time_section", "bracket", "white") << "(" << r;
 
-                if (isSubEnabled("compact_time", "time_section.show_label")) {
+                if (isNestedEnabled("compact_time", "time_section", "show_label")) {
                     ss << getTimeColor("time_section", "label", "white") << "Time: " << r;
                 }
 
                 bool wrote = false;
 
-                if (isSubEnabled("compact_time", "time_section.show_hour")) {
+                if (isNestedEnabled("compact_time", "time_section", "show_hour")) {
                     ss << getTimeColor("time_section", "hour", "white")
                         << std::setw(2) << std::setfill('0') << time.getHour() << r;
                     wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "time_section.show_minute")) {
+                if (isNestedEnabled("compact_time", "time_section", "show_minute")) {
                     if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
                     ss << getTimeColor("time_section", "minute", "white")
                         << std::setw(2) << std::setfill('0') << time.getMinute() << r;
                     wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "time_section.show_second")) {
+                if (isNestedEnabled("compact_time", "time_section", "show_second")) {
                     if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
                     ss << getTimeColor("time_section", "second", "white")
                         << std::setw(2) << std::setfill('0') << time.getSecond() << r;
@@ -331,38 +329,46 @@ int main(){
             }
 
             // ---------- DATE SECTION ----------
-            if (isSubEnabled("compact_time", "date_section.enabled"))
+            if (isNestedEnabled("compact_time", "date_section", "enabled"))
             {
                 ss << getTimeColor("date_section", "bracket", "white") << "(" << r;
 
-                if (isSubEnabled("compact_time", "date_section.show_label")) {
+                if (isNestedEnabled("compact_time", "date_section", "show_label")) {
                     ss << getTimeColor("date_section", "label", "white") << "Date: " << r;
                 }
 
-                if (isSubEnabled("compact_time", "date_section.show_day")) {
+                bool wrote = false;
+
+                if (isNestedEnabled("compact_time", "date_section", "show_day")) {
                     ss << getTimeColor("date_section", "day", "white")
-                        << std::setw(2) << std::setfill('0') << time.getDay() << r << " ";
+                        << std::setw(2) << std::setfill('0') << time.getDay() << r;
+                    wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "date_section.show_day_name")) {
+                if (isNestedEnabled("compact_time", "date_section", "show_day_name")) {
+                    if (wrote) ss << " ";
                     ss << getTimeColor("date_section", "day_name", "white")
                         << time.getDayName() << r;
+                    wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "date_section.show_month_name")) {
-                    ss << getTimeColor("date_section", "sep", "white") << ":" << r
-                        << getTimeColor("date_section", "month_name", "white")
-                        << time.getMonthName() << r << " ";
+                if (isNestedEnabled("compact_time", "date_section", "show_month_name")) {
+                    if (wrote) ss << getTimeColor("date_section", "sep", "white") << " : " << r;
+                    ss << getTimeColor("date_section", "month_name", "white")
+                        << time.getMonthName() << r;
+                    wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "date_section.show_month_num")) {
+                if (isNestedEnabled("compact_time", "date_section", "show_month_num")) {
+                    if (wrote) ss << " ";
                     ss << getTimeColor("date_section", "month_num", "white")
-                        << time.getMonthNumber() << r;
+                        << std::setw(2) << std::setfill('0') << time.getMonthNumber() << r;
+                    wrote = true;
                 }
 
-                if (isSubEnabled("compact_time", "date_section.show_year")) {
-                    ss << getTimeColor("date_section", "sep", "white") << ":" << r
-                        << getTimeColor("date_section", "year", "white")
+                if (isNestedEnabled("compact_time", "date_section", "show_year")) {
+                    if (wrote) ss << getTimeColor("date_section", "sep", "white") << " : " << r;
+                    ss << getTimeColor("date_section", "year", "white")
                         << time.getYearNumber() << r;
                 }
 
@@ -400,6 +406,8 @@ int main(){
 
                 ss << getTimeColor("leap_section", "bracket", "white") << ")" << r;
             }
+
+            lp.push(ss.str());
         }
 
         // Compact OS

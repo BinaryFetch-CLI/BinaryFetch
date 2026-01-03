@@ -5,6 +5,63 @@
     "title_color": "bright_cyan",
     "line_color": "bright_blue"
   },
+  "compact_time": {
+    "enabled": true,
+    "time_section": {
+      "enabled": true,
+      "show_label": true,
+      "show_hour": true,
+      "show_minute": true,
+      "show_second": true,
+      "colors": {
+        "bracket": "cyan",
+        "label": "red",
+        "hour": "cyan",
+        "minute": "cyan",
+        "second": "cyan",
+        "sep": "green"
+      }
+    },
+    "date_section": {
+      "enabled": true,
+      "show_label": true,
+      "show_day": true,
+      "show_day_name": true,
+      "show_month_name": true,
+      "show_month_num": false,
+      "show_year": true,
+      "colors": {
+        "bracket": "cyan",
+        "label": "red",
+        "day": "red",
+        "day_name": "red",
+        "month_name": "red",
+        "month_num": "red",
+        "year": "red",
+        "sep": "white"
+      }
+    },
+    "week_section": {
+      "enabled": true,
+      "show_label": true,
+      "show_num": true,
+      "colors": {
+        "bracket": "red",
+        "label": "blue",
+        "num": "cyan"
+      }
+    },
+    "leap_section": {
+      "enabled": false,
+      "show_label": true,
+      "show_val": true,
+      "colors": {
+        "bracket": "red",
+        "label": "green",
+        "val": "bright_magenta"
+      }
+    }
+  },
 
   "compact_os": {
     "enabled": true,
