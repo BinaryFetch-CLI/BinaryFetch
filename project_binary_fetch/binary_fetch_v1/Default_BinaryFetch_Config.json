@@ -26,15 +26,13 @@
       "enabled": true,
       "show_label": true,
       "show_day": true,
-      "show_day_name": true,
       "show_month_name": true,
-      "show_month_num": false,
+      "show_month_num": true,
       "show_year": true,
       "colors": {
         "bracket": "cyan",
         "label": "red",
         "day": "red",
-        "day_name": "red",
         "month_name": "red",
         "month_num": "red",
         "year": "red",
@@ -45,10 +43,13 @@
       "enabled": true,
       "show_label": true,
       "show_num": true,
+      "show_day_name": true,
       "colors": {
         "bracket": "red",
         "label": "blue",
-        "num": "cyan"
+        "num": "cyan",
+        "day_name": "cyan",
+        "sep": "red"
       }
     },
     "leap_section": {
