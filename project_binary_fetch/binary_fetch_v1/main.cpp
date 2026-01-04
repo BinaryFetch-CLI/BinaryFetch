@@ -1526,7 +1526,7 @@ int main(){
                         lp.push(ss.str());
                     }
                 }
-            } 
+            }  
         } 
 
 		// end of the GPU info section////////////////////////////////////////////////
