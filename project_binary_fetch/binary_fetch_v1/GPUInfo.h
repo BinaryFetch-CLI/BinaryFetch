@@ -15,7 +15,9 @@ struct gpu_data
     float gpu_usage;
     float gpu_temperature;
     int gpu_core_count;
+    float gpu_frequency;  // Add this line (in MHz)
 };
+
 
 // ----------------------------------------------------
 // GPUInfo class

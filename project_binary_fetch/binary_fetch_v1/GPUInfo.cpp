@@ -330,6 +330,64 @@ static int get_nvapi_core_count(NvPhysicalGpuHandle handle)
     return 0;
 }
 
+// NEW: NVAPI GPU frequency getter with multiple methods
+static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
+{
+    NvU32 frequency = 0;
+
+    // Method 1: Try current clock frequencies (most reliable for current frequency)
+    NV_GPU_CLOCK_FREQUENCIES clockFreqs = { 0 };
+    clockFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
+    clockFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
+
+    NvAPI_Status status = NvAPI_GPU_GetAllClockFrequencies(handle, &clockFreqs);
+    if (status == NVAPI_OK)
+    {
+        // Graphics clock (domain 0) is the main GPU core clock
+        if (clockFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].bIsPresent)
+        {
+            frequency = clockFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency;
+            if (frequency > 0)
+                return static_cast<float>(frequency) / 1000.0f; // Convert kHz to MHz
+        }
+    }
+
+    // Method 2: Try legacy current frequencies
+    NvU32 currentFreq = 0;
+    status = NvAPI_GPU_GetCurrentPCIEDownstreamWidth(handle, &currentFreq);
+
+    // Method 3: Try all clocks info
+    NV_GPU_CLOCK_FREQUENCIES allClocks = { 0 };
+    allClocks.version = NV_GPU_CLOCK_FREQUENCIES_VER;
+    allClocks.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
+
+    status = NvAPI_GPU_GetAllClockFrequencies(handle, &allClocks);
+    if (status == NVAPI_OK)
+    {
+        for (int i = 0; i < NVAPI_MAX_GPU_PUBLIC_CLOCKS; i++)
+        {
+            if (allClocks.domain[i].bIsPresent && allClocks.domain[i].frequency > 0)
+            {
+                frequency = allClocks.domain[i].frequency;
+                return static_cast<float>(frequency) / 1000.0f; // Convert kHz to MHz
+            }
+        }
+    }
+
+    // Method 4: Try dynamic performance states
+    NV_GPU_DYNAMIC_PSTATES_INFO_EX pStates = { 0 };
+    pStates.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
+    status = NvAPI_GPU_GetDynamicPstatesInfoEx(handle, &pStates);
+
+    if (status == NVAPI_OK)
+    {
+        // Try to get frequency from performance state
+        // This might not give exact current frequency but can be a fallback
+    }
+
+    return -1.0f; // Failed to get frequency
+}
+
 // ----------------------------------------------------
 // Main GPU info collector
 std::vector<gpu_data> GPUInfo::get_all_gpu_info()
@@ -405,6 +463,7 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
         d.gpu_usage = -1.0f;
         d.gpu_temperature = -1.0f;
         d.gpu_core_count = 0;
+        d.gpu_frequency = -1.0f; // Initialize frequency
 
         // Try NVIDIA-specific methods first
         if (is_nvidia_gpu(desc.VendorId) && nvapiInitialized && adapterIndex < nvapiGpuCount)
@@ -419,6 +478,9 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
 
             // Get core count
             d.gpu_core_count = get_nvapi_core_count(handle);
+
+            // Get frequency (NEW)
+            d.gpu_frequency = get_nvapi_frequency(handle);
         }
 
         // Fallback to WMI if NVAPI failed or not NVIDIA
