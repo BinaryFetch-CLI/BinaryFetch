@@ -1525,12 +1525,12 @@ int main(){
                             << getColor("gpu_info", "unit_color", "white") << " GHz" << r;
                         lp.push(ss.str());
                     } 
-                } 
+                }  
             }  
         } 
 
 		// end of the GPU info section////////////////////////////////////////////////
-
+         
 
         // Display Info (JSON Driven)
         if (isEnabled("display_info")) {
