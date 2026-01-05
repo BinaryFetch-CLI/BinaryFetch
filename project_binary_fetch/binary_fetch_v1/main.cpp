@@ -1,4 +1,4 @@
-// main.cpp (AsciiArt separated into header and implementation files)
+﻿// main.cpp (AsciiArt separated into header and implementation files)
 
 #include <iostream>
 #include <iomanip>        // Formatting utilities (setw, precision)
@@ -1958,3 +1958,344 @@ int main(){
 }
 
 
+/*
+
+
+
+
+# BinaryFetch Main System - Comprehensive Documentation
+
+## 📁 Project Overview
+
+**BinaryFetch** is a Windows-based system information tool that displays detailed hardware/software specifications in an ASCII-art decorated terminal interface. The main orchestrator (`main.cpp`) integrates multiple specialized modules to gather and present system data with configurable visual formatting.
+
+## 📊 Module Inventory
+
+### **Core System Info Modules (12)**
+1. **OSInfo** - Operating system details
+2. **CPUInfo** - Processor specifications
+3. **MemoryInfo** - RAM capacity, usage, and modules
+4. **GPUInfo** - Basic graphics card information
+5. **DetailedGPUInfo** - Advanced GPU metrics
+6. **StorageInfo** - Disk drives and partitions
+7. **NetworkInfo** - Network adapters and connectivity
+8. **UserInfo** - User account and PC details
+9. **PerformanceInfo** - Real-time system performance
+10. **DisplayInfo** - Monitor configurations
+11. **ExtraInfo** - Miscellaneous system data (audio, power)
+12. **SystemInfo** - Motherboard and BIOS information
+
+### **Compact Mode Modules (12)**
+13. **CompactAudio** - Audio device summary
+14. **CompactOS** - Lightweight OS summary
+15. **CompactCPU** - Lightweight CPU summary
+16. **CompactMemory** - Lightweight RAM summary
+17. **CompactScreen** - Display resolution summary
+18. **CompactSystem** - System board summary
+19. **CompactGPU** - Graphics card summary
+20. **CompactPerformance** - Performance statistics
+21. **CompactUser** - User information summary
+22. **CompactNetwork** - Network adapter summary
+23. **DiskInfo** (compact_disk_info.h) - Storage summary
+24. **TimeInfo** - Current date/time information
+
+### **Utility Modules (3)**
+25. **AsciiArt** - ASCII art loading and rendering
+26. **LivePrinter** - Progressive output streaming
+27. **nlohmann::json** - Configuration parsing
+
+## 🏗️ Architecture Summary
+
+| Component Type | Count | Purpose |
+|---------------|-------|---------|
+| Header Files | 28 | Modular system separation |
+| Class Objects | 28+ | Instantiated information providers |
+| JSON Config Sections | 20+ | Visual/behavior customization |
+| Lambda Functions | 6+ | Configuration helpers |
+| Stream Objects | 40+ | Output formatting |
+
+## 🔧 Configuration System
+
+### **Configuration Loading Strategy**
+```cpp
+bool LOAD_DEFAULT_CONFIG = true;  // Switch between development/production
+// true = "Default_BinaryFetch_Config.json" (development)
+// false = "%APPDATA%\\BinaryFetch\\BinaryFetch_Config.json" (production)
+```
+
+### **Configuration Path Management**
+- **Production Path**: `C:\Users\Default\AppData\Local\BinaryFetch\`
+- **Auto-creation**: Directory and config file created if missing
+- **Fallback**: Copies from default if user config doesn't exist
+
+### **Color System**
+16 ANSI color codes mapped to human-readable names:
+```cpp
+std::map<std::string, std::string> colors = {
+    {"red", "\033[31m"}, {"green", "\033[32m"}, // ... 14 more
+    {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
+};
+```
+
+## 🎯 Configuration Helper Functions
+
+### **Color Retrieval Lambda**
+```cpp
+auto getColor = [&](section, key, defaultColor) -> std::string
+```
+**Purpose**: Fetch color from JSON config with fallback
+**Parameters**:
+- `section`: JSON section name (e.g., "compact_os")
+- `key`: Specific color key (e.g., "[OS]")
+- `defaultColor`: Fallback if not found
+
+### **Enablement Check Lambdas**
+```cpp
+auto isEnabled = [&](section) -> bool            // Main section toggle
+auto isSubEnabled = [&](section, key) -> bool    // Sub-component toggle
+auto isSectionEnabled = [&](module, section) -> bool  // Detailed module sections
+auto isNestedEnabled = [&](module, section, key) -> bool  // Nested config
+```
+
+## 📋 Instantiated Objects (28 Total)
+
+### **Information Providers**
+```cpp
+// Core System Info
+OSInfo os;                    CPUInfo cpu;
+MemoryInfo ram;               GPUInfo obj_gpu;
+DetailedGPUInfo detailed_gpu_info; StorageInfo storage;
+NetworkInfo net;              UserInfo user;
+PerformanceInfo perf;         DisplayInfo display;
+ExtraInfo extra;              SystemInfo sys;
+
+// Compact Modules
+CompactAudio c_audio;         CompactOS c_os;
+CompactCPU c_cpu;             CompactScreen c_screen;
+CompactMemory c_memory;       CompactSystem c_system;
+CompactGPU c_gpu;             CompactPerformance c_perf;
+CompactUser c_user;           CompactNetwork c_net;
+DiskInfo disk;                TimeInfo time;
+
+// UI/Utility
+AsciiArt art;                 LivePrinter lp(art);
+```
+
+## 🎨 Output Sections Architecture
+
+### **Section Processing Order**
+1. **ASCII Art Loading** (`art.loadFromFile()`)
+2. **Configuration Setup** (JSON parsing and helpers)
+3. **Header** (BinaryFetch title)
+4. **Compact Time** (Dynamic date/time display)
+5. **Compact Modules** (12 summary sections)
+6. **Detailed Modules** (In-depth system analysis)
+7. **Footer** (Blank spacing and art completion)
+
+### **Compact Sections (12)**
+Each follows pattern: `[LABEL] -> data (subdata) @ units`
+- **Time**: Dynamic HH:MM:SS, Date, Week, Leap year
+- **OS**: Name, Build, Architecture, Uptime
+- **CPU**: Model, Cores/Threads, Clock speed
+- **Display**: Monitor brand, resolution, refresh rate
+- **Memory**: Total, Free, Used percentage
+- **Audio**: Input/Output devices with status
+- **GPU**: Name, Usage%, VRAM, Frequency
+- **Performance**: CPU/GPU/RAM/Disk usage percentages
+- **User**: Username, Domain, Admin status
+- **Network**: Name, Type, IP address
+- **Disk**: Usage% per drive, Capacity per drive
+
+### **Detailed Sections (9)**
+Each with hierarchical formatting:
+1. **Memory Info**: Module-by-module breakdown
+2. **Storage Info**: Multi-section disk analysis
+3. **Network Info**: Adapter details and speeds
+4. **OS Info**: Kernel, install date, serial
+5. **CPU Info**: Cache levels, virtualization, sockets
+6. **GPU Info**: Multi-GPU support with primary details
+7. **Display Info**: Per-monitor specifications
+8. **BIOS & MB**: Vendor, version, model, manufacturer
+9. **User Info**: Username, computer name, domain
+10. **Performance**: System uptime and component usage
+11. **Audio & Power**: Device lists and battery status
+
+## 🔄 Data Flow Pattern
+
+### **Standard Output Pipeline**
+```
+Module Data → String Stream → Color Formatting → LivePrinter → Terminal
+```
+
+### **Example: Compact CPU Section**
+```cpp
+if (isEnabled("compact_cpu")) {
+    std::ostringstream ss;
+    ss << getColor("compact_cpu", "[CPU]", "red") << "[CPU]" << r
+       << getColor("compact_cpu", "->", "blue") << " -> " << r
+       << getColor("compact_cpu", "name_color", "green")
+       << c_cpu.getCPUName() << r;
+    lp.push(ss.str());
+}
+```
+
+## 🎪 LivePrinter Integration
+
+### **Key Methods**
+- `lp.push(string)`: Queues line for progressive output
+- `lp.finish()`: Outputs remaining ASCII art lines
+- Automatic ASCII art alignment with system info
+
+### **Visual Layout**
+```
+┌─────────────────────────────────────────────────────┐
+│  ██████╗ ██╗███╗   ██╗██╗   ██╗███████╗            │  [OS] -> Windows 11 Pro (64-bit)
+│  ██╔══██╗██║████╗  ██║██║   ██║██╔════╝            │  [CPU] -> Intel i9-13900K (24C/32T) @ 5.8 GHz
+│  ██████╔╝██║██╔██╗ ██║██║   ██║█████╗              │  [Memory] -> (total: 64GB) (free: 42GB) (87%)
+│  ██╔══██╗██║██║╚██╗██║██║   ██║██╔══╝              │  ...
+│  ██████╔╝██║██║ ╚████║╚██████╔╝███████╗            │
+│  ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝            │
+└─────────────────────────────────────────────────────┘
+```
+
+## ⚙️ JSON Configuration Structure
+
+### **Top-Level Sections**
+```json
+{
+  "header": { "enabled": true, "colors": {...} },
+  "compact_time": {
+    "enabled": true,
+    "time_section": { "enabled": true, "colors": {...} },
+    "date_section": { "enabled": true, "colors": {...} }
+  },
+  "compact_os": { "enabled": true, "show_name": true, ... },
+  "detailed_memory": {
+    "enabled": true,
+    "sections": { "header": true, "total": true, ... },
+    "colors": { "header_title": "red", "total_value": "yellow" }
+  }
+  // ... 20+ additional sections
+}
+```
+
+## 📈 Performance Characteristics
+
+### **Module Initialization Cost**
+- **Heavy**: `StorageInfo`, `NetworkInfo` (WMI queries)
+- **Medium**: `CPUInfo`, `GPUInfo` (performance counters)
+- **Light**: `UserInfo`, `TimeInfo` (API calls)
+
+### **Output Generation**
+- **Progressive**: LivePrinter streams as sections complete
+- **Buffered**: Each section builds complete string before output
+- **Color-coded**: ANSI sequences inserted before streaming
+
+## 🛠️ Development Guidelines
+
+### **Adding New Sections**
+1. Create module class with `getX()` methods
+2. Add include in main.cpp header section
+3. Instantiate object before JSON parsing
+4. Add configuration section in JSON
+5. Implement output block with color helpers
+6. Follow existing formatting patterns
+
+### **Code Organization Rules**
+- **NO logic in main()**: Only orchestration calls
+- **Module independence**: Each class self-contained
+- **Configuration-driven**: All visuals via JSON
+- **Error resilience**: Continue if module fails
+- **Resource cleanup**: Automatic RAII management
+
+### **Testing Considerations**
+- Toggle `LOAD_DEFAULT_CONFIG` for development
+- Validate JSON syntax after changes
+- Test with/without admin privileges
+- Verify multi-GPU/multi-monitor scenarios
+- Check color support in target terminals
+
+## 🔍 Key Variables Reference
+
+| Variable | Type | Purpose | Scope |
+|----------|------|---------|-------|
+| `config` | `nlohmann::json` | Parsed configuration | Main |
+| `colors` | `map<string,string>` | ANSI color mapping | Main |
+| `r` | `string` | Reset color shorthand | Main |
+| `config_loaded` | `bool` | JSON parse success flag | Main |
+| `userConfigPath` | `string` | Production config path | Main |
+| `configDir` | `string` | AppData directory path | Main |
+| `LOAD_DEFAULT_CONFIG` | `bool` | Dev/production toggle | Main |
+
+## 🚨 Error Handling Strategy
+
+### **Graceful Degradation**
+- ASCII art failure → Continue without art
+- Module failure → Skip section with warning
+- JSON parse failure → Use default colors
+- Permission issues → Show partial information
+
+### **Recovery Points**
+1. ASCII art loading (`art.loadFromFile()`)
+2. Configuration loading (`config_file.is_open()`)
+3. Module initialization (try-catch in modules)
+4. Output streaming (continue on stream failure)
+
+## 📁 File Dependencies
+
+### **Required Headers (31 total)**
+- System: `<iostream>`, `<iomanip>`, `<vector>`, `<functional>`
+- Windows: `<windows.h>`, `<shlobj.h>`, `<direct.h>`
+- JSON: `"nlohmann/json.hpp"`
+- Project modules: `"AsciiArt.h"`, `"OSInfo.h"`, ... (28 modules)
+
+### **Required Libraries**
+- Standard C++17 runtime
+- Windows API libraries
+- nlohmann JSON (header-only)
+
+## 🔮 Extension Points
+
+### **Easy Additions**
+1. **New compact module**: Follow `CompactX.h` pattern
+2. **New detailed section**: Add to JSON and output block
+3. **New data points**: Extend existing modules
+4. **Color schemes**: JSON color mapping additions
+
+### **Architectural Extensions**
+1. **Export formats**: JSON/XML output methods
+2. **Historical tracking**: Database logging
+3. **Remote monitoring**: Network transmission
+4. **Plugin system**: Dynamic module loading
+
+## 📝 Maintenance Notes
+
+### **Common Issues**
+- WMI query permissions require admin rights
+- ANSI colors may not work in all terminals
+- Very wide ASCII art can overflow terminal
+- Disk speed measurement may slow startup
+
+### **Optimization Opportunities**
+- Lazy initialization of heavy modules
+- Cache results for repeated queries
+- Parallel module data gathering
+- Progressive output streaming
+
+This architecture supports team development through clear separation of concerns, standardized interfaces, and comprehensive configuration-driven customization. Each team member can own specific modules while maintaining consistent integration patterns.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
