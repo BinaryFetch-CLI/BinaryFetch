@@ -37,7 +37,7 @@ No prompts.
 No errors.
 No user intervention.
 
----
+
 ![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/21312.png?raw=true)
 
 ## 🗂️ User Customization (Only 2 Files)
