@@ -13,6 +13,21 @@
 #include <shlobj.h>
 #include <direct.h>
 // ASCII Art functionality
+#include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+
+#include <iostream>
+#include <iomanip>        // Formatting utilities (setw, precision)
+#include <vector>
+#include <functional>
+#include <sstream>        // For string stream operations
+#include <fstream>
+#include <string>
+#include <fstream>
+#include <regex>
+#include <windows.h>
+#include <shlobj.h>
+#include <direct.h>
+// ASCII Art functionality
 #include "AsciiArt.h"
 
 // ------------------ Full System Info Modules ------------------
@@ -46,7 +61,7 @@
 
 
 
-#include "nlohmann/json.hpp"  // JSON library
+#include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
 
@@ -86,6 +101,8 @@ int main(){
         std::cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
         // Program continues even if art fails to load
     }
+
+
 
     // ========== AUTO CONFIG FILE SETUP (Windows only) ==========
     std::string userConfigPath;
