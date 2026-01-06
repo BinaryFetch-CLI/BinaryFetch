@@ -193,9 +193,9 @@ int main(){
     }
 
     // Display GPU information
-    std::cout << "=== GPU Detection ===" << std::endl;
-    std::cout << "NVIDIA GPU Present: " << (CompactScreen::isNvidiaPresent() ? "Yes" : "No") << std::endl;
-    std::cout << "AMD GPU Present: " << (CompactScreen::isAMDPresent() ? "Yes" : "No") << std::endl;
+    //std::cout << "=== GPU Detection ===" << std::endl;
+    //std::cout << "NVIDIA GPU Present: " << (CompactScreen::isNvidiaPresent() ? "Yes" : "No") << std::endl;
+    //std::cout << "AMD GPU Present: " << (CompactScreen::isAMDPresent() ? "Yes" : "No") << std::endl;
 
     //-----------------------------testing site end-------------------------
 
@@ -256,7 +256,7 @@ int main(){
 // false = load user config from AppData
 // appdata path: C:\Users\Default\AppData\Local\BinaryFetch
 
-    bool LOAD_DEFAULT_CONFIG = false;
+    bool LOAD_DEFAULT_CONFIG = true;
     // ======================================================
 
 
@@ -527,63 +527,101 @@ int main(){
         }
 
 
-        /*
-        
-                // Compact Screen
-        if (isEnabled("compact_display")) {
-            const auto& screens = c_screen.getScreens();
-            int idx = 1;
+        // Compact Screen
+        if (isEnabled("compact_screen")) {
+            CompactScreen screenDetector;
+            auto screens = screenDetector.getScreens();
 
             if (screens.empty()) {
-                lp.push(
-                    getColor("compact_display", "[Display]", "red") + "[Display]" + r +
-                    getColor("compact_display", "->", "blue") + " -> " + r +
-                    "No displays detected"
-                );
+                // No displays detected - show error message
+                std::ostringstream ss;
+                ss << getColor("compact_screen", "[Display]", "red") << "[Display]" << r
+                    << getColor("compact_screen", "->", "blue") << " -> " << r
+                    << getColor("compact_screen", "name_color", "red") << "No displays detected" << r;
+                lp.push(ss.str());
             }
             else {
-                for (const auto& s : screens) {
+                // Display each detected screen
+                for (size_t i = 0; i < screens.size(); ++i) {
+                    const auto& screen = screens[i];
                     std::ostringstream ss;
 
-                    ss << getColor("compact_display", "[Display]", "red")
-                        << "[Display " << idx++ << "]" << r
-                        << getColor("compact_display", "->", "blue")
-                        << " -> " << r;
+                    // Header: [Display N] ->
+                    ss << getColor("compact_screen", "[Display]", "red")
+                        << "[Display " << (i + 1) << "]" << r
+                        << getColor("compact_screen", "->", "blue") << " -> " << r;
 
-                    // ---- Display name ----
-                    if (isSubEnabled("compact_display", "show_name")) {
-                        ss << getColor("compact_display", "name_color", "green")
-                            << s.name << r << " ";
+                    // Display name
+                    if (isSubEnabled("compact_screen", "show_name")) {
+                        ss << getColor("compact_screen", "name_color", "green")
+                            << screen.name << r << " ";
                     }
 
-                    // ---- Native resolution + scale ----
-                    if (isSubEnabled("compact_display", "show_resolution")) {
-                        ss << getColor("compact_display", "(", "red") << "(" << r
-                            << getColor("compact_display", "resolution_color", "yellow")
-                            << s.native_width << " x " << s.native_height
-                            << r
-                            << getColor("compact_display", "scale_color", "magenta")
-                            << " | " << s.scale_percent << "% (" << s.scale_mul << ")"
-                            << r
-                            << getColor("compact_display", ")", "red")
-                            << ")" << r << " ";
+                    // Resolution: (3840 x 2160)
+                    if (isSubEnabled("compact_screen", "show_resolution")) {
+                        ss << getColor("compact_screen", "(", "red") << "(" << r
+                            << getColor("compact_screen", "resolution_color", "yellow")
+                            << screen.native_width << r
+                            << getColor("compact_screen", "x", "blue") << " x " << r
+                            << getColor("compact_screen", "resolution_color", "yellow")
+                            << screen.native_height << r
+                            << getColor("compact_screen", ")", "red") << ") " << r;
                     }
 
-                    // ---- Refresh rate ----
-                    if (isSubEnabled("compact_display", "show_refresh")) {
-                        ss << getColor("compact_display", "at_symbol_color", "green")
-                            << "@" << r
-                            << getColor("compact_display", "refresh_color", "cyan")
-                            << s.refresh_rate << "Hz" << r;
+                    // Scale: (scale: 175%)
+                    if (isSubEnabled("compact_screen", "show_scale")) {
+                        ss << getColor("compact_screen", "(", "red") << "(" << r
+                            << getColor("compact_screen", "scale_label", "green") << "scale: " << r
+                            << getColor("compact_screen", "scale_value", "magenta")
+                            << screen.scale_percent << "%" << r
+                            << getColor("compact_screen", ")", "red") << ") " << r;
+                    }
+
+                    // Upscale: (upscale: 4x)
+                    if (isSubEnabled("compact_screen", "show_upscale")) {
+                        ss << getColor("compact_screen", "(", "red") << "(" << r
+                            << getColor("compact_screen", "upscale_label", "green") << "upscale: " << r
+                            << getColor("compact_screen", "upscale_value", "cyan")
+                            << screen.upscale << r
+                            << getColor("compact_screen", ")", "red") << ") " << r;
+                    }
+
+                    // Refresh rate: (60Hz)
+                    if (isSubEnabled("compact_screen", "show_refresh")) {
+                        ss << getColor("compact_screen", "(", "red") << "(" << r
+                            << getColor("compact_screen", "@", "green") << "@" << r
+                            << getColor("compact_screen", "refresh_color", "cyan")
+                            << screen.refresh_rate << "Hz" << r
+                            << getColor("compact_screen", ")", "red") << ")" << r;
                     }
 
                     lp.push(ss.str());
                 }
             }
         }
+        /*
+        
+        ## 🎨 Output Examples
 
+            ** With all options enabled : **
+            ```
+            [Display 1]->ASUS ROG(3840 x 2160) (scale: 175 %) (upscale: 4x) (@60Hz)
+            [Display 2]->Samsung Odyssey(2560 x 1440) (scale: 100 %) (upscale: 1x) (@144Hz)
+            ```
+
+            ** With minimal options(name + refresh only) :**
+            ```
+            [Display 1]->ASUS ROG(@60Hz)
+            [Display 2]->Samsung Odyssey(@144Hz)
+            ```
+
+            ** No displays detected : **
+            ```
+            [Display]->No displays detected
         
         */
+
+            
 
 
         // Compact Memory

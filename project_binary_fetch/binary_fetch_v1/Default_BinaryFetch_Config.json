@@ -102,20 +102,29 @@
       "clock_color": "red"
     }
   },
-  "compact_display": {
+  "compact_screen": {
     "enabled": true,
+    "show_header": true,
     "show_name": true,
     "show_resolution": true,
+    "show_scale": true,
+    "show_upscale": false,
     "show_refresh": true,
     "colors": {
-      "[Display]": "cyan",
-      "(": "green",
-      ")": "green",
-      "->": "green",
-      "name_color": "green",
-      "resolution_color": "green",
-      "at_symbol_color": "green",
-      "refresh_color": "green"
+      "[Display]": "red",
+      "->": "red",
+      "header_text": "red",
+      "name_color": "red",
+      "(": "red",
+      ")": "red",
+      "resolution_color": "red",
+      "x": "red",
+      "scale_label": "red",
+      "scale_value": "red",
+      "upscale_label": "red",
+      "upscale_value": "red",
+      "@": "red",
+      "refresh_color": "red"
     }
   },
   "compact_memory": {
