@@ -155,7 +155,7 @@ int main(){
     CompactAudio c_audio;
     CompactOS c_os;
     CompactCPU c_cpu;
-    CompactScreen c_screen;
+   // CompactScreen c_screen;
     CompactMemory c_memory;
     CompactSystem c_system;
     CompactGPU c_gpu;
@@ -166,6 +166,40 @@ int main(){
 
 
     TimeInfo time;
+
+
+    //-----------------------------testing site start-------------------------
+    CompactScreen screenDetector;
+
+    // Get all detected screens - note: getScreens() returns by value
+    auto screens = screenDetector.getScreens();
+
+    if (screens.empty()) {
+        std::cerr << "No displays detected!" << std::endl;
+        return 1;
+    }
+
+    std::cout << "=== Detected Displays ===" << std::endl << std::endl;
+
+    for (size_t i = 0; i < screens.size(); ++i) {
+        const auto& screen = screens[i];
+
+        // Format: Display Name (3840 x 2160) (scale: 175%) (upscale: 4x) (60Hz)
+        std::cout << screen.name << " "
+            << "(" << screen.native_width << " x " << screen.native_height << ") "
+            << "(scale: " << screen.scale_percent << "%) "
+            << "(upscale: " << screen.upscale << ") "
+            << "(" << screen.refresh_rate << "Hz)" << std::endl;
+    }
+
+    // Display GPU information
+    std::cout << "=== GPU Detection ===" << std::endl;
+    std::cout << "NVIDIA GPU Present: " << (CompactScreen::isNvidiaPresent() ? "Yes" : "No") << std::endl;
+    std::cout << "AMD GPU Present: " << (CompactScreen::isAMDPresent() ? "Yes" : "No") << std::endl;
+
+    //-----------------------------testing site end-------------------------
+
+
 
     //lp.push("[Second] -> " + std::to_string(time.getSecond()));
     //lp.push("[Minute] -> " + std::to_string(time.getMinute()));
@@ -292,6 +326,10 @@ int main(){
         };
 
     std::string r = colors["reset"];
+
+
+    
+
 
 
         //----------------- SECTIONS -----------------//

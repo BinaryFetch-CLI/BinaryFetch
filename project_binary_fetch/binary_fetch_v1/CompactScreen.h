@@ -1,22 +1,60 @@
-#pragma once
+﻿#pragma once
+
 #include <string>
 #include <vector>
+#include <windows.h>
+
+struct ScreenInfo {
+    std::string name;           // Friendly display name (e.g., "ASUS VG27AQ")
+    int native_width;           // Actual panel resolution width
+    int native_height;          // Actual panel resolution height
+    int current_width;          // Current Windows desktop resolution width
+    int current_height;         // Current Windows desktop resolution height
+    int refresh_rate;           // Refresh rate in Hz
+    int scale_percent;          // Windows DPI scaling (e.g., 100, 125, 150, 175, 200)
+    std::string scale_mul;      // Formatted scale multiplier (e.g., "1x", "1.75x")
+    std::string upscale;        // GPU upscale info (e.g., "Off", "2x (NVIDIA DSR)", "4x (AMD VSR)")
+};
 
 class CompactScreen {
 public:
-    struct ScreenInfo {
-        std::string brand_name;   // monitor model / brand (e.g. "HP M22f")
-        std::string resolution;   // "1920 x 1080"
-        int refresh_rate;         // e.g. 60
-    };
+    CompactScreen();
+
+    // Get all detected screens
+    std::vector<ScreenInfo> getScreens() const { return screens; }
+
+    // Check if NVIDIA GPU is present
+    static bool isNvidiaPresent();
+
+    // Check if AMD GPU is present
+    static bool isAMDPresent();
+
+    // Convert scale percentage to multiplier string (e.g., 150 -> "1.5x")
+    static std::string scaleMultiplier(int scalePercent);
+
+    // Compute upscale factor from current vs native resolution
+    static int computeUpscaleFactor(int currentWidth, int nativeWidth);
+
+    // Refresh screen information
+    bool refresh();
 
 private:
     std::vector<ScreenInfo> screens;
 
-public:
-    CompactScreen();                              // populates screens on construction
-    std::vector<ScreenInfo> get_screens() const;  // returns vector of screens
+    // Population methods
+    bool populateFromDXGI();
+    bool enrichWithNVAPI();
+    bool enrichWithADL();
 
-    // optional convenience: get a formatted multiline string using "Screen" wording
-    std::string get_formatted() const;
+    // Helper to get friendly name from EDID
+    std::string getFriendlyNameFromEDID(const std::wstring& deviceName);
+
+    // Helper to parse EDID for native resolution and name
+    struct EDIDInfo {
+        std::string friendlyName;
+        int nativeWidth;
+        int nativeHeight;
+        bool valid;
+    };
+    EDIDInfo parseEDID(const unsigned char* edid, size_t size);
 };

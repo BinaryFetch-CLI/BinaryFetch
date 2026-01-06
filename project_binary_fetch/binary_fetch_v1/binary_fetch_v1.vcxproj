@@ -22,7 +22,6 @@
     <ClInclude Include="AsciiArt.h" />
     <ClInclude Include="CompactAudio.h" />
     <ClInclude Include="CompactCPU.h" />
-    <ClInclude Include="CompactDisplay.h" />
     <ClInclude Include="CompactGPU.h" />
     <ClInclude Include="CompactMemory.h" />
     <ClInclude Include="CompactNetwork.h" />
@@ -71,7 +70,6 @@
   <ItemGroup>
     <ClCompile Include="AsciiArt.cpp" />
     <ClCompile Include="CompactAudio.cpp" />
-    <ClCompile Include="CompactDisplay.cpp" />
     <ClCompile Include="CompactGPU.cpp" />
     <ClCompile Include="CompactMemory.cpp" />
     <ClCompile Include="CompactNetwork.cpp" />

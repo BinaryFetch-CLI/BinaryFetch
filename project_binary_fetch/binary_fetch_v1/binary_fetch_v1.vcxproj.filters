@@ -67,9 +67,6 @@
     <ClInclude Include="CompactCPU.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactDisplay.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="CompactScreen.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -196,9 +193,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="CompactCPU.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="CompactDisplay.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="CompactScreen.cpp">
