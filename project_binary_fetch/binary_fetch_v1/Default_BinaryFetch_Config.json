@@ -258,7 +258,7 @@
       "total_value": "bright_blue",
       "free_value": "bright_cyan",
       "used_value": "bright_red",
-      "brackets": "bright_black",
+      "brackets": "red",
       "~": "cyan",
       "module_label": "bright_blue",
       " : ": "bright_black",

@@ -837,20 +837,20 @@ int main(){
 
                     std::ostringstream ss;
                     // Structural Marker and Label
-                    ss << getColor("detailed_memory", "~", "blue") << "~ " << r
-                        << getColor("detailed_memory", "module_label", "magenta") << "Memory " << i << r
-                        << getColor("detailed_memory", " : ", "blue") << ": " << r;
+                    ss << getColor("detailed_memory", "~", "white") << "~ " << r
+                        << getColor("detailed_memory", "module_label", "white") << "Memory " << i << r
+                        << getColor("detailed_memory", " : ", "white") << ": " << r;
 
                     // Used Percentage in parentheses
-                    ss << getColor("detailed_memory", "brackets", "blue") << "(" << r
-                        << getColor("detailed_memory", "label", "green") << "Used: " << r
-                        << getColor("detailed_memory", "used_value", "red") << ram.getUsedPercentage() << "%" << r
-                        << getColor("detailed_memory", "brackets", "blue") << ") " << r;
+                    ss << getColor("detailed_memory", "brackets", "white") << "(" << r
+                        << getColor("detailed_memory", "label", "white") << "Used: " << r
+                        << getColor("detailed_memory", "used_value", "white") << ram.getUsedPercentage() << "%" << r
+                        << getColor("detailed_memory", "brackets", "white") << ") " << r;
 
                     // Capacity, Type, and Speed
-                    ss << getColor("detailed_memory", "capacity", "green") << capOut.str() << r << " "
+                    ss << getColor("detailed_memory", "capacity", "white") << capOut.str() << r << " "
                         << getColor("detailed_memory", "type", "cyan") << modules[i].type << r << " "
-                        << getColor("detailed_memory", "speed", "yellow") << modules[i].speed << r;
+                        << getColor("detailed_memory", "speed", "white") << modules[i].speed << r;
 
                     lp.push(ss.str());
                 }
