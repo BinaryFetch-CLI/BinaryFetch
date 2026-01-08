@@ -651,28 +651,28 @@ int main(){
         // Compact GPU
         if (isEnabled("compact_gpu")) {
             std::ostringstream ss;
-            ss << getColor("compact_gpu", "[GPU]", "red") << "[GPU]" << r
-                << getColor("compact_gpu", "->", "blue") << " -> " << r;
+            ss << getColor("compact_gpu", "[GPU]", "white") << "[GPU]" << r
+                << getColor("compact_gpu", "->", "white") << " -> " << r;
 
-            if (isSubEnabled("compact_gpu", "show_name")) ss << getColor("compact_gpu", "name_color", "blue") << c_gpu.getGPUName() << r;
+            if (isSubEnabled("compact_gpu", "show_name")) ss << getColor("compact_gpu", "name_color", "white") << c_gpu.getGPUName() << r;
 
             if (isSubEnabled("compact_gpu", "show_usage")) {
-                ss << getColor("compact_gpu", "(", "red") << " (" << r
-                    << getColor("compact_gpu", "usage_color", "yellow") << c_gpu.getGPUUsagePercent() << "%" << r
-                    << getColor("compact_gpu", ")", "red") << ")" << r;
+                ss << getColor("compact_gpu", "(", "white") << " (" << r
+                    << getColor("compact_gpu", "usage_color", "white") << c_gpu.getGPUUsagePercent() << "%" << r
+                    << getColor("compact_gpu", ")", "white") << ")" << r;
             }
 
             if (isSubEnabled("compact_gpu", "show_vram")) {
-                ss << getColor("compact_gpu", "(", "red") << " (" << r
-                    << getColor("compact_gpu", "vram_color", "cyan") << c_gpu.getVRAMGB() << " GB" << r
-                    << getColor("compact_gpu", ")", "red") << ")" << r;
+                ss << getColor("compact_gpu", "(", "white") << " (" << r
+                    << getColor("compact_gpu", "vram_color", "white") << c_gpu.getVRAMGB() << " GB" << r
+                    << getColor("compact_gpu", ")", "white") << ")" << r;
             }
 
             if (isSubEnabled("compact_gpu", "show_freq")) {
-                ss << getColor("compact_gpu", "(", "red") << " (" << r
-                    << getColor("compact_gpu", "at_symbol_color", "green") << "@" << r
-                    << getColor("compact_gpu", "freq_color", "magenta") << c_gpu.getGPUFrequency() << r
-                    << getColor("compact_gpu", ")", "red") << ")" << r;
+                ss << getColor("compact_gpu", "(", "white") << " (" << r
+                    << getColor("compact_gpu", "at_symbol_color", "white") << "@" << r
+                    << getColor("compact_gpu", "freq_color", "white") << c_gpu.getGPUFrequency() << r
+                    << getColor("compact_gpu", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
