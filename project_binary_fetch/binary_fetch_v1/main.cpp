@@ -723,26 +723,26 @@ int main(){
         // Compact Network
         if (isEnabled("compact_network")) {
             std::ostringstream ss;
-            ss << getColor("compact_network", "[Network]", "red") << "[Network]" << r
-                << getColor("compact_network", "->", "blue") << " -> " << r;
+            ss << getColor("compact_network", "[Network]", "white") << "[Network]" << r
+                << getColor("compact_network", "->", "white") << " -> " << r;
 
             if (isSubEnabled("compact_network", "show_name")) {
-                ss << getColor("compact_network", "(", "red") << "(" << r
-                    << getColor("compact_network", "label_color", "green") << "Name: " << r
-                    << getColor("compact_network", "name_color", "green") << c_net.get_network_name()<< r
-                    << getColor("compact_network", ")", "red") << ") " << r;
+                ss << getColor("compact_network", "(", "white") << "(" << r
+                    << getColor("compact_network", "label_color", "white") << "Name: " << r
+                    << getColor("compact_network", "name_color", "white") << c_net.get_network_name()<< r
+                    << getColor("compact_network", ")", "white") << ") " << r;
             }
             if (isSubEnabled("compact_network", "show_type")) {
-                ss << getColor("compact_network", "(", "red") << "(" << r
-                    << getColor("compact_network", "label_color", "green") << "Type: " << r
-                    << getColor("compact_network", "type_color", "yellow") << c_net.get_network_type() << r
-                    << getColor("compact_network", ")", "red") << ") " << r;
+                ss << getColor("compact_network", "(", "white") << "(" << r
+                    << getColor("compact_network", "label_color", "white") << "Type: " << r
+                    << getColor("compact_network", "type_color", "white") << c_net.get_network_type() << r
+                    << getColor("compact_network", ")", "white") << ") " << r;
             }
             if (isSubEnabled("compact_network", "show_ip")) {
-                ss << getColor("compact_network", "(", "red") << "(" << r
-                    << getColor("compact_network", "label_color", "green") << "ip: " << r
-                    << getColor("compact_network", "ip_color", "magenta") << c_net.get_network_ip() << r
-                    << getColor("compact_network", ")", "red") << ")" << r;
+                ss << getColor("compact_network", "(", "white") << "(" << r
+                    << getColor("compact_network", "label_color", "white") << "ip: " << r
+                    << getColor("compact_network", "ip_color", "white") << c_net.get_network_ip() << r
+                    << getColor("compact_network", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
