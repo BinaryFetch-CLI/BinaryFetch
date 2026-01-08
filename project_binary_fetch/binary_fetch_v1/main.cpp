@@ -313,7 +313,7 @@ int main(){
             std::ostringstream ss;
             ss << getColor("header", "prefix_color", "bright_red") << "~>> " << r
                 << getColor("header", "title_color", "green") << "BinaryFetch" << r
-                << getColor("header", "line_color", "red") << "_____________________________________________________" << r;
+                << getColor("header", "line_color", "red") << "________________________________________________" << r;
             lp.push(ss.str());
         }
 
@@ -534,7 +534,7 @@ int main(){
                     // Resolution: (3840 x 2160)
                     if (isSubEnabled("compact_screen", "show_resolution")) {
                         ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "resolution_color", "white")
+                            << getColor("compact_screen", "resolution_color", "White")
                             << screen.native_width << r
                             << getColor("compact_screen", "x", "white") << " x " << r
                             << getColor("compact_screen", "resolution_color", "white")
@@ -545,7 +545,7 @@ int main(){
                     // Scale: (scale: 175%)
                     if (isSubEnabled("compact_screen", "show_scale")) {
                         ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "scale_label", "white") << "white: " << r
+                            << getColor("compact_screen", "scale_label", "white") << "Scale: " << r
                             << getColor("compact_screen", "scale_value", "white")
                             << screen.scale_percent << "%" << r
                             << getColor("compact_screen", ")", "white") << ") " << r;
