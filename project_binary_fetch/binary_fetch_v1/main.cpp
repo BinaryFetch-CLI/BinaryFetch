@@ -479,23 +479,23 @@ int main(){
         // Compact CPU
         if (isEnabled("compact_cpu")) {
             std::ostringstream ss;
-            ss << getColor("compact_cpu", "[CPU]", "red") << "[CPU]" << r
+            ss << getColor("compact_cpu", "[CPU]", "white") << "[CPU]" << r
                 << getColor("compact_cpu", "->", "white") << " -> " << r;
 
             if (isSubEnabled("compact_cpu", "show_name")) ss << getColor("compact_cpu", "name_color", "white") << c_cpu.getCPUName() << r;
 
             if (isSubEnabled("compact_cpu", "show_cores") || isSubEnabled("compact_cpu", "show_threads")) {
-                ss << getColor("compact_cpu", "(", "red") << " (" << r;
-                if (isSubEnabled("compact_cpu", "show_cores")) ss << getColor("compact_cpu", "core_color", "yellow") << c_cpu.getCPUCores() << r << getColor("compact_cpu", "text_color", "green") << "C" << r;
+                ss << getColor("compact_cpu", "(", "white") << " (" << r;
+                if (isSubEnabled("compact_cpu", "show_cores")) ss << getColor("compact_cpu", "core_color", "white") << c_cpu.getCPUCores() << r << getColor("compact_cpu", "text_color", "white") << "C" << r;
                 if (isSubEnabled("compact_cpu", "show_cores") && isSubEnabled("compact_cpu", "show_threads")) ss << getColor("compact_cpu", "separator_color", "blue") << "/" << r;
-                if (isSubEnabled("compact_cpu", "show_threads")) ss << getColor("compact_cpu", "thread_color", "yellow") << c_cpu.getCPUThreads() << r << getColor("compact_cpu", "text_color", "green") << "T" << r;
-                ss << getColor("compact_cpu", ")", "red") << ")" << r;
+                if (isSubEnabled("compact_cpu", "show_threads")) ss << getColor("compact_cpu", "thread_color", "white") << c_cpu.getCPUThreads() << r << getColor("compact_cpu", "text_color", "white") << "T" << r;
+                ss << getColor("compact_cpu", ")", "white") << ")" << r;
             }
              
             if (isSubEnabled("compact_cpu", "show_clock")) {
                 ss << std::fixed << std::setprecision(2)
-                    << getColor("compact_cpu", "at_symbol_color", "green") << " @" << r
-                    << getColor("compact_cpu", "clock_color", "cyan") << " " << c_cpu.getClockSpeed() << " GHz" << r;
+                    << getColor("compact_cpu", "at_symbol_color", "white") << " @" << r
+                    << getColor("compact_cpu", "clock_color", "white") << " " << c_cpu.getClockSpeed() << " GHz" << r;
             }
             lp.push(ss.str());
         }
