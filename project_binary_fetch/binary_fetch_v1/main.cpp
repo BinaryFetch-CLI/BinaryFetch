@@ -479,8 +479,8 @@ int main(){
         // Compact CPU
         if (isEnabled("compact_cpu")) {
             std::ostringstream ss;
-            ss << getColor("compact_cpu", "[CPU]", "white") << "[CPU]" << r
-                << getColor("compact_cpu", "->", "white") << " -> " << r;
+            ss << getColor("compact_cpu", "CPU", "white") << "CPU" << r
+                << getColor("compact_cpu", "CPU_:", "white") << ": " << r;
 
             if (isSubEnabled("compact_cpu", "show_name")) ss << getColor("compact_cpu", "name_color", "white") << c_cpu.getCPUName() << r;
 
