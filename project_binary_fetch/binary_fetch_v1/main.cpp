@@ -723,8 +723,8 @@ int main(){
         // Compact Network
         if (isEnabled("compact_network")) {
             std::ostringstream ss;
-            ss << getColor("compact_network", "[Network]", "white") << "[Network]" << r
-                << getColor("compact_network", "->", "white") << " -> " << r;
+            ss << getColor("compact_network", "Network", "white") << "Network" << r
+                << getColor("compact_network", "Network_:", "white") << ": " << r;
 
             if (isSubEnabled("compact_network", "show_name")) {
                 ss << getColor("compact_network", "(", "white") << "(" << r
