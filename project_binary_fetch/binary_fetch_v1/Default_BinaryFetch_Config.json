@@ -112,7 +112,9 @@
     "show_usage": true,
     "show_vram": true,
     "show_freq": true,
+    "show_emoji": true,
     "colors": {
+      "emoji_color": "green",
       "GPU": "blue",
       "(": "yellow",
       ")": "yellow",

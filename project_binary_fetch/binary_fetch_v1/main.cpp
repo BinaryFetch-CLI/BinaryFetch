@@ -512,6 +512,9 @@ int main(){
         // Compact GPU
         if (isEnabled("compact_gpu")) {
             std::ostringstream ss;
+
+            if (isSubEnabled("compact_gpu", "show_emoji")) ss << getColor("compact_gpu", "emoji_color", "white") << u8"🧩" << r << " ";
+
             ss << getColor("compact_gpu", "GPU", "white") << "GPU" << r
                 << getColor("compact_gpu", "GPU_:", "white") << ": " << r;
 
