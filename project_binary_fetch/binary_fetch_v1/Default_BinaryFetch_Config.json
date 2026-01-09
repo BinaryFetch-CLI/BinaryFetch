@@ -135,7 +135,9 @@
     "show_scale": true,
     "show_upscale": false,
     "show_refresh": true,
+    "show_emoji": true,
     "colors": {
+      "emoji_color": "green",
       "Display": "red",
       "Display_:": "red",
       "header_text": "red",

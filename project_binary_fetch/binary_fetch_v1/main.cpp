@@ -546,6 +546,10 @@ int main(){
         if (isEnabled("compact_screen")) {
             CompactScreen screenDetector;
             auto screens = screenDetector.getScreens();
+            std::ostringstream ss;
+
+
+            
 
             if (screens.empty()) {
                 // No displays detected - show error message
@@ -560,6 +564,8 @@ int main(){
                 for (size_t i = 0; i < screens.size(); ++i) {
                     const auto& screen = screens[i];
                     std::ostringstream ss;
+
+                    if (isSubEnabled("compact_screen", "show_emoji")) ss << getColor("compact_screen", "emoji_color", "white") << u8"🧩" << r << " ";
 
                     // Header: [Display N] ->
                     ss << getColor("compact_screen", "Display", "white")
