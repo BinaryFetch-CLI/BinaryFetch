@@ -457,7 +457,7 @@ int main(){
         if (isEnabled("compact_os")) {
             std::ostringstream ss;
 
-            if (isSubEnabled("compact_os", "show_emoji")) ss << getColor("compact_os", "emoji_color", "white") << u8"🧩" << r << " ";
+            if (isSubEnabled("compact_os", "show_emoji")) ss << getColor("compact_os", "emoji_color", "white") << u8"🧩 " << r ;
 
             ss << getColor("compact_os", "OS", "white") << "OS" << r
                 << getColor("compact_os", "OS_:", "white") << ": " << r;
@@ -484,6 +484,9 @@ int main(){
         // Compact CPU
         if (isEnabled("compact_cpu")) {
             std::ostringstream ss;
+
+            if (isSubEnabled("compact_cpu", "show_emoji")) ss << getColor("compact_cpu", "emoji_color", "white") << u8"💻 " << r;
+
             ss << getColor("compact_cpu", "CPU", "white") << "CPU" << r
                 << getColor("compact_cpu", "CPU_:", "white") << ": " << r;
 

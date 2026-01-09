@@ -90,7 +90,9 @@
     "show_cores": true,
     "show_threads": true,
     "show_clock": true,
+    "show_emoji": true,
     "colors": {
+      "emoji_color": "green",
       "CPU": "blue",
       "(": "red",
       ")": "red",
