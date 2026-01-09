@@ -70,7 +70,9 @@
     "show_build": true,
     "show_arch": true,
     "show_uptime": true,
+    "show_emoji": true,
     "colors": {
+      "emoji_color":"green",
       "OS": "red",
       "(": "blue",
       ")": "blue",

@@ -456,9 +456,13 @@ int main(){
         // Compact OS
         if (isEnabled("compact_os")) {
             std::ostringstream ss;
+
+            if (isSubEnabled("compact_os", "show_emoji")) ss << getColor("compact_os", "emoji_color", "white") << u8"🧩" << r << " ";
+
             ss << getColor("compact_os", "OS", "white") << "OS" << r
                 << getColor("compact_os", "OS_:", "white") << ": " << r;
 
+            
             if (isSubEnabled("compact_os", "show_name")) ss << getColor("compact_os", "name_color", "white") << c_os.getOSName() << r << " ";
             if (isSubEnabled("compact_os", "show_build")) ss << getColor("compact_os", "build_color", "white") << c_os.getOSBuild() << r;
 
