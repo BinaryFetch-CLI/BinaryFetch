@@ -7,6 +7,8 @@
   },
   "compact_time": {
     "enabled": true,
+    "show_emoji": true,
+    "emoji_color": "yellow",
     "time_section": {
       "enabled": true,
       "show_label": true,

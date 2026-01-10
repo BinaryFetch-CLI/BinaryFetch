@@ -171,7 +171,7 @@ int main(){
 
 
     //-----------------------------testing site start-------------------------
-    std::cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n";
+    // std::cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n";
     //-----------------------------testing site end-------------------------
 
 
@@ -314,7 +314,7 @@ int main(){
             std::ostringstream ss;
             ss << getColor("header", "prefix_color", "bright_red") << "~>> " << r
                 << getColor("header", "title_color", "green") << "BinaryFetch" << r
-                << getColor("header", "line_color", "red") << "________________________________________________" << r;
+                << getColor("header", "line_color", "red") << "_____________________________________________________" << r;
             lp.push(ss.str());
         }
 
@@ -325,6 +325,8 @@ int main(){
         {
             TimeInfo time;
             std::ostringstream ss;
+
+            if (isSubEnabled("compact_time", "show_emoji")) ss << getColor("compact_time", "emoji_color", "white") << u8"🧩" << r << " ";
 
             // Helper to get colors from nested time structure
             auto getTimeColor = [&](const std::string& subsection, const std::string& key, const std::string& defaultColor = "white") -> std::string {
