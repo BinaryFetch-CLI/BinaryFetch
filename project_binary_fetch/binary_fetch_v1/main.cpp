@@ -314,7 +314,10 @@ int main(){
             std::ostringstream ss;
             ss << getColor("header", "prefix_color", "bright_red") << "~>> " << r
                 << getColor("header", "title_color", "green") << "BinaryFetch" << r
-                << getColor("header", "line_color", "red") << "_____________________________________________________" << r;
+                << getColor("header", "line_color", "red") << r;
+
+            if (isSubEnabled("header", "show_line")) ss << getColor("header", "line_color", "white") << "_____________________________________________________" << r << " ";
+
             lp.push(ss.str());
         }
 

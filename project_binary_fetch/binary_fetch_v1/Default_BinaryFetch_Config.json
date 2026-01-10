@@ -3,7 +3,8 @@
     "enabled": true,
     "prefix_color": "bright_red",
     "title_color": "bright_cyan",
-    "line_color": "bright_blue"
+      "show_line": true,
+      "line_color": "green"
   },
   "compact_time": {
     "enabled": true,
