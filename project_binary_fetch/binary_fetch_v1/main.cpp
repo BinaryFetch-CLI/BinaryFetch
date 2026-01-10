@@ -567,7 +567,7 @@ int main(){
                     const auto& screen = screens[i];
                     std::ostringstream ss;
 
-                    if (isSubEnabled("compact_screen", "show_emoji")) ss << getColor("compact_screen", "emoji_color", "white") << u8"🧩" << r << " ";
+                    if (isSubEnabled("compact_screen", "show_emoji")) ss << getColor("compact_screen", "emoji_color", "white") << u8"📺" << r << " ";
 
                     // Header: [Display N] ->
                     ss << getColor("compact_screen", "Display", "white")
