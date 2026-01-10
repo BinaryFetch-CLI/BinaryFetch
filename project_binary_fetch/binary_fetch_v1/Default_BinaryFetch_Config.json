@@ -252,7 +252,11 @@
     "enabled": true,
     "show_usage": true,
     "show_capacity": true,
+    "show_disk_usage_emoji": true,
+    "show_disk_capacity_emoji": true,
     "colors": {
+      "disk_usage_emoji_color": "green",
+      "disk_capacity_emoji_color": "green",
       "Disk Usage": "green",
       "Disk_Usage_:": "red",
       "Disk Cap": "green",

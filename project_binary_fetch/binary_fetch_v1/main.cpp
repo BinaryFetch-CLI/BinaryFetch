@@ -788,6 +788,9 @@ int main(){
             if (isSubEnabled("compact_disk", "show_usage")) {
                 auto disks = disk.getAllDiskUsage();
                 std::ostringstream ss;
+
+                if (isSubEnabled("compact_disk", "show_disk_usage_emoji")) ss << getColor("compact_disk", "disk_usage_emoji_color", "white") << u8"🧩" << r << " ";
+
                 ss << getColor("compact_disk", "Disk Usage", "white") << "Disk Usage" << r << getColor("compact_disk", "Disk_Usage_:", "white") << ": " << r;
                 for (const auto& d : disks) {
                     ss << getColor("compact_disk", "(", "white") << "(" << r << getColor("compact_disk", "letter_color", "white") << d.first[0] << ":" << r
@@ -800,6 +803,9 @@ int main(){
             if (isSubEnabled("compact_disk", "show_capacity")) {
                 auto caps = disk.getDiskCapacity();
                 std::ostringstream sc;
+
+                if (isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"🧩" << r << " ";
+
                 sc << getColor("compact_disk", "Disk Cap", "white") << "Disk Cap" << r << getColor("compact_disk", "Disk_Cap_:", "white") << ": " << r;
                 for (const auto& c : caps) {
                     sc << getColor("compact_disk", "(", "white") << "(" << r << getColor("compact_disk", "letter_color", "white") << c.first[0] << r
