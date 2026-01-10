@@ -759,7 +759,7 @@ int main(){
         if (isEnabled("compact_network")) {
             std::ostringstream ss;
 
-            if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🧩" << r << " ";
+            if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
 
             ss << getColor("compact_network", "Network", "white") << "Network" << r
                 << getColor("compact_network", "Network_:", "white") << ": " << r;
