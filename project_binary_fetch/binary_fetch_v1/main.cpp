@@ -806,7 +806,7 @@ int main(){
                 auto caps = disk.getDiskCapacity();
                 std::ostringstream sc;
 
-                if (isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"🧩" << r << " ";
+                if (isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"📊" << r << " ";
 
                 sc << getColor("compact_disk", "Disk Cap", "white") << "Disk Cap" << r << getColor("compact_disk", "Disk_Cap_:", "white") << ": " << r;
                 for (const auto& c : caps) {
