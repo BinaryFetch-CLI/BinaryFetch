@@ -694,7 +694,7 @@ int main(){
             if (isSubEnabled("compact_audio", "show_output")) {
                 std::ostringstream ss2;
 
-                if (isSubEnabled("compact_audio", "show_audio_output_emoji")) ss2 << getColor("compact_audio", "audio_input_emoji_color", "white") << u8"🧩" << r << " ";
+                if (isSubEnabled("compact_audio", "show_audio_output_emoji")) ss2 << getColor("compact_audio", "audio_input_emoji_color", "white") << u8"🎧" << r << " ";
 
                 ss2 << getColor("compact_audio", "Audio Output", "white") << "Audio Output" << r
                     << getColor("compact_audio", "Audio_Output_:", "white") << ": " << r
