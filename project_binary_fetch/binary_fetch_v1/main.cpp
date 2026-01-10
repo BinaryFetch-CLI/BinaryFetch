@@ -326,7 +326,7 @@ int main(){
             TimeInfo time;
             std::ostringstream ss;
 
-            if (isSubEnabled("compact_time", "show_emoji")) ss << getColor("compact_time", "emoji_color", "white") << u8"🧩" << r << " ";
+            if (isSubEnabled("compact_time", "show_emoji")) ss << getColor("compact_time", "emoji_color", "white") << u8"📅" << r << " ";
 
             // Helper to get colors from nested time structure
             auto getTimeColor = [&](const std::string& subsection, const std::string& key, const std::string& defaultColor = "white") -> std::string {
