@@ -1705,7 +1705,7 @@ int main(){
                     ss << getColor("display_info", "#-", "white") << "#- " << r
                         << getColor("display_info", "error_header_color", "white") << "Display" << r
                         << getColor("display_info", "separator_line", "white")
-                        << " ----------------------------------------------------------#" << r;
+                        << " --------------------------------------------------------#" << r;
                     lp.push(ss.str());
                 }
                 lp.push(getColor("display_info", "error_color", "white") + "No monitors detected." + r);
@@ -1720,7 +1720,7 @@ int main(){
                         ss << getColor("display_info", "#-", "white") << "#- " << r
                             << getColor("display_info", "header_text_color", "white") << "Monitor " << (i + 1) << " " << r
                             << getColor("display_info", "separator_line", "white")
-                            << "--------------------------------------------------------#" << r;
+                            << "------------------------------------------------------#" << r;
                         lp.push(ss.str());
                     }
 
@@ -1839,7 +1839,7 @@ int main(){
                 ss << getColor("user_info", "#-", "white") << "#- " << r
                     << getColor("user_info", "header_text_color", "white") << "User Info " << r
                     << getColor("user_info", "separator_line", "white")
-                    << "----------------------------------------------------#" << r;
+                    << "------------------------------------------------------#" << r;
                 lp.push(ss.str());
             }
 
@@ -1988,7 +1988,7 @@ int main(){
                 ss << getColor("audio_power_info", "#-", "white") << "#- " << r
                     << getColor("audio_power_info", "header_text_color", "white") << "Audio Input " << r
                     << getColor("audio_power_info", "separator_line", "white")
-                    << "-----------------------------------------------------#" << r;
+                    << "----------------------------------------------------#" << r;
                 lp.push(ss.str());
             }
 
