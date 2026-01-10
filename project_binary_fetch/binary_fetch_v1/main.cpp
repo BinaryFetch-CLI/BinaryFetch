@@ -651,7 +651,7 @@ int main(){
         if (isEnabled("compact_memory")) {
             std::ostringstream ss;
 
-            if (isSubEnabled("compact_memory", "show_emoji")) ss << getColor("compact_memory", "emoji_color", "white") << u8"🧩" << r << " ";
+            if (isSubEnabled("compact_memory", "show_emoji")) ss << getColor("compact_memory", "emoji_color", "white") << u8"📟" << r << " ";
 
             ss << getColor("compact_memory", "Memory", "white") << "Memory" << r
                 << getColor("compact_memory", "Memory_:", "white") << ": " << r;
