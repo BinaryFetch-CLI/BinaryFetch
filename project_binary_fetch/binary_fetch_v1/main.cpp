@@ -173,8 +173,7 @@ int main(){
     //-----------------------------testing site start-------------------------
     // std::cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n";
     
-    
-
+   
     
     //-----------------------------testing site end-------------------------
 
@@ -1704,6 +1703,7 @@ int main(){
         if (isEnabled("display_info")) {
             lp.push("");
 
+            const auto& screens = di.getScreens();
 
             for (size_t i = 0; i < screens.size(); ++i) {
                 const auto& s = screens[i];
