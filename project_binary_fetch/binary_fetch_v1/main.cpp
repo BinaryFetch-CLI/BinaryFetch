@@ -1888,7 +1888,6 @@ int main(){
 
 		//end of the BIOS & Motherboard info section///////////////////////////////
 
-
         // User Info (JSON Driven)
         if (isEnabled("user_info")) {
             lp.push("");
@@ -1907,7 +1906,7 @@ int main(){
             if (isSubEnabled("user_info", "show_username")) {
                 std::ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "label_color", "white") << "Username                  " << r
+                    << getColor("user_info", "username_label_color", "white") << "Username                  " << r
                     << getColor("user_info", ":", "white") << ": " << r
                     << getColor("user_info", "username_value_color", "white") << user.get_username() << r;
                 lp.push(ss.str());
@@ -1917,7 +1916,7 @@ int main(){
             if (isSubEnabled("user_info", "show_computer_name")) {
                 std::ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "label_color", "white") << "Computer Name             " << r
+                    << getColor("user_info", "computer_name_label_color", "white") << "Computer Name             " << r
                     << getColor("user_info", ":", "white") << ": " << r
                     << getColor("user_info", "computer_name_value_color", "white") << user.get_computer_name() << r;
                 lp.push(ss.str());
@@ -1927,7 +1926,7 @@ int main(){
             if (isSubEnabled("user_info", "show_domain")) {
                 std::ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "label_color", "white") << "Domain                    " << r
+                    << getColor("user_info", "domain_label_color", "white") << "Domain                    " << r
                     << getColor("user_info", ":", "white") << ": " << r
                     << getColor("user_info", "domain_value_color", "white") << user.get_domain_name() << r;
                 lp.push(ss.str());
