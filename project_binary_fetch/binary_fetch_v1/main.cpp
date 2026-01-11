@@ -1817,86 +1817,9 @@ int main(){
             }
         }
 
-        /*
-        
 
 
-                // Display Info (JSON Driven)
-        if (isEnabled("display_info")) {
-            lp.push("");
-            auto monitors = display.get_all_displays();
-
-            if (monitors.empty()) {
-                if (isSubEnabled("display_info", "show_header")) {
-                    std::ostringstream ss;
-                    ss << getColor("display_info", "#-", "white") << "#- " << r
-                        << getColor("display_info", "error_header_color", "white") << "Display" << r
-                        << getColor("display_info", "separator_line", "white")
-                        << " --------------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-                lp.push(getColor("display_info", "error_color", "white") + "No monitors detected." + r);
-            }
-            else {
-                for (size_t i = 0; i < monitors.size(); ++i) {
-                    auto& m = monitors[i];
-
-                    // Monitor Header
-                    if (isSubEnabled("display_info", "show_header")) {
-                        std::ostringstream ss;
-                        ss << getColor("display_info", "#-", "white") << "#- " << r
-                            << getColor("display_info", "header_text_color", "white") << "Monitor " << (i + 1) << " " << r
-                            << getColor("display_info", "separator_line", "white")
-                            << "------------------------------------------------------#" << r;
-                        lp.push(ss.str());
-                    }
-
-                    // Brand
-                    if (isSubEnabled("display_info", "show_brand")) {
-                        std::ostringstream ss;
-                        ss << getColor("display_info", "~", "white") << "~ " << r
-                            << getColor("display_info", "label_color", "white") << "Brand                    " << r
-                            << getColor("display_info", ":", "white") << ": " << r
-                            << getColor("display_info", "brand_value_color", "white") << m.brand_name << r;
-                        lp.push(ss.str());
-                    }
-
-                    // Resolution
-                    if (isSubEnabled("display_info", "show_resolution")) {
-                        std::ostringstream ss;
-                        ss << getColor("display_info", "~", "white") << "~ " << r
-                            << getColor("display_info", "label_color", "white") << "Resolution               " << r
-                            << getColor("display_info", ":", "white") << ": " << r
-                            << getColor("display_info", "resolution_value_color", "white") << m.resolution << r;
-                        lp.push(ss.str());
-                    }
-
-                    // Refresh Rate
-                    if (isSubEnabled("display_info", "show_refresh_rate")) {
-                        std::ostringstream ss;
-                        ss << getColor("display_info", "~", "white") << "~ " << r
-                            << getColor("display_info", "label_color", "white") << "Refresh Rate             " << r
-                            << getColor("display_info", ":", "white") << ": " << r
-                            << getColor("display_info", "refresh_rate_value_color", "white") << m.refresh_rate << r
-                            << getColor("display_info", "unit_color", "white") << " Hz" << r;
-                        lp.push(ss.str());
-                    }
-                }
-            }
-        }
-
-        // end of the Display info section////////////////////////////////////////////////
-
-
-
-
-
-
-        */
-
-
-
-
+        //END of gpu section/////////////////////////////////////////////////////////////////
 
         // BIOS & Motherboard Info (JSON Driven)
         if (isEnabled("bios_mb_info")) {
@@ -1916,7 +1839,7 @@ int main(){
             if (isSubEnabled("bios_mb_info", "show_bios_vendor")) {
                 std::ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "label_color", "white") << "Bios Vendor              " << r
+                    << getColor("bios_mb_info", "vendor_label_color", "white") << "Bios Vendor               " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
                     << getColor("bios_mb_info", "vendor_value_color", "white") << sys.get_bios_vendor() << r;
                 lp.push(ss.str());
@@ -1926,7 +1849,7 @@ int main(){
             if (isSubEnabled("bios_mb_info", "show_bios_version")) {
                 std::ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "label_color", "white") << "Bios Version             " << r
+                    << getColor("bios_mb_info", "version_label_color", "white") << "Bios Version              " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
                     << getColor("bios_mb_info", "version_value_color", "white") << sys.get_bios_version() << r;
                 lp.push(ss.str());
@@ -1936,7 +1859,7 @@ int main(){
             if (isSubEnabled("bios_mb_info", "show_bios_date")) {
                 std::ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "label_color", "white") << "Bios Date                " << r
+                    << getColor("bios_mb_info", "date_label_color", "white") << "Bios Date                 " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
                     << getColor("bios_mb_info", "date_value_color", "white") << sys.get_bios_date() << r;
                 lp.push(ss.str());
@@ -1946,7 +1869,7 @@ int main(){
             if (isSubEnabled("bios_mb_info", "show_mb_model")) {
                 std::ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "label_color", "white") << "Motherboard Model        " << r
+                    << getColor("bios_mb_info", "model_label_color", "white") << "Motherboard Model         " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
                     << getColor("bios_mb_info", "model_value_color", "white") << sys.get_motherboard_model() << r;
                 lp.push(ss.str());
@@ -1956,7 +1879,7 @@ int main(){
             if (isSubEnabled("bios_mb_info", "show_mb_manufacturer")) {
                 std::ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "label_color", "white") << "Motherboard Manufacturer " << r
+                    << getColor("bios_mb_info", "mfg_label_color", "white") << "Motherboard Manufacturer  " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
                     << getColor("bios_mb_info", "mfg_value_color", "white") << sys.get_motherboard_manufacturer() << r;
                 lp.push(ss.str());
