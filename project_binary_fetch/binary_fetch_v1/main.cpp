@@ -1203,9 +1203,10 @@ int main(){
         // ----------------- END DETAILED STORAGE ----------------- //
 
 
-
-// Network Info (Compact + Extra)
+        // Network Info (Compact + Extra)
         if (isEnabled("network_info")) {
+
+            lp.push("");//blank line....don't use cout !!! it might break the allignment
 
             // Header
             if (isSubEnabled("network_info", "show_header")) {
@@ -1221,7 +1222,7 @@ int main(){
             if (isSubEnabled("network_info", "show_name")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "name_label_color", "white") // Fixed level color
                     << "Network Name              " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "name_value_color", "white")
@@ -1233,7 +1234,7 @@ int main(){
             if (isSubEnabled("network_info", "show_type")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "type_label_color", "white") // Fixed level color
                     << "Network Type              " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "type_value_color", "white")
@@ -1245,7 +1246,7 @@ int main(){
             if (isSubEnabled("network_info", "show_local_ip")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "local_ip_label_color", "white") // Fixed level color
                     << "Local IP                  " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "local_ip_color", "white")
@@ -1257,7 +1258,7 @@ int main(){
             if (isSubEnabled("network_info", "show_public_ip")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "public_ip_label_color", "white") // Fixed level color
                     << "Public IP:                " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "public_ip_color", "white")
@@ -1269,7 +1270,7 @@ int main(){
             if (isSubEnabled("network_info", "show_locale")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "locale_label_color", "white") // Fixed level color
                     << "Locale                    " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "locale_value_color", "white")
@@ -1281,7 +1282,7 @@ int main(){
             if (isSubEnabled("network_info", "show_mac")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "mac_label_color", "white") // Fixed level color
                     << "Mac address               " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "mac_value_color", "white")
@@ -1293,7 +1294,7 @@ int main(){
             if (isSubEnabled("network_info", "show_upload")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "upload_label_color", "white") // Fixed level color
                     << "avg upload speed          " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "upload_value_color", "white")
@@ -1301,21 +1302,19 @@ int main(){
                 lp.push(ss.str());
             }
 
-
             // Download Speed
             if (isSubEnabled("network_info", "show_download")) {
                 std::ostringstream ss;
                 ss << getColor("network_info", "~", "white") << "~ " << r
-                    << getColor("network_info", "label_color", "white")
+                    << getColor("network_info", "download_label_color", "white") // Fixed level color
                     << "avg download speed        " << r
                     << getColor("network_info", ":", "white") << ": " << r
                     << getColor("network_info", "download_value_color", "white")
                     << net.get_network_download_speed() << r;
                 lp.push(ss.str());
             }
-
-
         }
+
         // end of the detailed network section////////////////////////////////////////////////
 
         // OS Info (JSON Driven)

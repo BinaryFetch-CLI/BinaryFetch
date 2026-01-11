@@ -300,7 +300,7 @@
     }
   },
   "detailed_storage": {
-    "enabled": true,
+    "enabled": false,
     "sections": {
       "storage_summary": true,
       "disk_performance": true,
@@ -404,18 +404,25 @@
     "show_download": true,
     "#-": "bright_blue",
     "~": "cyan",
-    ":": "magenta",
+    ":": "red",
     "separator_line": "red",
     "header_text_color": "bright_yellow",
-    "label_color": "bright_cyan",
-    "name_value_color": "green",
-    "type_value_color": "bright_green",
+    "name_label_color": "blue",
+    "name_value_color": "blue",
+    "type_label_color": "blue",
+    "type_value_color": "cyan",
+    "local_ip_label_color": "blue",
     "local_ip_color": "red",
+    "public_ip_label_color": "blue",
     "public_ip_color": "red",
+    "locale_label_color": "blue",
     "locale_value_color": "cyan",
-    "mac_value_color": "magenta",
+    "mac_label_color": "blue",
+    "mac_value_color": "blue",
+    "upload_label_color": "blue",
     "upload_value_color": "bright_red",
-    "download_value_color": "bright_green"
+    "download_label_color": "blue",
+    "download_value_color": "blue"
   },
   "os_info": {
     "enabled": true,
