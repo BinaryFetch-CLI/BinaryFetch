@@ -1723,25 +1723,18 @@ int main(){
         if (isEnabled("display_info")) {
             lp.push("");
 
-            // ---------- Header ----------
-            if (isSubEnabled("display_info", "show_header")) {
-                std::ostringstream ss;
-                ss << getColor("display_info", "#-", "blue") << "#- " << r
-                    << getColor("display_info", "header_text_color", "cyan")
-                    << "Display Info " << r
-                    << getColor("display_info", "separator_line", "red")
-                    << "-----------------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
 
             for (size_t i = 0; i < screens.size(); ++i) {
                 const auto& s = screens[i];
 
-                // ---------- Display Index ----------
-                if (isSubEnabled("display_info", "show_display_index")) {
+                // ---------- Display Banner ----------
+                if (isSubEnabled("display_info", "show_display_banner")) {
                     std::ostringstream ss;
-                    ss << getColor("display_info", "index_color", "cyan")
-                        << "Display " << (i + 1) << r;
+                    ss << getColor("display_info", "#-", "blue") << "#- " << r
+                        << getColor("display_info", "display_banner_text", "cyan")
+                        << "Display " << (i + 1) << " " << r
+                        << getColor("display_info", "display_banner_line", "red")
+                        << "------------------------------------------------------#" << r;
                     lp.push(ss.str());
                 }
 

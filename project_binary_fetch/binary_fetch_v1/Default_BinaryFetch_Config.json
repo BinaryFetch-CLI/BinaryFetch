@@ -510,7 +510,7 @@
   "display_info": {
     "enabled": true,
 
-    "show_header": true,
+    "show_display_banner": true,
     "show_display_index": false,
     "show_name": true,
     "show_applied_resolution": true,
@@ -519,6 +519,8 @@
     "show_scaling": true,
     "show_upscale": true,
     "show_dsr": true,
+    "display_banner_text": "blue",
+    "display_banner_line": "red",
 
     "colors": {
       "#-": "blue",
@@ -559,8 +561,8 @@
       "dsr_brackets_color": "blue",
       "dsr_type_color": "cyan"
     }
-  
-},
+
+  },
   "bios_mb_info": {
     "enabled": true,
     "show_header": true,
