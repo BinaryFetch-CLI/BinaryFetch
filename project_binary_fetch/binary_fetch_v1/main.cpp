@@ -1694,10 +1694,10 @@ int main(){
                             label << getColor("gpu_info", "gpu_index_label_color", "white") << "GPU " << (i + 1) << r;
                         }
                         else {
-                            label << getColor("gpu_info", "#-", "white") << "#-" << r
+                            label << getColor("gpu_info", "#-", "white") << "#- " << r
                                 << getColor("gpu_info", "gpu_index_label_color", "white") << "GPU " << (i + 1) << r
                                 << getColor("gpu_info", "separator_line", "white")
-                                << "------------------------------------------------------------#" << r;
+                                << " ----------------------------------------------------------#" << r;
                         }
 
                         std::string lbl = label.str();
