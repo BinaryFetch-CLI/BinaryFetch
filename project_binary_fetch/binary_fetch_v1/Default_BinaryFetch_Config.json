@@ -304,7 +304,7 @@
     "sections": {
       "storage_summary": true,
       "disk_performance": true,
-      "disk_performance_predicted": true
+      "disk_performance_predicted": false
     },
     "storage_summary": {
       "header": {

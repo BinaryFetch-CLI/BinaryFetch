@@ -104,39 +104,174 @@ int main(){
         // Program continues even if art fails to load
     }
 
+    // ========== AUTO CONFIG FILE SETUP ==========
+    // Toggle for developer convenience
+    bool LOAD_DEFAULT_CONFIG = false;  // true = dev mode, false = production mode
 
-
-    // ========== AUTO CONFIG FILE SETUP (Windows only) ==========
     std::string userConfigPath;
     std::string configDir;
+    std::string configPath;
 
     // Windows: C:\Users\Default\AppData\Local\BinaryFetch\BinaryFetch_Config.json
     configDir = "C:\\Users\\Default\\AppData\\Local\\BinaryFetch";
     userConfigPath = configDir + "\\BinaryFetch_Config.json";
 
-    // Create directory if it doesn't exist
-    DWORD attribs = GetFileAttributesA(configDir.c_str());
-    bool dirExists = (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
-    if (!dirExists) {
-        _mkdir(configDir.c_str());
-    }
+    // Helper function to find default config (like ASCII art does)
+    auto findDefaultConfig = []() -> std::string {
+        std::vector<std::string> searchPaths = {
+            "Default_BinaryFetch_Config.json",
+            "./Default_BinaryFetch_Config.json",
+            "../Default_BinaryFetch_Config.json",
+            "../../Default_BinaryFetch_Config.json",      // For x64/Debug builds
+            "../../../Default_BinaryFetch_Config.json"
+        };
 
-    // Check if user config exists, if not copy from default
-    std::ifstream checkConfig(userConfigPath);
-    bool userConfigExists = checkConfig.good();
-    checkConfig.close();
-
-    if (!userConfigExists) {
-        std::ifstream defaultConfig("Default_BinaryFetch_Config.json", std::ios::binary);
-        if (defaultConfig.is_open()) {
-            std::ofstream userConfig(userConfigPath, std::ios::binary);
-            if (userConfig.is_open()) {
-                userConfig << defaultConfig.rdbuf();
-                userConfig.close();
+        // Add executable directory
+        char exePath[MAX_PATH];
+        if (GetModuleFileNameA(NULL, exePath, MAX_PATH)) {
+            std::string exeDir = exePath;
+            size_t lastSlash = exeDir.find_last_of("\\/");
+            if (lastSlash != std::string::npos) {
+                exeDir = exeDir.substr(0, lastSlash);
+                searchPaths.push_back(exeDir + "\\Default_BinaryFetch_Config.json");
             }
-            defaultConfig.close();
+        }
+
+        // Try each path
+        for (const auto& path : searchPaths) {
+            std::ifstream test(path);
+            if (test.good()) {
+                test.close();
+                return path;
+            }
+        }
+        return "";  // Not found
+        };
+
+    // Determine which config to load
+    if (LOAD_DEFAULT_CONFIG) {
+        // DEV MODE: Load from project folder
+        configPath = findDefaultConfig();
+        if (configPath.empty()) {
+            std::cout << "Warning: Could not find Default_BinaryFetch_Config.json" << std::endl;
+            configPath = "Default_BinaryFetch_Config.json";  // Fallback
         }
     }
+    else {
+        // PRODUCTION MODE: Use AppData with auto-copy
+        configPath = userConfigPath;
+
+        // Create directory if it doesn't exist
+        DWORD attribs = GetFileAttributesA(configDir.c_str());
+        bool dirExists = (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
+        if (!dirExists) {
+            _mkdir(configDir.c_str());
+        }
+
+        // Check if user config exists
+        std::ifstream checkConfig(userConfigPath);
+        bool userConfigExists = checkConfig.good();
+        checkConfig.close();
+
+        if (!userConfigExists) {
+            // Find default config using multi-path search
+            std::string defaultConfigPath = findDefaultConfig();
+
+            if (!defaultConfigPath.empty()) {
+                // Copy default config to AppData
+                std::ifstream defaultConfig(defaultConfigPath, std::ios::binary);
+                if (defaultConfig.is_open()) {
+                    std::ofstream userConfig(userConfigPath, std::ios::binary);
+                    if (userConfig.is_open()) {
+                        userConfig << defaultConfig.rdbuf();
+                        userConfig.close();
+                        // std::cout << "Config copied to: " << userConfigPath << std::endl;
+                    }
+                    defaultConfig.close();
+                }
+            }
+            else {
+                std::cout << "Warning: Could not find Default_BinaryFetch_Config.json to copy." << std::endl;
+                // Try to use any found config as fallback
+                std::string fallback = findDefaultConfig();
+                if (!fallback.empty()) {
+                    configPath = fallback;
+                }
+            }
+        }
+    }
+
+    // Color map
+    std::map<std::string, std::string> colors = {
+        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
+        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
+        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
+        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
+        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
+        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
+    };
+
+    // Load Config
+    json config;
+    bool config_loaded = false;
+
+    std::ifstream config_file(configPath);
+    if (config_file.is_open()) {
+        try {
+            config = json::parse(config_file);
+            config_loaded = true;
+            // std::cout << "Config loaded from: " << configPath << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cout << "Warning: Failed to parse config file. Using defaults." << std::endl;
+        }
+        config_file.close();
+    }
+    else {
+        std::cout << "Warning: Could not open config file: " << configPath << std::endl;
+    }
+
+    // Helper functions
+    auto getColor = [&](const std::string& section, const std::string& key, const std::string& defaultColor = "white") -> std::string {
+        if (!config_loaded || !config.contains(section)) return colors[defaultColor];
+
+        if (config[section].contains("colors") && config[section]["colors"].contains(key)) {
+            std::string colorName = config[section]["colors"][key].get<std::string>();
+            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
+        }
+
+        if (config[section].contains(key)) {
+            std::string colorName = config[section][key].get<std::string>();
+            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
+        }
+
+        return colors[defaultColor];
+        };
+
+    auto isEnabled = [&](const std::string& section) -> bool {
+        if (!config_loaded || !config.contains(section)) return true;
+        return config[section].value("enabled", true);
+        };
+
+    auto isSubEnabled = [&](const std::string& section, const std::string& key) -> bool {
+        if (!config_loaded || !config.contains(section)) return true;
+        return config[section].value(key, true);
+        };
+
+    auto isSectionEnabled = [&](const std::string& module, const std::string& section) -> bool {
+        if (!config_loaded || !config.contains(module)) return true;
+        if (!config[module].contains("sections")) return true;
+        return config[module]["sections"].value(section, true);
+        };
+
+    auto isNestedEnabled = [&](const std::string& module, const std::string& section, const std::string& key) -> bool {
+        if (!config_loaded || !config.contains(module)) return true;
+        if (!config[module].contains(section)) return true;
+        return config[module][section].value(key, true);
+        };
+
+    std::string r = colors["reset"];
+
 
     // Create LivePrinter
     LivePrinter lp(art);
@@ -168,9 +303,8 @@ int main(){
     TimeInfo time;
 
     // toggle dummy ip  and direct load from config for better DX testing
-    bool dummy_compact_network = true;
-	bool dummy_detailed_network = true;
-    bool LOAD_DEFAULT_CONFIG = true;
+    bool dummy_compact_network = false;
+	bool dummy_detailed_network = false;
     //-----------------------------testing site start-------------------------
     // std::cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n";
     
@@ -179,135 +313,6 @@ int main(){
     //-----------------------------testing site end-------------------------
 
 
-
-    //lp.push("[Second] -> " + std::to_string(time.getSecond()));
-    //lp.push("[Minute] -> " + std::to_string(time.getMinute()));
-    //lp.push("[Hour] -> " + std::to_string(time.getHour()));
-    //lp.push("[Day] -> " + std::to_string(time.getDay()));
-    //lp.push("[Week] -> Week " + std::to_string(time.getWeekNumber()));
-    //lp.push("[Day Name] -> " + time.getDayName());
-    //lp.push("[Month] -> " + std::to_string(time.getMonthNumber()));
-    //lp.push("[Month Name] -> " + time.getMonthName());
-    //lp.push("[Year] -> " + std::to_string(time.getYearNumber()));
-    //lp.push("[Leap Year] -> " + time.getLeapYear());
-
-    //----------------- JSON CONFIG SYSTEM -----------------//
-    // 1. Color Map
-    std::map<std::string, std::string> colors = {
-        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-    };
-
-    /*
-    
-    // 2. Load Config from USER LOCATION (not Default_ file)
-    std::ifstream config_file(userConfigPath);
-    json config;
-    bool config_loaded = false;
-    if (config_file.is_open()) {
-        try {
-            config = json::parse(config_file);
-            config_loaded = true;
-        }
-        catch (const std::exception& e) {}
-        config_file.close();
-    }
-    
-    */
-
-
-/*
-    By default, BinaryFetch loads its configuration from the BinaryFetch system folder.
-    For developers, repeatedly navigating to this location during testing can quickly become a nightmare.
-
-    To solve this, I added an option that lets developers choose where the config is loaded from.
-    Now, you can switch between a direct method (loading the config locally) and the standard method (loading from the system folder).
-
-    For development and continuous testing, the direct method is far more convenient and efficient.
- */
-
-// ================= CONFIG LOAD SWITCH =================
-// true  = load Default_BinaryFetch_Config.json
-// false = load user config from AppData
-// appdata path: C:\Users\Default\AppData\Local\BinaryFetch
-
-
-    // ======================================================
-
-
-    // 2. Load Config (user OR default based on flag)
-    json config;
-    bool config_loaded = false;
-
-    std::string configPath = LOAD_DEFAULT_CONFIG
-        ? "Default_BinaryFetch_Config.json"
-        : userConfigPath;
-
-    std::ifstream config_file(configPath);
-    if (config_file.is_open()) {
-        try {
-            config = json::parse(config_file);
-            config_loaded = true;
-        }
-        catch (const std::exception&) {
-            // silently fail, fallback behavior handled elsewhere
-        }
-        config_file.close();
-    }
-
-
-    // 3. Helper functions
-    auto getColor = [&](const std::string& section, const std::string& key, const std::string& defaultColor = "white") -> std::string {
-        if (!config_loaded || !config.contains(section)) return colors[defaultColor];
-
-        // First, try to find color in "colors" sub-object (for detailed_memory style)
-        if (config[section].contains("colors") && config[section]["colors"].contains(key)) {
-            std::string colorName = config[section]["colors"][key].get<std::string>();
-            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-        }
-
-        // Otherwise, look for color directly under section (for compact modules style)
-        if (config[section].contains(key)) {
-            std::string colorName = config[section][key].get<std::string>();
-            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-        }
-
-        return colors[defaultColor];
-        };
-
-    auto isEnabled = [&](const std::string& section) -> bool {
-        if (!config_loaded || !config.contains(section)) return true;
-        return config[section].value("enabled", true);
-        };
-
-    // Helper for sub-module toggles
-    auto isSubEnabled = [&](const std::string& section, const std::string& key) -> bool {
-        if (!config_loaded || !config.contains(section)) return true;
-        return config[section].value(key, true);
-        };
-
-    // Helper for sections toggles (for detailed modules)
-    auto isSectionEnabled = [&](const std::string& module, const std::string& section) -> bool {
-        if (!config_loaded || !config.contains(module)) return true;
-        if (!config[module].contains("sections")) return true;
-        return config[module]["sections"].value(section, true);
-        };
-
-    // Helper for nested section enabled status (for compact_time style)
-    auto isNestedEnabled = [&](const std::string& module, const std::string& section, const std::string& key) -> bool {
-        if (!config_loaded || !config.contains(module)) return true;
-        if (!config[module].contains(section)) return true;
-        return config[module][section].value(key, true);
-        };
-
-    std::string r = colors["reset"];
-
-
-    
 
 
 
