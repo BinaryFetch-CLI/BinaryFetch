@@ -44,7 +44,7 @@ No user intervention.
 ## 🗂️ User Customization (Only 2 Files)
 you can modify and customize them safely from,
 
-`C:\Users\Default\AppData\Local\BinaryFetch\`
+`C:\Users\Public\Local\BinaryFetch\`
 | File               | Purpose                         |
 | ------------------ | ------------------------------- |
 | `BinaryArt.txt`    | User ASCII art (fully editable, copy-paste-done !) |
