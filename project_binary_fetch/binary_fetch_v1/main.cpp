@@ -2623,20 +2623,286 @@ C. COLOR ISSUES:
    2. Verify color names in JSON are correct
    3. Reset code (\033[0m) should follow colored text
 
-XIV. FUTURE ENHANCEMENTS:
---------------------------
 
-A. PLANNED FEATURES:
-   1. Export to JSON/HTML/Text file
-   2. Real-time monitoring mode
-   3. Historical tracking
-   4. Plugin system for custom modules
+------------------------------------------------------------------------------
 
-B. POSSIBLE IMPROVEMENTS:
-   1. Async data fetching
-   2. More detailed hardware detection
-   3. Cross-platform support
-   4. GUI version
+
+
+
+
+```
+CLASS: AsciiArt
+OBJECT: art
+FUNCTIONS:
+1. loadFromFile() - Loads ASCII art from user config folder, returns bool
+
+CLASS: LivePrinter
+OBJECT: lp
+FUNCTIONS:
+1. push(std::string) - Adds formatted line to output queue
+2. finish() - Prints remaining ASCII art lines
+
+CLASS: OSInfo
+OBJECT: os
+FUNCTIONS:
+1. GetOSName() - Returns OS name (e.g., "Windows 11 Pro")
+2. GetOSVersion() - Returns OS build version
+3. GetOSArchitecture() - Returns architecture (e.g., "64-bit")
+4. get_os_kernel_info() - Returns kernel information
+5. get_os_uptime() - Returns system uptime as string
+6. get_os_install_date() - Returns installation date
+7. get_os_serial_number() - Returns OS serial number
+
+CLASS: CPUInfo
+OBJECT: cpu
+FUNCTIONS:
+1. get_cpu_info() - Returns CPU brand/model
+2. get_cpu_utilization() - Returns CPU usage percentage
+3. get_cpu_speed() - Returns current CPU speed
+4. get_cpu_base_speed() - Returns base CPU speed
+5. get_cpu_cores() - Returns number of physical cores
+6. get_cpu_logical_processors() - Returns number of logical processors
+7. get_cpu_sockets() - Returns number of CPU sockets
+8. get_cpu_virtualization() - Returns virtualization support status
+9. get_cpu_l1_cache() - Returns L1 cache size
+10. get_cpu_l2_cache() - Returns L2 cache size
+11. get_cpu_l3_cache() - Returns L3 cache size
+
+CLASS: MemoryInfo
+OBJECT: ram
+FUNCTIONS:
+1. getTotal() - Returns total RAM in GB
+2. getFree() - Returns free RAM in GB
+3. getUsedPercentage() - Returns RAM usage percentage
+4. getModules() - Returns vector of RAM module information
+
+CLASS: GPUInfo
+OBJECT: obj_gpu
+FUNCTIONS:
+1. get_all_gpu_info() - Returns vector of all GPU information
+
+STRUCT: GPUData (returned by get_all_gpu_info())
+- gpu_name - GPU model name
+- gpu_memory - VRAM information
+- gpu_usage - GPU usage percentage
+- gpu_vendor - GPU vendor
+- gpu_driver_version - Driver version
+- gpu_temperature - GPU temperature
+- gpu_core_count - Number of cores
+
+CLASS: DetailedGPUInfo
+OBJECT: detailed_gpu_info
+FUNCTIONS:
+1. primary_gpu_info() - Returns detailed info about primary GPU
+   - name - GPU name
+   - vram_gb - VRAM in GB
+   - frequency_ghz - Clock frequency in GHz
+
+CLASS: StorageInfo
+OBJECT: storage
+FUNCTIONS:
+1. process_storage_info(callback) - Processes all storage devices with callback
+
+STRUCT: storage_data (passed to callback)
+- drive_letter - Drive letter (e.g., "C:")
+- total_space - Total space in GiB
+- used_space - Used space in GiB
+- used_percentage - Usage percentage
+- file_system - File system type
+- is_external - Boolean for external/internal
+- serial_number - Disk serial number
+- read_speed - Read speed in MB/s
+- write_speed - Write speed in MB/s
+- predicted_read_speed - Predicted read speed
+- predicted_write_speed - Predicted write speed
+- storage_type - Storage type (SSD/HDD/etc)
+
+CLASS: NetworkInfo
+OBJECT: net
+FUNCTIONS:
+1. get_network_name() - Returns network name
+2. get_local_ip() - Returns local IP address
+3. get_public_ip() - Returns public IP address
+4. get_locale() - Returns system locale
+5. get_mac_address() - Returns MAC address
+6. get_network_upload_speed() - Returns upload speed
+7. get_network_download_speed() - Returns download speed
+
+CLASS: UserInfo
+OBJECT: user
+FUNCTIONS:
+1. get_username() - Returns current username
+2. get_computer_name() - Returns computer name
+3. get_domain_name() - Returns domain name
+
+CLASS: PerformanceInfo
+OBJECT: perf
+FUNCTIONS:
+1. get_system_uptime() - Returns system uptime
+2. get_cpu_usage_percent() - Returns CPU usage percentage
+3. get_ram_usage_percent() - Returns RAM usage percentage
+4. get_disk_usage_percent() - Returns disk usage percentage
+5. get_gpu_usage_percent() - Returns GPU usage percentage
+
+CLASS: DisplayInfo
+OBJECT: di
+FUNCTIONS:
+1. getScreens() - Returns vector of screen information
+
+STRUCT: ScreenInfo (returned by getScreens())
+- name - Display name
+- current_width - Current width resolution
+- current_height - Current height resolution
+- native_resolution - Native resolution
+- refresh_rate - Refresh rate in Hz
+- aspect_ratio - Aspect ratio
+- scale_percent - Scaling percentage
+- upscale - Upscale factor
+- dsr_enabled - DSR/VSR enabled status
+- dsr_type - DSR type
+
+CLASS: ExtraInfo
+OBJECT: extra
+FUNCTIONS:
+1. get_output_devices() - Returns vector of audio output devices
+2. get_input_devices() - Returns vector of audio input devices
+3. get_power_status() - Returns power/battery status
+
+STRUCT: AudioDevice
+- name - Device name
+- isActive - Active status
+
+STRUCT: PowerStatus
+- hasBattery - Boolean for battery presence
+- batteryPercent - Battery percentage
+- isCharging - Charging status
+
+CLASS: SystemInfo
+OBJECT: sys
+FUNCTIONS:
+1. get_bios_vendor() - Returns BIOS vendor
+2. get_bios_version() - Returns BIOS version
+3. get_bios_date() - Returns BIOS date
+4. get_motherboard_model() - Returns motherboard model
+5. get_motherboard_manufacturer() - Returns motherboard manufacturer
+
+CLASS: TimeInfo
+OBJECT: time
+FUNCTIONS:
+1. getHour() - Returns current hour (0-23)
+2. getMinute() - Returns current minute (0-59)
+3. getSecond() - Returns current second (0-59)
+4. getDay() - Returns current day of month (1-31)
+5. getMonthName() - Returns month name
+6. getMonthNumber() - Returns month number (1-12)
+7. getYearNumber() - Returns current year
+8. getWeekNumber() - Returns week number
+9. getDayName() - Returns day name
+10. getLeapYear() - Returns leap year status
+
+--- COMPACT MODE CLASSES ---
+
+CLASS: CompactAudio
+OBJECT: c_audio
+FUNCTIONS:
+1. active_audio_input() - Returns active audio input device
+2. active_audio_input_status() - Returns input device status
+3. active_audio_output() - Returns active audio output device
+4. active_audio_output_status() - Returns output device status
+
+CLASS: CompactOS
+OBJECT: c_os
+FUNCTIONS:
+1. getOSName() - Returns OS name
+2. getOSBuild() - Returns OS build
+3. getArchitecture() - Returns architecture
+4. getUptime() - Returns uptime
+
+CLASS: CompactCPU
+OBJECT: c_cpu
+FUNCTIONS:
+1. getCPUName() - Returns CPU name
+2. getCPUCores() - Returns number of cores
+3. getCPUThreads() - Returns number of threads
+4. getClockSpeed() - Returns clock speed in GHz
+
+CLASS: CompactMemory
+OBJECT: c_memory
+FUNCTIONS:
+1. get_total_memory() - Returns total RAM in GB
+2. get_free_memory() - Returns free RAM in GB
+3. get_used_memory_percent() - Returns RAM usage percentage
+
+CLASS: CompactScreen
+OBJECT: screenDetector (local)
+FUNCTIONS:
+1. getScreens() - Returns vector of screen info
+STRUCT: CompactScreenInfo
+- name - Display name
+- native_width - Native width
+- native_height - Native height
+- scale_percent - Scaling percentage
+- upscale - Upscale factor
+- refresh_rate - Refresh rate
+
+CLASS: CompactSystem
+OBJECT: c_system
+FUNCTIONS: (Not used in current implementation)
+
+CLASS: CompactGPU
+OBJECT: c_gpu
+FUNCTIONS:
+1. getGPUName() - Returns GPU name
+2. getGPUUsagePercent() - Returns GPU usage percentage
+3. getVRAMGB() - Returns VRAM in GB
+4. getGPUFrequency() - Returns GPU frequency
+
+CLASS: CompactPerformance
+OBJECT: c_perf
+FUNCTIONS:
+1. getCPUUsage() - Returns CPU usage percentage
+2. getGPUUsage() - Returns GPU usage percentage
+3. getRAMUsage() - Returns RAM usage percentage
+4. getDiskUsage() - Returns disk usage percentage
+
+CLASS: CompactUser
+OBJECT: c_user
+FUNCTIONS:
+1. getUsername() - Returns username
+2. getDomain() - Returns domain
+3. isAdmin() - Returns admin status
+
+CLASS: CompactNetwork
+OBJECT: c_net
+FUNCTIONS:
+1. get_network_name() - Returns network name
+2. get_network_type() - Returns network type
+3. get_network_ip() - Returns IP address
+
+CLASS: DiskInfo
+OBJECT: disk
+FUNCTIONS:
+1. getAllDiskUsage() - Returns map of drive letters to usage percentages
+2. getDiskCapacity() - Returns map of drive letters to capacities in GB
+
+--- JSON CONFIGURATION ---
+OBJECT: config
+TYPE: nlohmann::json
+FUNCTIONS:
+1. contains(section) - Checks if section exists
+2. value(key, default) - Returns value with default
+3. [section]["colors"][key] - Color configuration access
+
+--- HELPER LAMBDA FUNCTIONS ---
+1. getColor(section, key, default) - Returns ANSI color code
+2. isEnabled(section) - Checks if section is enabled
+3. isSubEnabled(section, key) - Checks if subsection is enabled
+4. isSectionEnabled(module, section) - Checks nested section
+5. isNestedEnabled(module, section, key) - Checks deeply nested config
+```
+
+
+
 
 ===============================================================================
                              END OF DOCUMENTATION
