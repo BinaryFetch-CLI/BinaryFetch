@@ -264,9 +264,7 @@ int main(){
     DiskInfo disk;
     TimeInfo time;
 
-    // toggle dummy ip  and direct load from config for better DX testing
-    // bool dummy_compact_network = false;
-	// bool dummy_detailed_network = false;
+
     // removed these feature....now we can toggle them straight form the json config
     //-----------------------------testing site start-------------------------
     // std::cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n";
@@ -2501,7 +2499,8 @@ D. EMOJI SUPPORT:
 VII. DEVELOPER FEATURES:
 ------------------------
 
-A. DUMMY DATA MODES:
+A. DUMMY DATA MODES: (now we can toggle these directly form the json config)
+    user can access them too 
    - dummy_compact_network: Test compact network with fake data
    - dummy_detailed_network: Test detailed network with fake data
 
