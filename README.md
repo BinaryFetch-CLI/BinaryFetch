@@ -29,17 +29,13 @@ If a user:
 
 * deletes `BinaryArt.txt`
 * deletes `BinaryFetch_Config.json`
-* corrupts configuration
 * runs BinaryFetch for the first time
 
 👉 **The engine automatically recreates everything from defaults.**
 
-No prompts.
-No errors.
-No user intervention.
 
 
-![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/21312.png?raw=true)
+![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/Ascii_art_tutorial.png?raw=true)
 
 ## 🗂️ User Customization (Only 2 Files)
 you can modify and customize them safely from,
