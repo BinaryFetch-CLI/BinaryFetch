@@ -322,10 +322,8 @@ int main(){
     //-----------------------------testing site end-------------------------
 
 
-
-
-
-        //----------------- SECTIONS -----------------//
+    // json based printing workfolow starts here...........................
+        
 
         // BinaryFetch Header
         if (isEnabled("header")) {
