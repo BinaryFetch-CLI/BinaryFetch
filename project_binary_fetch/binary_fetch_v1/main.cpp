@@ -275,6 +275,9 @@ int main(){
 
     std::string r = colors["reset"];
 
+	// Anyway....this is how we're allowed to print emojis in C++ console
+    // :cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
+
 
     // Create LivePrinter
     LivePrinter lp(art);
