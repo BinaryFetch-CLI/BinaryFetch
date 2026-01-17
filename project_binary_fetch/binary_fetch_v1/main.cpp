@@ -63,6 +63,7 @@ Before you try to implement modifications inside the main() function:
 
 - main() is intended to act as an orchestrator/controller, not a logic container.
 - Avoid adding heavy logic, calculations, or system queries directly here.
+- I designed main() to initialize components and control execution flow only.
 - All feature logic should live inside their respective modules/classes.
 - main() should only:
     - initialize components
@@ -81,7 +82,26 @@ it is a sign that the logic should be moved into a new module.
 
 int main(){
 
-    // Initialize COM
+    // Initialize COM 
+    /*
+	 if you're a beginner and don't know what's com...here's a brief explanation:
+
+     * 1. Provides "Native C++" wrappers for complex COM interfaces.
+     * 2. Includes _com_ptr_t (Smart Pointers) for automatic memory management.
+     * 3. Includes _com_error for C++ exception handling (try/catch) instead of HRESULTs.
+     * 4. Simplifies BSTR (string) and VARIANT data type conversions.
+     * 5. Makes COM code look like standard C++ rather than low-level C.
+
+    
+
+     why I used com here ?
+     -> COM initialization required for WMI (Windows Management
+     Instrumentation) queries used by system info modules to retrieve
+     hardware/software data via Win32 classes
+    
+    */
+
+	//com initialization
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
         std::cout << "Failed to initialize COM library. Error: 0x"
@@ -107,7 +127,7 @@ int main(){
 
     // ========== AUTO CONFIG FILE SETUP ==========
     // true = dev mode (loads local file), false = production mode (extracts from EXE)
-    bool LOAD_DEFAULT_CONFIG = false;
+    bool LOAD_DEFAULT_CONFIG = false; // must be false for production releases
 
     std::string configDir = "C:\\Users\\Public\\BinaryFetch";
     std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
