@@ -284,7 +284,7 @@ int main(){
 
 
     // create objects of all classes here 
-    OSInfo os;
+    OSInfo os;                           
     CPUInfo cpu;
     MemoryInfo ram;
     GPUInfo obj_gpu;
