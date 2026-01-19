@@ -1,17 +1,17 @@
 ﻿#include "GPUInfo.h"
-#include <windows.h>
-#include <dxgi1_6.h>
-#include <d3d12.h>
-#include <wbemidl.h>
-#include <comdef.h>
-#include <iostream>
-#include <sstream>
-#include "nvapi.h"
+#include <windows.h> // Core Windows API (often sucks)
+#include <dxgi1_6.h> // DirectX Graphics Infrastructure (DXGI) for GPU enumeration
+#include <d3d12.h>  // Direct3D 12 (not directly used here, but often included with DXGI)
+#include <wbemidl.h> // WMI (Windows Management Instrumentation) for querying system info
+#include <comdef.h> // COM definitions and smart pointers
+#include <iostream> // if you don't know what is this, C'mon...get a life bro 
+#include <sstream>  // String stream for string manipulation
+#include "nvapi.h"  // NVIDIA NVAPI for NVIDIA-specific GPU info
 
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "wbemuuid.lib")
-#pragma comment(lib, "nvapi64.lib")
+#pragma comment(lib, "dxgi.lib") // Link against DXGI library
+#pragma comment(lib, "d3d12.lib") // Link against Direct3D 12 library
+#pragma comment(lib, "wbemuuid.lib") // Link against WMI library
+#pragma comment(lib, "nvapi64.lib") // Link against NVAPI library
 
 using namespace std;
 
