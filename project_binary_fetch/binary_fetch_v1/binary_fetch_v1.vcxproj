@@ -33,7 +33,6 @@
     <ClInclude Include="compact_disk_info.h" />
     <ClInclude Include="ConfigReader.h" />
     <ClInclude Include="CPUInfo.h" />
-    <ClInclude Include="DetailedScreen.h" />
     <ClInclude Include="ExtraInfo.h" />
     <ClInclude Include="GPUInfo.h" />
     <ClInclude Include="json.hpp" />
@@ -86,7 +85,6 @@
     <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="CPUInfo.cpp" />
     <ClCompile Include="DetailedGPUInfo.h" />
-    <ClCompile Include="DetailedScreen.cpp" />
     <ClCompile Include="DisplayInfo.cpp" />
     <ClCompile Include="DisplayInfo.h" />
     <ClCompile Include="DtailedGPUInfo.cpp" />
