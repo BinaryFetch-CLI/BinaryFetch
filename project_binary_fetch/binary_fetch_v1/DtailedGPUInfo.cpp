@@ -225,3 +225,46 @@ GPUData DetailedGPUInfo::primary_gpu_info()
     if (!gpus.empty()) return gpus[0];
     return GPUData{ -1, "No GPU Found", 0.0f, 0.0f };
 }
+
+
+
+
+
+/*
+ * =========================================================================================
+ * EXPLANATION OF THE GPU TELEMETRY PROCESS
+ * =========================================================================================
+ * * 1. INITIALIZATION & ENUMERATION 
+ * - The process starts by creating a 'DXGI Factory'. This is a COM object that talks
+ * to Windows to list every graphics adapter (GPU) currently plugged into the PC.
+ * - Simultaneously, the code attempts to load 'nvapi64.dll'. If successful, it unlocks
+ * proprietary NVIDIA commands that standard Windows APIs cannot access.
+ * * 2. THE DUAL-PATH STRATEGY 
+ * Because different GPUs speak different "languages," the code splits its logic:
+ * * A. NVIDIA PATH (High Precision):
+ * - If the Vendor ID matches 0x10DE, the code uses NVAPI.
+ * - It queries the "Public Clock Graphics" domain to get the real-time core clock.
+ * - It performs unit conversion (kHz -> GHz) for human readability.
+ * * B. FALLBACK PATH (Heuristic Estimation):
+ * - For AMD or Intel GPUs, Windows doesn't provide a direct "Clock Speed" API.
+ * - The code uses "String Matching" (e.g., looking for "RX 7900") to guess the
+ * frequency based on known hardware specs.
+ * * 3. DATA AGGREGATION 
+ * - All collected stats (Name, VRAM in GB, and Frequency) are packed into a
+ * 'GPUData' structure.
+ * - VRAM is calculated by converting bytes into Gigabytes (using 1024^3).
+ * * 4. CLEANUP & MEMORY MANAGEMENT 🧹
+ * - Since DXGI uses COM, every 'Adapter' and 'Factory' is manually Released
+ * to prevent memory leaks.
+ * - NVAPI is formally unloaded to free up the driver handle.
+ * =========================================================================================
+ */
+
+ /*
+ {
+   "process_summary": "Dual-layer GPU hardware abstraction",
+   "primary_api": "DXGI + NVAPI",
+   "vram_calculation": "Binary (1024-based)",
+   "vendor_support": ["NVIDIA", "AMD", "Intel"]
+ }
+ */
