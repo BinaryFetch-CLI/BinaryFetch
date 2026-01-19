@@ -135,7 +135,7 @@ static float get_nvapi_gpu_frequency(NvPhysicalGpuHandle handle)
         }
     }
 
-    return 0.0f; // Failed to get frequency
+    return 0.0f; // Failed to get frequency (o.of = default empty value)
 }
 
 // Helper: Estimate frequency for non-NVIDIA GPUs (basic method)
@@ -148,6 +148,10 @@ static float estimate_gpu_frequency_basic(const wstring& gpuName)
     // Convert to lowercase for comparison
     transform(name.begin(), name.end(), name.begin(), ::towlower);
 
+    // I don't have amd gpu rn...so I'm using this cheap method for estimation
+    // sorry gng :)
+
+
     // AMD GPUs - rough estimates
     if (name.find(L"rx 7900") != wstring::npos) return 2.5f;
     if (name.find(L"rx 7800") != wstring::npos) return 2.4f;
@@ -157,6 +161,8 @@ static float estimate_gpu_frequency_basic(const wstring& gpuName)
     if (name.find(L"rx 6700") != wstring::npos) return 2.4f;
 
     // Intel Arc GPUs
+
+    // I'm broke....I don't have any arc gpus too....
     if (name.find(L"arc a770") != wstring::npos) return 2.4f;
     if (name.find(L"arc a750") != wstring::npos) return 2.35f;
     if (name.find(L"arc a580") != wstring::npos) return 2.0f;
@@ -252,6 +258,8 @@ GPUData DetailedGPUInfo::primary_gpu_info()
     auto gpus = get_all_gpus();
     if (!gpus.empty()) return gpus[0];
     return GPUData{ -1, "No GPU Found", 0.0f, 0.0f };
+
+    // I'm nott  sure will this work on amd system or not :(
 }
 
 
