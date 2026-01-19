@@ -1,11 +1,45 @@
-#include "DetailedGPUInfo.h"
+﻿#include "DetailedGPUInfo.h"
 #include <windows.h> // The base library for Windows development. It provides the core API for memory management and hardware interaction.
 #include <dxgi.h> // DirectX Graphics Infrastructure. Used to enumerate physical adapters (GPUs), check video memory capacity, and identify monitor outputs.
 #include <vector> // Standard C++ library for using the vector container.
-#include <string>
-#include <algorithm>
-#include <comdef.h>
+#include <string> // Standard C++ library for using the string class.
+#include <algorithm> // Standard C++ library for algorithms like transform.
+#include <comdef.h> // Provides definitions for COM error handling and smart pointers.
 #include "nvapi.h"
+
+
+
+// Don't know what is COM ? okay....don't worry
+/**
+ * @file COM_Explanation.h
+ * @brief Understanding Component Object Model (COM) in the context of DXGI/Windows.
+ * * [WHAT IS COM?]
+ * Component Object Model (COM) is Microsoft's binary interface standard.
+ * In this project, it acts as the bridge between your C++ code and the
+ * Graphics Driver/DirectX subsystem.
+ * * [KEY MECHANICS]
+ * 1. Interfaces: You interact with pointers to interfaces (e.g., IDXGIAdapter).
+ * These are essentially tables of function pointers. 🔌
+ * * 2. Lifetime Management: COM uses Reference Counting. You must call
+ * AddRef() to keep an object and Release() to destroy it. ⏳
+ * * 3. Error Handling: Uses HRESULT (a 32-bit integer).
+ * - S_OK (0x0) means success.
+ * - Errors usually start with 0x8. ⚠️
+ * * [WHY <comdef.h>?]
+ * Included to provide smart helper classes (like _bstr_t or _com_error)
+ * to handle hardware communication errors more gracefully.
+ * * [DEFAULT SETTINGS]
+ * Default Color: White
+ * Default JSON: Cyan
+ */
+
+ /*
+ {
+   "com_protocol": "Active",
+   "threading_model": "Apartment/Free",
+   "integration": "DXGI_NVIDIA_API"
+ }
+ */
 
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib, "nvapi64.lib")
