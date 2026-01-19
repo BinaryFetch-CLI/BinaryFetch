@@ -9,37 +9,65 @@
 
 
 
-// Don't know what is COM ? okay....don't worry
-/**
- * @file COM_Explanation.h
- * @brief Understanding Component Object Model (COM) in the context of DXGI/Windows.
- * * [WHAT IS COM?]
- * Component Object Model (COM) is Microsoft's binary interface standard.
- * In this project, it acts as the bridge between your C++ code and the
- * Graphics Driver/DirectX subsystem.
- * * [KEY MECHANICS]
- * 1. Interfaces: You interact with pointers to interfaces (e.g., IDXGIAdapter).
- * These are essentially tables of function pointers. 🔌
- * * 2. Lifetime Management: COM uses Reference Counting. You must call
- * AddRef() to keep an object and Release() to destroy it. ⏳
- * * 3. Error Handling: Uses HRESULT (a 32-bit integer).
- * - S_OK (0x0) means success.
- * - Errors usually start with 0x8. ⚠️
- * * [WHY <comdef.h>?]
- * Included to provide smart helper classes (like _bstr_t or _com_error)
- * to handle hardware communication errors more gracefully.
- * * [DEFAULT SETTINGS]
- * Default Color: White
- * Default JSON: Cyan
- */
+/*
+===============================================================================
+COM EXPLANATION ..... if you're a beginner, must read this !!! 
+===============================================================================
 
- /*
- {
-   "com_protocol": "Active",
-   "threading_model": "Apartment/Free",
-   "integration": "DXGI_NVIDIA_API"
- }
- */
+PART 1: WHAT IS COM? 
+-------------------
+COM (Component Object Model) is a Windows system that lets different parts
+of Windows talk to each other using C++ objects.
+
+In simple words:
+COM allows your C++ program to use Windows features like:
+- GPUs
+- DirectX
+- Audio devices
+- Drivers
+
+COM objects are accessed using pointers, just like normal C++ objects,
+but they are created and managed by Windows.
+
+One important rule:
+- When Windows gives you a COM object, you MUST release it manually
+  using Release() when you are done.
+
+Example:
+    pAdapter->Release();
+
+If you forget this, memory leaks can happen.
+
+-------------------------------------------------------------------------------
+
+PART 2: WHAT IS COM DOING HERE ?
+--------------------------------------
+In this file (GPUInfo.cpp), COM is used by DXGI (DirectX Graphics Infrastructure).
+
+Here is what happens:
+1. DXGI creates GPU objects (IDXGIFactory, IDXGIAdapter)
+2. These GPU objects are COM objects
+3. COM manages their lifetime using reference counting
+4. We use these objects to read GPU information
+5. After using them, we call Release() to clean up properly
+
+Without COM:
+- We could not access GPU hardware through DXGI
+- Windows would not safely manage GPU resources
+
+-------------------------------------------------------------------------------
+
+SHORT SUMMARY
+-------------
+COM is not something you write yourself here.
+It is simply the system that allows this code to:
+- Ask Windows for GPU information
+- Work safely with DirectX
+- Avoid memory leaks when used correctly
+
+===============================================================================
+*/
+
 
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib, "nvapi64.lib")
@@ -231,40 +259,122 @@ GPUData DetailedGPUInfo::primary_gpu_info()
 
 
 /*
- * =========================================================================================
- * EXPLANATION OF THE GPU TELEMETRY PROCESS
- * =========================================================================================
- * * 1. INITIALIZATION & ENUMERATION 
- * - The process starts by creating a 'DXGI Factory'. This is a COM object that talks
- * to Windows to list every graphics adapter (GPU) currently plugged into the PC.
- * - Simultaneously, the code attempts to load 'nvapi64.dll'. If successful, it unlocks
- * proprietary NVIDIA commands that standard Windows APIs cannot access.
- * * 2. THE DUAL-PATH STRATEGY 
- * Because different GPUs speak different "languages," the code splits its logic:
- * * A. NVIDIA PATH (High Precision):
- * - If the Vendor ID matches 0x10DE, the code uses NVAPI.
- * - It queries the "Public Clock Graphics" domain to get the real-time core clock.
- * - It performs unit conversion (kHz -> GHz) for human readability.
- * * B. FALLBACK PATH (Heuristic Estimation):
- * - For AMD or Intel GPUs, Windows doesn't provide a direct "Clock Speed" API.
- * - The code uses "String Matching" (e.g., looking for "RX 7900") to guess the
- * frequency based on known hardware specs.
- * * 3. DATA AGGREGATION 
- * - All collected stats (Name, VRAM in GB, and Frequency) are packed into a
- * 'GPUData' structure.
- * - VRAM is calculated by converting bytes into Gigabytes (using 1024^3).
- * * 4. CLEANUP & MEMORY MANAGEMENT 🧹
- * - Since DXGI uses COM, every 'Adapter' and 'Factory' is manually Released
- * to prevent memory leaks.
- * - NVAPI is formally unloaded to free up the driver handle.
- * =========================================================================================
- */
+================================================================================
+EXPLANATION: WHAT IS HAPPENING IN THIS FILE?
+================================================================================
 
- /*
- {
-   "process_summary": "Dual-layer GPU hardware abstraction",
-   "primary_api": "DXGI + NVAPI",
-   "vram_calculation": "Binary (1024-based)",
-   "vendor_support": ["NVIDIA", "AMD", "Intel"]
- }
- */
+This file is responsible for collecting *detailed GPU information* on Windows.
+It combines three major technologies:
+
+1. DXGI (DirectX Graphics Infrastructure)
+2. COM (Component Object Model)
+3. NVIDIA NVAPI (vendor-specific API)
+
+The goal is to enumerate all GPUs installed in the system and extract:
+- GPU name
+- Dedicated VRAM size
+- GPU core frequency (GHz) when possible
+
+-------------------------------------------------------------------------------
+STEP 1: DXGI FACTORY CREATION (ENTRY POINT)
+-------------------------------------------------------------------------------
+- CreateDXGIFactory() creates a DXGI Factory object.
+- This factory acts as the gateway to the graphics subsystem.
+- Through it, we can enumerate all physical graphics adapters (GPUs).
+
+DXGI is vendor-agnostic, meaning:
+✔ Works for NVIDIA
+✔ Works for AMD
+✔ Works for Intel (integrated & discrete)
+
+-------------------------------------------------------------------------------
+STEP 2: GPU ENUMERATION (DXGI)
+-------------------------------------------------------------------------------
+- EnumAdapters() is called in a loop.
+- Each call returns an IDXGIAdapter (a COM interface).
+- From each adapter, we retrieve a DXGI_ADAPTER_DESC structure.
+
+This gives us:
+- GPU name (wide string)
+- Vendor ID (used to detect NVIDIA)
+- Dedicated video memory (VRAM)
+
+Each adapter is released after use to prevent memory leaks
+(COM reference counting rule).
+
+-------------------------------------------------------------------------------
+STEP 3: NVIDIA DETECTION
+-------------------------------------------------------------------------------
+- NVIDIA GPUs are identified using Vendor ID: 0x10DE
+- If NVIDIA is detected, we attempt to load NVAPI dynamically.
+- NVAPI is *not required* for non-NVIDIA GPUs.
+
+This keeps the application:
+✔ Lightweight
+✔ Safe on AMD / Intel systems
+✔ Free from hard dependency on NVAPI
+
+-------------------------------------------------------------------------------
+STEP 4: NVAPI INITIALIZATION (NVIDIA ONLY)
+-------------------------------------------------------------------------------
+If NVAPI is available:
+- NvAPI_Initialize() starts communication with the NVIDIA driver.
+- NvAPI_EnumPhysicalGPUs() retrieves handles for all NVIDIA GPUs.
+
+Each NVAPI handle maps to one physical NVIDIA GPU.
+
+-------------------------------------------------------------------------------
+STEP 5: GPU FREQUENCY RETRIEVAL
+-------------------------------------------------------------------------------
+NVIDIA GPUs:
+- Use NvAPI_GPU_GetAllClockFrequencies()
+- Reads real-time GPU core clock (Graphics domain)
+- NVAPI returns frequency in kHz
+- Converted to GHz for human-readable output
+
+Non-NVIDIA GPUs:
+- No universal Windows API exists for live clock speeds
+- A *basic name-based estimation* is used as a fallback
+- This is clearly marked as approximate and non-authoritative
+
+-------------------------------------------------------------------------------
+STEP 6: DATA PACKAGING
+-------------------------------------------------------------------------------
+For each GPU, we construct a GPUData object containing:
+- Index
+- Name
+- VRAM (GB)
+- Frequency (GHz)
+
+All GPUData objects are stored in a vector and returned.
+
+-------------------------------------------------------------------------------
+STEP 7: CLEANUP
+-------------------------------------------------------------------------------
+- NVAPI is unloaded (if initialized)
+- DXGI Factory is released
+- All COM objects are properly released
+
+This ensures:
+✔ No memory leaks
+✔ No driver lockups
+✔ Clean program termination
+
+-------------------------------------------------------------------------------
+PRIMARY GPU LOGIC
+-------------------------------------------------------------------------------
+- The "primary GPU" is assumed to be the first DXGI adapter.
+- This matches Windows' default adapter ordering.
+
+-------------------------------------------------------------------------------
+SUMMARY
+-------------------------------------------------------------------------------
+DXGI  → Enumerates GPUs (vendor-neutral)
+COM   → Manages object lifetimes safely
+NVAPI → Provides real hardware clock data (NVIDIA only)
+
+Result:
+A fast, safe, and extensible GPU information pipeline suitable for
+CLI tools like BinaryFetch / DiskFetch.
+================================================================================
+*/
