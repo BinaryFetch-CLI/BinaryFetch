@@ -283,54 +283,78 @@ static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& out
     return ok;
 }
 
-
 // ----------------------------------------------------
 // WMI-based GPU usage
+//
+// Asks Windows how busy the GPU is.
+// Accuracy level: "ehh… good enough"
 float GPUInfo::get_gpu_usage()
 {
     float val = 0.0f;
+
+    // Query the 3D engine usage counter
+    // This is where Windows *tries* to be honest
     query_wmi_float(
         L"SELECT UtilizationPercentage FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine WHERE Name LIKE '%_3D%'",
         L"UtilizationPercentage",
         val);
-    return val;
+
+    return val; // Percentage (hopefully)
 }
 
 // ----------------------------------------------------
-// WMI-based GPU temperature (improved)
+// WMI-based GPU temperature
+//
+// Translation:
+// "Windows… how hot is the GPU right now?"
 float GPUInfo::get_gpu_temperature()
 {
+    // All the pain is handled inside this helper
     return query_wmi_gpu_temperature();
 }
 
 // ----------------------------------------------------
-// Estimate core count
+// Estimate GPU core count
+//
+// Windows does NOT expose GPU cores.
+// So this is a semi-educated guess for known GPUs :)
 int GPUInfo::get_gpu_core_count()
 {
     ID3D12Device* device = nullptr;
     IDXGIFactory4* factory = nullptr;
+
+    // Create DXGI factory (gateway to GPU land)
     if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
         return 0;
 
     IDXGIAdapter1* adapter = nullptr;
     int cores = 0;
+
+    // Grab the first adapter
     if (SUCCEEDED(factory->EnumAdapters1(0, &adapter)))
     {
+        // Try creating a D3D12 device just to confirm GPU exists
         if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device))))
         {
-            cores = 7168; // RTX 4070 Super has 7168 CUDA cores
+            // Hardcoded known value (RTX 4070 Super)
+            cores = 7168;
+
             device->Release();
         }
         adapter->Release();
     }
+
     factory->Release();
     return cores;
 }
 
 // ----------------------------------------------------
 // NVAPI helpers
+//
+// NVIDIA-only zone 🟢
 static bool nvapi_available()
 {
+    // Check if nvapi64.dll exists on the system
     HMODULE nv = LoadLibraryA("nvapi64.dll");
     if (!nv) return false;
     FreeLibrary(nv);
@@ -339,34 +363,39 @@ static bool nvapi_available()
 
 static bool is_nvidia_gpu(UINT vendorId)
 {
-    return (vendorId == 0x10DE); // NVIDIA vendor ID
+    // NVIDIA vendor ID = 0x10DE
+    return (vendorId == 0x10DE);
 }
 
-// NVAPI temperature getter with multiple fallback methods
+// ----------------------------------------------------
+// NVAPI GPU temperature getter
+//
+// Tries MULTIPLE methods because GPUs are mysterious
 static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
 {
     float temperature = -1.0f;
 
-    // Method 1: Standard thermal settings (works on most GPUs including RTX 40 series)
+    // Method 1: Standard thermal settings (best case)
     NV_GPU_THERMAL_SETTINGS thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
 
-    NvAPI_Status status = NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_ALL, &thermalSettings);
+    NvAPI_Status status =
+        NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_ALL, &thermalSettings);
 
     if (status == NVAPI_OK && thermalSettings.count > 0)
     {
-        // Find GPU core sensor
+        // Look specifically for the GPU core sensor
         for (NvU32 i = 0; i < thermalSettings.count; i++)
         {
             if (thermalSettings.sensor[i].controller == NVAPI_THERMAL_CONTROLLER_GPU_INTERNAL &&
                 thermalSettings.sensor[i].target == NVAPI_THERMAL_TARGET_GPU)
             {
                 temperature = static_cast<float>(thermalSettings.sensor[i].currentTemp);
-                return temperature;
+                return temperature; // Jackpot 🎯
             }
         }
 
-        // If no specific GPU sensor found, use first available sensor
+        // Fallback: just take the first sensor
         if (thermalSettings.sensor[0].currentTemp > 0)
         {
             temperature = static_cast<float>(thermalSettings.sensor[0].currentTemp);
@@ -374,7 +403,7 @@ static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
         }
     }
 
-    // Method 2: Try with just GPU target
+    // Method 2: GPU-only target
     thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
     status = NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_GPU, &thermalSettings);
@@ -385,7 +414,7 @@ static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
         return temperature;
     }
 
-    // Method 3: Try NONE target (gets default sensor)
+    // Method 3: Absolute desperation mode
     thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
     status = NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_NONE, &thermalSettings);
@@ -396,18 +425,30 @@ static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
         return temperature;
     }
 
+    // NVAPI said nope
     return temperature;
 }
 
+// ----------------------------------------------------
+// NVAPI GPU usage
+//
+// NVIDIA usually tells the truth :)
 static float get_nvapi_usage(NvPhysicalGpuHandle handle)
 {
-    NV_GPU_DYNAMIC_PSTATES_INFO_EX pStates = { 0 };
+    NV_GPU_DYNAMIC_PSTATES_INFO_EX pStates = {};
     pStates.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
+
+    // utilization[0] = GPU core usage
     if (NvAPI_GPU_GetDynamicPstatesInfoEx(handle, &pStates) == NVAPI_OK)
-        return static_cast<float>(pStates.utilization[0].percentage); // GPU Core usage
+        return static_cast<float>(pStates.utilization[0].percentage);
+
     return -1.0f;
 }
 
+// ----------------------------------------------------
+// NVAPI core count
+//
+// Directly from NVIDIA (very nice)
 static int get_nvapi_core_count(NvPhysicalGpuHandle handle)
 {
     NvU32 count = 0;
@@ -416,34 +457,36 @@ static int get_nvapi_core_count(NvPhysicalGpuHandle handle)
     return 0;
 }
 
-// NEW: NVAPI GPU frequency getter with multiple methods
+// ----------------------------------------------------
+// NVAPI GPU frequency getter
+//
+// GPU clocks are chaotic, so we try multiple ways
 static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
 {
     NvU32 frequency = 0;
 
-    // Method 1: Try current clock frequencies (most reliable for current frequency)
-    NV_GPU_CLOCK_FREQUENCIES clockFreqs = { 0 };
+    // Method 1: Current graphics clock (best)
+    NV_GPU_CLOCK_FREQUENCIES clockFreqs = {};
     clockFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
     clockFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
 
     NvAPI_Status status = NvAPI_GPU_GetAllClockFrequencies(handle, &clockFreqs);
     if (status == NVAPI_OK)
     {
-        // Graphics clock (domain 0) is the main GPU core clock
         if (clockFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].bIsPresent)
         {
             frequency = clockFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency;
             if (frequency > 0)
-                return static_cast<float>(frequency) / 1000.0f; // Convert kHz to MHz
+                return static_cast<float>(frequency) / 1000.0f; // kHz → MHz
         }
     }
 
-    // Method 2: Try legacy current frequencies
+    // Method 2: Legacy calls (mostly useless but tried)
     NvU32 currentFreq = 0;
     status = NvAPI_GPU_GetCurrentPCIEDownstreamWidth(handle, &currentFreq);
 
-    // Method 3: Try all clocks info
-    NV_GPU_CLOCK_FREQUENCIES allClocks = { 0 };
+    // Method 3: Scan all clock domains
+    NV_GPU_CLOCK_FREQUENCIES allClocks = {};
     allClocks.version = NV_GPU_CLOCK_FREQUENCIES_VER;
     allClocks.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
 
@@ -455,58 +498,49 @@ static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
             if (allClocks.domain[i].bIsPresent && allClocks.domain[i].frequency > 0)
             {
                 frequency = allClocks.domain[i].frequency;
-                return static_cast<float>(frequency) / 1000.0f; // Convert kHz to MHz
+                return static_cast<float>(frequency) / 1000.0f;
             }
         }
     }
 
-    // Method 4: Try dynamic performance states
-    NV_GPU_DYNAMIC_PSTATES_INFO_EX pStates = { 0 };
-    pStates.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
-    status = NvAPI_GPU_GetDynamicPstatesInfoEx(handle, &pStates);
-
-    if (status == NVAPI_OK)
-    {
-        // Try to get frequency from performance state
-        // This might not give exact current frequency but can be a fallback
-    }
-
-    return -1.0f; // Failed to get frequency
+    // No luck
+    return -1.0f;
 }
 
 // ----------------------------------------------------
 // Main GPU info collector
+//
+// This is where everything comes together 🧠
 std::vector<gpu_data> GPUInfo::get_all_gpu_info()
 {
     std::vector<gpu_data> list;
+
     IDXGIFactory6* factory = nullptr;
     if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
         return list;
 
-    // Initialize NVAPI once for all GPUs
+    // Init NVAPI once (for NVIDIA GPUs)
     bool nvapiInitialized = false;
-    NvPhysicalGpuHandle nvapiHandles[NVAPI_MAX_PHYSICAL_GPUS] = { 0 };
+    NvPhysicalGpuHandle nvapiHandles[NVAPI_MAX_PHYSICAL_GPUS] = {};
     NvU32 nvapiGpuCount = 0;
 
     if (nvapi_available())
     {
-        NvAPI_Status initStatus = NvAPI_Initialize();
-        if (initStatus == NVAPI_OK)
+        if (NvAPI_Initialize() == NVAPI_OK)
         {
             nvapiInitialized = true;
-            // Enumerate all physical GPUs
-            NvAPI_Status enumStatus = NvAPI_EnumPhysicalGPUs(nvapiHandles, &nvapiGpuCount);
-            if (enumStatus != NVAPI_OK)
-            {
+            if (NvAPI_EnumPhysicalGPUs(nvapiHandles, &nvapiGpuCount) != NVAPI_OK)
                 nvapiGpuCount = 0;
-            }
         }
     }
 
     IDXGIAdapter4* adapter = nullptr;
     UINT adapterIndex = 0;
 
-    for (UINT i = 0; factory->EnumAdapters1(i, (IDXGIAdapter1**)&adapter) != DXGI_ERROR_NOT_FOUND; ++i)
+    // Enumerate all adapters
+    for (UINT i = 0;
+        factory->EnumAdapters1(i, (IDXGIAdapter1**)&adapter) != DXGI_ERROR_NOT_FOUND;
+        ++i)
     {
         DXGI_ADAPTER_DESC3 desc{};
         if (FAILED(adapter->GetDesc3(&desc)))
@@ -516,60 +550,54 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
         }
 
         gpu_data d;
+
+        // Basic info
         d.gpu_name = wstr_to_utf8(desc.Description);
 
-        double memGB = static_cast<double>(desc.DedicatedVideoMemory) / (1024.0 * 1024.0 * 1024.0);
+        double memGB = static_cast<double>(desc.DedicatedVideoMemory) /
+            (1024.0 * 1024.0 * 1024.0);
         std::ostringstream memStream;
         memStream.precision(1);
-        memStream << fixed << memGB;
+        memStream << std::fixed << memGB;
         d.gpu_memory = memStream.str() + " GB";
 
         // Driver version
         LARGE_INTEGER driverVersion{};
         if (SUCCEEDED(adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion)))
         {
-            unsigned int part1 = HIWORD(driverVersion.HighPart);
-            unsigned int part2 = LOWORD(driverVersion.HighPart);
-            unsigned int part3 = HIWORD(driverVersion.LowPart);
-            unsigned int part4 = LOWORD(driverVersion.LowPart);
-
             std::ostringstream oss;
-            oss << part1 << "." << part2 << "." << part3 << "." << part4;
+            oss << HIWORD(driverVersion.HighPart) << "."
+                << LOWORD(driverVersion.HighPart) << "."
+                << HIWORD(driverVersion.LowPart) << "."
+                << LOWORD(driverVersion.LowPart);
             d.gpu_driver_version = oss.str();
         }
-        else d.gpu_driver_version = "Unknown";
+        else
+            d.gpu_driver_version = "Unknown";
 
         // Vendor
-        d.gpu_vendor = (desc.VendorId == 0x10DE) ? "NVIDIA" :
+        d.gpu_vendor =
+            (desc.VendorId == 0x10DE) ? "NVIDIA" :
             (desc.VendorId == 0x1002 || desc.VendorId == 0x1022) ? "AMD" :
             (desc.VendorId == 0x8086) ? "Intel" : "Unknown";
 
-        // ---------------- Runtime Info ----------------
-        // Initialize with defaults
+        // Defaults
         d.gpu_usage = -1.0f;
         d.gpu_temperature = -1.0f;
         d.gpu_core_count = 0;
-        d.gpu_frequency = -1.0f; // Initialize frequency
+        d.gpu_frequency = -1.0f;
 
-        // Try NVIDIA-specific methods first
+        // NVIDIA fast path
         if (is_nvidia_gpu(desc.VendorId) && nvapiInitialized && adapterIndex < nvapiGpuCount)
         {
             NvPhysicalGpuHandle handle = nvapiHandles[adapterIndex];
-
-            // Get temperature
             d.gpu_temperature = get_nvapi_temperature(handle);
-
-            // Get usage
             d.gpu_usage = get_nvapi_usage(handle);
-
-            // Get core count
             d.gpu_core_count = get_nvapi_core_count(handle);
-
-            // Get frequency (NEW)
             d.gpu_frequency = get_nvapi_frequency(handle);
         }
 
-        // Fallback to WMI if NVAPI failed or not NVIDIA
+        // Fallbacks
         if (d.gpu_usage < 0.0f)
             d.gpu_usage = get_gpu_usage();
         if (d.gpu_temperature < 0.0f)
@@ -580,7 +608,6 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
         list.push_back(d);
         adapter->Release();
 
-        // Only increment adapter index for NVIDIA GPUs
         if (is_nvidia_gpu(desc.VendorId))
             adapterIndex++;
     }
@@ -593,13 +620,14 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
 }
 
 
+
 /*
 ================================================================================
 OKAY… WHAT IS THIS FILE ACTUALLY DOING? (GPUInfo.cpp)
 ================================================================================
 
 Short answer:
-👉 It spies on your GPU. Legally.
+=> It spies on your GPU. Legally.
 
 Long answer:
 Windows does NOT give GPU info in one nice place (typical toxic windows behavior),
