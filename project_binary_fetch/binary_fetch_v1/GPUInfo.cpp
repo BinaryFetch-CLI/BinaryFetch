@@ -28,32 +28,53 @@ static std::string wstr_to_utf8(const std::wstring& w)
 
 // ----------------------------------------------------
 // Helper: query WMI for GPU temperature (tries multiple methods)
+//
+// WARNING ⚠️
+// Windows does NOT want you to know GPU temperature.
+// So this function politely asks… then begs… then panics.
+//
+// Strategy:
+// 1️⃣ Try OpenHardwareMonitor (best case, clean data)
+// 2️⃣ Fallback to raw WMI thermal zones (kinda sucks)
+// 3️⃣ If everything bombs → return -1.0f and move on with life
+//
 static float query_wmi_gpu_temperature()
 {
+    // Wake up COM (Windows' favorite pain generator)
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     bool needsUninit = SUCCEEDED(hr);
 
+    // Security setup (Windows is paranoid for no reason)
     hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
         RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
         NULL, EOAC_NONE, NULL);
 
     IWbemLocator* locator = nullptr;
     IWbemServices* services = nullptr;
+
+    // Create WMI locator (if this fails, we’re already cooked)
     hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&locator);
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return -1.0f;
+        return -1.0f; // Bombed instantly 💥
     }
 
-    // Try OpenHardwareMonitor namespace first (if installed)
+    // ----------------------------------------------------
+    // METHOD 1: OpenHardwareMonitor (the good path :)
+    // Only works if user has OHM installed
+    // This is the most accurate WMI-based option
+    // ----------------------------------------------------
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\OpenHardwareMonitor"), NULL, NULL, 0, NULL, 0, 0, &services);
     if (SUCCEEDED(hr))
     {
+        // Tell Windows: "Relax, we’re trusted" (it still doesn’t believe us)
         CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
 
         IEnumWbemClassObject* enumerator = nullptr;
+
+        // Ask for temperature sensors that look GPU-ish
         hr = services->ExecQuery(
             bstr_t("WQL"),
             bstr_t(L"SELECT Value FROM Sensor WHERE SensorType='Temperature' AND (Name LIKE '%GPU%' OR Parent LIKE '%GPU%')"),
@@ -65,12 +86,17 @@ static float query_wmi_gpu_temperature()
         {
             IWbemClassObject* obj = nullptr;
             ULONG returned = 0;
+
+            // Loop until we find a usable temperature
             while (enumerator->Next(WBEM_INFINITE, 1, &obj, &returned) == S_OK && returned)
             {
                 VARIANT val;
                 if (SUCCEEDED(obj->Get(L"Value", 0, &val, 0, 0)))
                 {
+                    // OHM usually gives clean numbers (thank you)
                     float temp = (val.vt == VT_R8) ? (float)val.dblVal : (float)val.intVal;
+
+                    // Clean up ASAP and escape before Windows changes its mind
                     VariantClear(&val);
                     obj->Release();
                     enumerator->Release();
@@ -87,7 +113,15 @@ static float query_wmi_gpu_temperature()
         services->Release();
     }
 
-    // Try standard WMI (less reliable for GPU temp)
+    // ----------------------------------------------------
+    // METHOD 2: Raw WMI Thermal Zones (last resort :)
+    //
+    // Problems:
+    // - Might be CPU temp
+    // - Might be motherboard temp
+    // - Might be total nonsense
+    // But hey, Windows gave us this… so we try.
+    // ----------------------------------------------------
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\WMI"), NULL, NULL, 0, NULL, 0, 0, &services);
     if (SUCCEEDED(hr))
     {
@@ -112,9 +146,12 @@ static float query_wmi_gpu_temperature()
                 if (SUCCEEDED(obj->Get(L"CurrentTemperature", 0, &val, 0, 0)))
                 {
                     float temp = (val.vt == VT_R8) ? (float)val.dblVal : (float)val.intVal;
-                    // Convert from tenths of Kelvin to Celsius
+
+                    // WMI returns temp in tenths of Kelvin (why???)
                     if (temp > 2000.0f)
                         temp = (temp / 10.0f) - 273.15f;
+
+                    // Clean up and pray this number makes sense
                     VariantClear(&val);
                     obj->Release();
                     enumerator->Release();
@@ -131,10 +168,14 @@ static float query_wmi_gpu_temperature()
         services->Release();
     }
 
+    // Everything failed. Windows said NO.
     locator->Release();
     if (needsUninit) CoUninitialize();
+
+    // Temperature unavailable → sucks
     return -1.0f;
 }
+
 
 // ----------------------------------------------------
 // Helper: query float values via WMI (generic)
@@ -690,9 +731,9 @@ DXGI  → Who is the GPU?
 WMI   → What is it doing? (maybe)
 NVAPI → What is it REALLY doing?
 
-Windows made this hard.
+Windows made this hard. (again.....suckssssss) ( I really hate windows API design )
 So we adapted.
 
-End of story.
+End of story. 
 ================================================================================
 */
