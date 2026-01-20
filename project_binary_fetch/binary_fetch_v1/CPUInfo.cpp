@@ -1,3 +1,149 @@
+﻿/*
+================================================================================
+ CPUInfo.cpp — What’s going on in this file?
+================================================================================
+
+This file is responsible for collecting CPU + system runtime information on
+Windows — basically recreating what Task Manager shows, but using raw APIs
+instead of fancy UI magic.
+
+We mix and match multiple Windows technologies here because Windows does NOT
+give everything in one place (classic Windows moment).
+
+What we use:
+-------------
+1) CPUID (intrinsics)
+   - For CPU brand / model name
+   - Fast, direct, and very reliable
+
+2) WMI (Windows Management Instrumentation)
+   - Used for:
+	 • Base clock speed
+	 • Current clock speed
+	 • Socket count
+	 • Process count
+	 • Thread count
+	 • Handle count
+   - Powerful but slow and kinda sucks sometimes
+   - Still the only way to get some info cleanly
+
+3) PDH (Performance Data Helper)
+   - Used for real-time CPU utilization (%)
+   - Same backend Task Manager uses
+   - Needs warm-up or it gives garbage data
+
+4) WinAPI system calls
+   - Core count
+   - Logical processors (threads)
+   - Cache sizes (L1, L2, L3)
+   - System uptime
+   - Virtualization status
+
+Why this looks complicated:
+----------------------------
+Because Windows spreads CPU info across:
+- CPUID
+- WMI
+- PDH
+- Kernel APIs
+
+So yeah… we stitched it all together manually :)))
+
+================================================================================
+ Function overview
+================================================================================
+
+wmi_querysingle_value()
+----------------------
+A helper that runs a WMI query and returns ONE value as a string.
+Used everywhere to avoid rewriting the same COM + WMI boilerplate.
+
+get_cpu_info()
+--------------
+Uses CPUID to grab the full CPU brand string
+(Exactly what Task Manager shows)
+
+get_cpu_utilization()
+---------------------
+Uses PDH counters to get real-time CPU usage (%).
+This needs initialization + a delay or Windows lies :)
+
+get_cpu_base_speed()
+--------------------
+Reads MaxClockSpeed from WMI and converts MHz → GHz.
+
+get_cpu_speed()
+---------------
+Reads CurrentClockSpeed from WMI (current boost clock).
+
+get_cpu_sockets()
+-----------------
+Counts how many physical CPU sockets exist.
+Usually 1 unless you’re running a server monster.
+
+get_cpu_cores()
+---------------
+Counts PHYSICAL cores using GetLogicalProcessorInformation.
+Does NOT count hyperthreads.
+
+get_cpu_logical_processors()
+----------------------------
+Returns total logical processors (threads).
+This is cores × SMT.
+
+get_cpu_virtualization()
+------------------------
+Checks if CPU virtualization is enabled in BIOS / firmware.
+
+get_cpu_l1_cache()
+get_cpu_l2_cache()
+get_cpu_l3_cache()
+------------------
+Reads cache sizes using processor topology info.
+Automatically formats KB / MB.
+
+get_system_uptime()
+-------------------
+Uses GetTickCount64() to calculate how long the system
+has been running (days:hours:minutes:seconds).
+
+get_process_count()
+-------------------
+Counts total running processes via WMI.
+
+get_thread_count()
+------------------
+Counts total system threads via performance counters.
+
+get_handle_count()
+------------------
+Counts total open OS handles (files, objects, etc).
+
+================================================================================
+ TL;DR
+================================================================================
+This file:
+- Talks directly to the OS
+- Avoids external libraries
+- Mimics Task Manager behavior
+- Trades simplicity for accuracy and control
+
+Yes, it’s long.
+Yes, Windows APIs are messy.
+But it WORKS — and that’s a win :)
+================================================================================
+*/
+
+
+
+
+
+
+
+
+
+
+
 #include "CPUInfo.h"
 #include <windows.h>
 #include <intrin.h>
