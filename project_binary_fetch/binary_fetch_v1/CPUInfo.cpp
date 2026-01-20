@@ -144,20 +144,27 @@ But it WORKS — and that’s a win :)
 
 
 
-#include "CPUInfo.h"
-#include <windows.h>
-#include <intrin.h>
-#include <vector>
-#include <sstream>
-#include <wbemidl.h>
-#include <pdh.h>
-#include <comdef.h>
-#include <iomanip>
+#include "CPUInfo.h"   
 
-#pragma comment(lib, "pdh.lib")
-#pragma comment(lib, "wbemuuid.lib")
+#include <windows.h>  // Windows API (sometimes shit, some times magic) 
+#include <intrin.h>   // Low-level CPU instructions (CPUID stuff goes brrr)
+#include <vector>     // Dynamic arrays because fixed-size arrays are too restrictive
+#include <sstream>    // String building playground (turn numbers into pretty text)
+#include <wbemidl.h>  // WMI access – asking Windows deep questions about the system
+#include <pdh.h>      // Performance Data Helper – CPU usage, Task Manager style
+#include <comdef.h>   // COM helpers so Windows APIs don’t make us cry
+#include <iomanip>    // Fancy formatting (decimals, padding, alignment, drip)
 
-using namespace std;
+
+
+#pragma comment(lib, "pdh.lib")      
+// Auto-link PDH (Performance Data Helper) so CPU usage works without linker drama
+
+#pragma comment(lib, "wbemuuid.lib") 
+// Auto-link WMI UUIDs because COM + WMI won’t cooperate without this guy
+
+
+using namespace std; // if you don't whatt  is std...C'mon, get a life
 
 //helper fucntion for WMI queries-----------------------------------------------------------------
 string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
