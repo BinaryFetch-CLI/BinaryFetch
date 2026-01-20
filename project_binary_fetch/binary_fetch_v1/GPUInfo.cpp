@@ -179,65 +179,110 @@ static float query_wmi_gpu_temperature()
 
 // ----------------------------------------------------
 // Helper: query float values via WMI (generic)
+//
+// This function is basically:
+// "Hey Windows, can you give me ONE number?"
+//
+// Windows reply options:
+// 1) Sure :) 
+// 2) Maybe
+// 3) Nope (bombed)
+// ----------------------------------------------------
 static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& outVal)
 {
+    // Wake up COM (Windows' ancient ritual begins)
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     bool needsUninit = SUCCEEDED(hr);
 
+    // Security setup because Windows doesn't trust anyone, not even itself
     hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
         RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
         NULL, EOAC_NONE, NULL);
 
     IWbemLocator* locator = nullptr;
     IWbemServices* services = nullptr;
+
+    // Ask Windows for the WMI locator
+    // If this fails, everything after this is doomed :0
     hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&locator);
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return false;
+        return false; // Instant fail, no drama
     }
 
+    // Connect to ROOT\\CIMV2 (the default WMI playground)
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &services);
+
+    // Locator served its purpose, bye
     locator->Release();
+
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return false;
+        return false; // Connection failed, Windows said NO
     }
 
+    // Tell Windows: "We’re cool, let us read data"
     CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
         RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
 
     IEnumWbemClassObject* enumerator = nullptr;
-    hr = services->ExecQuery(bstr_t("WQL"), bstr_t(wql),
-        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &enumerator);
+
+    // Run the WQL query (this is where things usually explode)
+    hr = services->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t(wql),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &enumerator);
+
     if (FAILED(hr)) {
         services->Release();
         if (needsUninit) CoUninitialize();
-        return false;
+        return false; // Query bombed
     }
 
     IWbemClassObject* obj = nullptr;
     ULONG returned = 0;
     bool ok = false;
-    while (enumerator && SUCCEEDED(enumerator->Next(WBEM_INFINITE, 1, &obj, &returned)) && returned)
+
+    // Loop through results (usually just one, but WMI loves loops)
+    while (enumerator &&
+        SUCCEEDED(enumerator->Next(WBEM_INFINITE, 1, &obj, &returned)) &&
+        returned)
     {
         VARIANT val;
-        if (SUCCEEDED(obj->Get(field, 0, &val, 0, 0)) && (val.vt == VT_R8 || val.vt == VT_I4))
+
+        // Try to extract the requested field
+        if (SUCCEEDED(obj->Get(field, 0, &val, 0, 0)) &&
+            (val.vt == VT_R8 || val.vt == VT_I4))
         {
-            outVal = (val.vt == VT_R8) ? (float)val.dblVal : (float)val.intVal;
+            // Got the number! :)
+            outVal = (val.vt == VT_R8)
+                ? (float)val.dblVal
+                : (float)val.intVal;
+
             ok = true;
             VariantClear(&val);
             obj->Release();
-            break;
+            break; // Mission accomplished
         }
+
+        // Field was useless, try next
         VariantClear(&val);
         obj->Release();
     }
+
+    // Clean up everything before Windows gets angry
     if (enumerator) enumerator->Release();
     services->Release();
     if (needsUninit) CoUninitialize();
+
+    // ok == true  → value retrieved :)
+    // ok == false → Windows trolled us :0
     return ok;
 }
+
 
 // ----------------------------------------------------
 // WMI-based GPU usage
