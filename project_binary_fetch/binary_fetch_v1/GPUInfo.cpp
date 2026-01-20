@@ -505,3 +505,194 @@ std::vector<gpu_data> GPUInfo::get_all_gpu_info()
     factory->Release();
     return list;
 }
+
+
+/*
+================================================================================
+OKAY… WHAT IS THIS FILE ACTUALLY DOING? (GPUInfo.cpp)
+================================================================================
+
+Short answer:
+👉 It spies on your GPU. Legally.
+
+Long answer:
+Windows does NOT give GPU info in one nice place (typical toxic windows behavior),
+so this file grabs pieces from everywhere and assembles them like LEGO.
+
+--------------------------------------------------------------------------------
+WHY SO MANY APIs? (YEPP, ALL OF THEM ARE NEEDED)
+--------------------------------------------------------------------------------
+
+Windows GPU info is scattered like puzzle pieces:
+
+🧩 DXGI
+- Who is the GPU?
+- Name, VRAM, vendor, driver version
+
+🧩 WMI
+- What is the GPU doing?
+- Usage, temperature (sometimes lies, but tries its best)
+
+🧩 NVAPI (NVIDIA ONLY)
+- What is the GPU *actually* doing?
+- Fast, accurate, real hardware stats
+
+No single API does everything.
+So yeah… we summon all three.
+
+--------------------------------------------------------------------------------
+WHY SO MANY HEADERS??
+--------------------------------------------------------------------------------
+Because Windows.
+
+- windows.h  → unavoidable
+- DXGI/D3D12 → GPU enumeration & driver-level info
+- WMI        → system queries (fragile but useful) (sometimes sucks)
+- COM stuff  → because Windows loves COM (often sucks)
+- NVAPI      → NVIDIA secret sauce
+
+It looks scary.
+It’s normal.
+
+--------------------------------------------------------------------------------
+STRING DRAMA (WIDE STRINGS STRIKE AGAIN)
+--------------------------------------------------------------------------------
+Windows uses UTF-16.
+Humans use UTF-8.
+JSON hates broken text.
+
+So:
+wstr_to_utf8()
+- Converts GPU names properly
+- Prevents cursed terminal output
+- Saves your sanity
+
+--------------------------------------------------------------------------------
+WMI INIT (THE "PLEASE DON'T CRASH" SECTION)
+--------------------------------------------------------------------------------
+Before WMI works, we must:
+1️⃣ Wake up COM
+2️⃣ Set security (very picky)
+3️⃣ Connect to WMI
+4️⃣ Ask nicely using WQL (SQL but Windows-flavored)
+
+Miss one step?
+Boom. No data.
+
+--------------------------------------------------------------------------------
+GPU TEMPERATURE (THE QUEST)
+--------------------------------------------------------------------------------
+We try TWO paths:
+
+🥇 OpenHardwareMonitor
+- Works if user has OHM installed
+- Most accurate WMI option
+
+🥈 ACPI thermal sensors
+- Might be GPU
+- Might be CPU
+- Might be vibes only
+
+If everything fails → return -1.0f and move on.
+
+--------------------------------------------------------------------------------
+GPU USAGE (BEST EFFORT MODE)
+--------------------------------------------------------------------------------
+WMI performance counters are used here.
+
+They are:
+✔ Vendor-agnostic
+✔ Usually okay
+✖ Not perfect
+
+Better than nothing.
+
+--------------------------------------------------------------------------------
+CORE COUNT (WINDOWS SAID "NO")
+--------------------------------------------------------------------------------
+Windows doesn’t expose GPU core counts universally.
+
+So we:
+- Detect the GPU
+- Match known models
+- Return known values (example: RTX 4070 Super = 7168 cores)
+
+Yes, it’s heuristic.
+Yes, it works.
+
+--------------------------------------------------------------------------------
+NVAPI TIME (NVIDIA GPUs ONLY :)
+--------------------------------------------------------------------------------
+If NVIDIA is detected:
+- Initialize NVAPI
+- Find physical GPUs
+- Match them with DXGI adapters
+- Pull real-time stats directly from the driver
+
+This path gives:
+🔥 Real temperature
+🔥 Real usage
+🔥 Real clock speed
+🔥 Real core info
+
+Fast. Accurate. Beautiful.
+
+--------------------------------------------------------------------------------
+GPU FREQUENCY (WHY THIS IS ANNOYING)
+--------------------------------------------------------------------------------
+GPU clocks:
+- Boost
+- Idle
+- Throttle
+- Change every second
+
+So:
+- Try current clock
+- Try all clock domains
+- Fallback if needed
+- Return MHz or -1.0f
+
+There is NO universal Windows API for this.
+Yes, that’s dumb.
+
+--------------------------------------------------------------------------------
+MAIN PIPELINE (THE ACTUAL WORK)
+--------------------------------------------------------------------------------
+For every detected GPU:
+1️⃣ Enumerate via DXGI
+2️⃣ Read static info
+3️⃣ Try NVAPI (if NVIDIA)
+4️⃣ Fallback to WMI
+5️⃣ Pack everything into gpu_data
+6️⃣ Push to vector
+
+Goal:
+✔ Accurate
+✔ Stable
+✔ No crashes
+✔ Works on most systems
+
+--------------------------------------------------------------------------------
+CLEANUP (DO NOT SKIP THIS)
+--------------------------------------------------------------------------------
+- Release COM objects
+- Shutdown NVAPI
+- Destroy DXGI factory
+
+If you skip cleanup:
+Windows will remember.
+And punish you later.
+
+--------------------------------------------------------------------------------
+TL;DR
+--------------------------------------------------------------------------------
+DXGI  → Who is the GPU?
+WMI   → What is it doing? (maybe)
+NVAPI → What is it REALLY doing?
+
+Windows made this hard.
+So we adapted.
+
+End of story.
+================================================================================
+*/
