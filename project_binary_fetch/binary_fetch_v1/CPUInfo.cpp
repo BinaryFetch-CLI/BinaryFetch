@@ -167,39 +167,71 @@ But it WORKS — and that’s a win :)
 using namespace std; // if you don't whatt  is std...C'mon, get a life
 
 //helper fucntion for WMI queries-----------------------------------------------------------------
+
+// Generic helper to run a WMI query and return a single value as string
+// Think of this as: "ask Windows nicely → get one answer → leave quietly"
 string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 {
+	// COM / WMI plumbing objects (the boring but necessary stuff)
 	HRESULT hres;
-	IWbemLocator* locator = NULL;
-	IWbemServices* services = NULL;
-	IEnumWbemClassObject* enumerator = NULL;
-	IWbemClassObject* clsObj = NULL;
+	IWbemLocator* locator = NULL;          // Finds the WMI service
+	IWbemServices* services = NULL;        // Talks to WMI
+	IEnumWbemClassObject* enumerator = NULL; // Walks through query results
+	IWbemClassObject* clsObj = NULL;       // One result object
 	ULONG uReturn = 0;
+
+	// Default answer when Windows refuses to cooperate :)
 	string result = "Unknown";
 
+	// Initialize COM (try multithreaded first)
 	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
 	if (FAILED(hres))
 	{
+		// Fallback to apartment-threaded if MTA is already taken
 		hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
 		if (FAILED(hres)) return result;
 	}
 
-	hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
-		RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+	// Set up COM security so WMI doesn’t ghost us
+	hres = CoInitializeSecurity(
+		NULL,
+		-1,
+		NULL,
+		NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL,
+		EOAC_NONE,
+		NULL
+	);
+
+	// RPC_E_TOO_LATE just means security was already set somewhere else
 	if (FAILED(hres) && hres != RPC_E_TOO_LATE)
 	{
 		CoUninitialize();
 		return result;
 	}
 
-	hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&locator);
+	// Create the WMI locator (the GPS for Windows internals)
+	hres = CoCreateInstance(
+		CLSID_WbemLocator,
+		0,
+		CLSCTX_INPROC_SERVER,
+		IID_IWbemLocator,
+		(LPVOID*)&locator
+	);
 	if (FAILED(hres))
 	{
 		CoUninitialize();
 		return result;
 	}
 
-	hres = locator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &services);
+	// Connect to the default WMI namespace (ROOT\\CIMV2 = the good stuff)
+	hres = locator->ConnectServer(
+		_bstr_t(L"ROOT\\CIMV2"),
+		NULL, NULL, 0, NULL, 0, 0,
+		&services
+	);
 	if (FAILED(hres))
 	{
 		locator->Release();
@@ -207,8 +239,17 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 		return result;
 	}
 
-	hres = CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+	// Give ourselves permission to actually read data
+	hres = CoSetProxyBlanket(
+		services,
+		RPC_C_AUTHN_WINNT,
+		RPC_C_AUTHZ_NONE,
+		NULL,
+		RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL,
+		EOAC_NONE
+	);
 	if (FAILED(hres))
 	{
 		services->Release();
@@ -217,8 +258,14 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 		return result;
 	}
 
-	hres = services->ExecQuery(_bstr_t(L"WQL"), _bstr_t(query),
-		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &enumerator);
+	// Fire the WQL query (fast + forward-only because we only need one value)
+	hres = services->ExecQuery(
+		_bstr_t(L"WQL"),
+		_bstr_t(query),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL,
+		&enumerator
+	);
 	if (FAILED(hres))
 	{
 		services->Release();
@@ -227,15 +274,18 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 		return result;
 	}
 
+	// Grab the first result and extract the requested property
 	if (enumerator)
 	{
 		while (enumerator->Next(WBEM_INFINITE, 1, &clsObj, &uReturn) == S_OK && uReturn > 0)
 		{
 			VARIANT vtProp;
 			VariantInit(&vtProp);
+
 			hres = clsObj->Get(property_name, 0, &vtProp, 0, 0);
 			if (SUCCEEDED(hres))
 			{
+				// Handle the usual data types WMI likes to throw at us
 				if (vtProp.vt == VT_BSTR && vtProp.bstrVal != NULL)
 					result = _bstr_t(vtProp.bstrVal);
 				else if (vtProp.vt == VT_I4)
@@ -244,19 +294,24 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 					result = to_string(vtProp.uintVal);
 				else if (vtProp.vt == VT_UI2)
 					result = to_string(vtProp.uiVal);
+
 				VariantClear(&vtProp);
 			}
+
 			clsObj->Release();
-			break;
+			break; // One value is all we came for :)
 		}
 		enumerator->Release();
 	}
 
+	// Clean exit: release COM objects and leave no mess behind
 	if (services) services->Release();
 	if (locator) locator->Release();
 	CoUninitialize();
+
 	return result;
 }
+
 
 // get the cpu model and brand (like task manager shows)
 string CPUInfo::get_cpu_info()
