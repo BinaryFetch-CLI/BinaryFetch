@@ -1,9 +1,9 @@
 
 BinaryFetch License (BFL-1.0)
 
-Copyright (c) 2025
-Author: Maruf Hasan
-Administration: InterCentury
+Copyright (c) 2025 - 2026
+**Author:** Maruf Hasan
+**Administration:** BinaryFetch-CLI & InterCentury
 
 ---
 
@@ -122,5 +122,6 @@ Respect the work. Respect the author.
 ---
 
 End of License
+
 
 
