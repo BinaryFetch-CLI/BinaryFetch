@@ -1,7 +1,10 @@
 #pragma once
 #include <string>
 #include <vector>
+
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#endif
 
 struct DetailedScreenInfo {
     // Basic Information
@@ -80,14 +83,13 @@ public:
 private:
     std::vector<DetailedScreenInfo> screens;
 
-    // Core population methods
+#if defined(_WIN32) || defined(_WIN64)
     bool populateFromDXGI();
     bool enrichWithEDID();
     bool enrichWithRegistry();
     bool enrichWithNVAPI();
     bool enrichWithADL();
 
-    // Enhanced EDID parsing
     struct ExtendedEDIDInfo {
         std::string friendlyName;
         int nativeWidth;
@@ -101,7 +103,6 @@ private:
 
     ExtendedEDIDInfo parseExtendedEDID(const unsigned char* edid, size_t size);
 
-    // Helper methods
     std::string getFriendlyNameFromEDID(const std::wstring& deviceName);
     std::string getConnectionType(const std::wstring& deviceName);
     bool detectHDRCapability(const std::wstring& deviceName);
@@ -110,7 +111,9 @@ private:
     int getBitDepth(const std::wstring& deviceName);
     std::string getColorFormat(const std::wstring& deviceName);
     std::string getPanelType(const std::string& modelName);
-
-    // Manufacturer ID decoder
     std::string decodeManufacturerID(unsigned short id);
+#else
+    bool populateFromXrandr();
+    bool populateFromDRM();
+#endif
 };

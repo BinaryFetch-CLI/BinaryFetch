@@ -1,23 +1,24 @@
 #include "TimeInfo.h"
 
-// Constructor - gets current system time
 TimeInfo::TimeInfo() {
     updateTime();
 }
 
-// Private method to fetch current system time
 void TimeInfo::updateTime() {
+#if defined(_WIN32) || defined(_WIN64)
     GetLocalTime(&systemTime);
+#else
+    time_t now = time(nullptr);
+    localtime_r(&now, &timeInfo);
+#endif
 }
 
-// Check if a year is a leap year
 bool TimeInfo::isLeapYear(int year) const {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
 
-// Calculate ISO week number
 int TimeInfo::calculateWeekNumber() const {
-    // Get January 1st of current year
+#if defined(_WIN32) || defined(_WIN64)
     SYSTEMTIME jan1;
     jan1.wYear = systemTime.wYear;
     jan1.wMonth = 1;
@@ -37,72 +38,98 @@ int TimeInfo::calculateWeekNumber() const {
     uli2.LowPart = ft2.dwLowDateTime;
     uli2.HighPart = ft2.dwHighDateTime;
 
-    // Calculate day of year
     ULONGLONG diff = uli2.QuadPart - uli1.QuadPart;
     int dayOfYear = (int)(diff / 10000000ULL / 86400ULL) + 1;
-
-    // Calculate week number (simple calculation)
     int weekNumber = (dayOfYear + 6) / 7;
-
     return weekNumber;
+#else
+    int dayOfYear = timeInfo.tm_yday + 1;
+    int weekNumber = (dayOfYear + 6) / 7;
+    return weekNumber;
+#endif
 }
 
-// Get second
 int TimeInfo::getSecond() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wSecond;
+#else
+    return timeInfo.tm_sec;
+#endif
 }
 
-// Get minute
 int TimeInfo::getMinute() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wMinute;
+#else
+    return timeInfo.tm_min;
+#endif
 }
 
-// Get hour
 int TimeInfo::getHour() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wHour;
+#else
+    return timeInfo.tm_hour;
+#endif
 }
 
-// Get day
 int TimeInfo::getDay() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wDay;
+#else
+    return timeInfo.tm_mday;
+#endif
 }
 
-// Get week number
 int TimeInfo::getWeekNumber() const {
     return calculateWeekNumber();
 }
 
-// Get day name
 std::string TimeInfo::getDayName() const {
     const char* days[] = { "Sunday", "Monday", "Tuesday", "Wednesday",
                           "Thursday", "Friday", "Saturday" };
+#if defined(_WIN32) || defined(_WIN64)
     return days[systemTime.wDayOfWeek];
+#else
+    return days[timeInfo.tm_wday];
+#endif
 }
 
-// Get month number
 int TimeInfo::getMonthNumber() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wMonth;
+#else
+    return timeInfo.tm_mon + 1;
+#endif
 }
 
-// Get month name
 std::string TimeInfo::getMonthName() const {
     const char* months[] = { "", "January", "February", "March", "April",
                             "May", "June", "July", "August", "September",
                             "October", "November", "December" };
+#if defined(_WIN32) || defined(_WIN64)
     return months[systemTime.wMonth];
+#else
+    return months[timeInfo.tm_mon + 1];
+#endif
 }
 
-// Get year number
 int TimeInfo::getYearNumber() const {
+#if defined(_WIN32) || defined(_WIN64)
     return systemTime.wYear;
+#else
+    return timeInfo.tm_year + 1900;
+#endif
 }
 
-// Get leap year status
 std::string TimeInfo::getLeapYear() const {
+#if defined(_WIN32) || defined(_WIN64)
     return isLeapYear(systemTime.wYear) ? "Yes" : "No";
+#else
+    return isLeapYear(timeInfo.tm_year + 1900) ? "Yes" : "No";
+#endif
 }
 
-// Refresh the system time
 void TimeInfo::refresh() {
     updateTime();
 }

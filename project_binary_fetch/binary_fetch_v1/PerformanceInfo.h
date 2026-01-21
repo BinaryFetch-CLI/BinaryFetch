@@ -1,11 +1,13 @@
 #pragma once
 
 #include <string>
+
+#if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
 #include <Pdh.h>
-
 #pragma comment(lib, "pdh.lib")
-#pragma comment(lib, "nvapi64.lib") // make sure NVAPI SDK library is linked
+#pragma comment(lib, "nvapi64.lib")
+#endif
 
 class PerformanceInfo {
 private:

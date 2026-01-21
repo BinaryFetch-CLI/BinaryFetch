@@ -1,35 +1,44 @@
-﻿// main.cpp (AsciiArt separated into header and implementation files)
+// main.cpp (AsciiArt separated into header and implementation files)
 
 #include <iostream>
-#include <iomanip>        // Formatting utilities (setw, precision)
+#include <iomanip>
 #include <vector>
 #include <functional>
-#include <sstream>        // For string stream operations
+#include <sstream>
 #include <fstream>
 #include <string>
-#include <fstream>
 #include <regex>
-#include <windows.h>
-#include <shlobj.h>
-#include <direct.h>
-#include <comdef.h>
-#include <Wbemidl.h>
-// ASCII Art functionality
-#include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+#include <map>
 
-#include <iostream>
-#include <iomanip>        // Formatting utilities (setw, precision)
-#include <vector>
-#include <functional>
-#include <sstream>        // For string stream operations
-#include <fstream>
-#include <string>
-#include <fstream>
-#include <regex>
-#include <windows.h>
-#include <shlobj.h>
-#include <direct.h>
-// ASCII Art functionality
+// Platform-specific includes
+#if defined(_WIN32) || defined(_WIN64)
+    #define PLATFORM_WINDOWS 1
+    #include <windows.h>
+    #include <shlobj.h>
+    #include <direct.h>
+    #include <comdef.h>
+    #include <Wbemidl.h>
+#else
+    #define PLATFORM_WINDOWS 0
+    #include <sys/stat.h>
+    #include <unistd.h>
+    #include <pwd.h>
+#endif
+
+#if defined(__linux__)
+    #define PLATFORM_LINUX 1
+#else
+    #define PLATFORM_LINUX 0
+#endif
+
+#if defined(__FreeBSD__)
+    #define PLATFORM_FREEBSD 1
+#else
+    #define PLATFORM_FREEBSD 0
+#endif
+
+#define PLATFORM_POSIX (PLATFORM_LINUX || PLATFORM_FREEBSD)
+
 #include "AsciiArt.h"
 
 // ------------------ Full System Info Modules ------------------
@@ -92,60 +101,82 @@ it is a sign that the logic should be moved into a new module.
 */
 
 
-int main(){
+int main(int argc, char* argv[]){
 
-    // Initialize COM
+    bool fullMode = false;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--full" || arg == "-f") {
+            fullMode = true;
+        } else if (arg == "--help" || arg == "-h") {
+            std::cout << "BinaryFetch - System Information Tool\n\n"
+                      << "Usage: binaryfetch [OPTIONS]\n\n"
+                      << "Options:\n"
+                      << "  -f, --full    Show detailed system information (expanded mode)\n"
+                      << "  -h, --help    Show this help message\n\n"
+                      << "Config files:\n"
+#if PLATFORM_WINDOWS
+                      << "  C:\\Users\\Public\\BinaryFetch\\BinaryFetch_Config.json\n"
+                      << "  C:\\Users\\Public\\BinaryFetch\\BinaryArt.txt\n"
+#else
+                      << "  ~/.config/binaryfetch/BinaryFetch_Config.json\n"
+                      << "  ~/.config/binaryfetch/BinaryArt.txt\n"
+#endif
+                      << std::endl;
+            return 0;
+        }
+    }
+
+#if PLATFORM_WINDOWS
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
         std::cout << "Failed to initialize COM library. Error: 0x"
             << std::hex << hr << std::endl;
         return 1;
     }
+    SetConsoleOutputCP(CP_UTF8);
+#endif
 
-
-
-    
-    // ========== SIMPLIFIED ASCII ART LOADING ==========
-        // Just call loadFromFile() - it handles everything automatically!
-        // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
-        // - If missing, copies from Default_Ascii_Art.txt and creates it
-        // - User can modify their art anytime in AppData folder
-
-	SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console (for emoji printing)
     AsciiArt art;
     if (!art.loadFromFile()) {
         std::cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
-        // Program continues even if art fails to load
     }
 
-    // ========== AUTO CONFIG FILE SETUP ==========
-    // true = dev mode (loads local file), false = production mode (extracts from EXE)
     bool LOAD_DEFAULT_CONFIG = false;
 
+#if PLATFORM_WINDOWS
     std::string configDir = "C:\\Users\\Public\\BinaryFetch";
     std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
+#else
+    std::string homeDir;
+    const char* home = getenv("HOME");
+    if (home) {
+        homeDir = home;
+    } else {
+        struct passwd* pw = getpwuid(getuid());
+        if (pw) homeDir = pw->pw_dir;
+    }
+    std::string configDir = homeDir + "/.config/binaryfetch";
+    std::string userConfigPath = configDir + "/BinaryFetch_Config.json";
+#endif
     std::string configPath;
 
     if (LOAD_DEFAULT_CONFIG) {
-        // DEV MODE: Load directly from project folder for fast iteration 🧪
         configPath = "Default_BinaryFetch_Config.json";
     }
     else {
-        // PRODUCTION MODE: Use constant public folder 🛰️
         configPath = userConfigPath;
 
-        // 1. Create directory if it doesn't exist
+#if PLATFORM_WINDOWS
         if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
             _mkdir(configDir.c_str());
         }
 
-        // 2. Self-Healing: Check if user config exists, if not, extract from EXE memory
         std::ifstream checkConfig(userConfigPath);
         bool userConfigExists = checkConfig.good();
         checkConfig.close();
 
         if (!userConfigExists) {
-            // IDR_DEFAULT_CONFIG is 101 in your resource.h
             HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(101), RT_RCDATA);
             if (hRes) {
                 HGLOBAL hData = LoadResource(NULL, hRes);
@@ -162,6 +193,36 @@ int main(){
                 std::cout << "Warning: Internal resource IDR_DEFAULT_CONFIG not found." << std::endl;
             }
         }
+#else
+        struct stat st;
+        if (stat(configDir.c_str(), &st) != 0) {
+            std::string parentDir = homeDir + "/.config";
+            mkdir(parentDir.c_str(), 0755);
+            mkdir(configDir.c_str(), 0755);
+        }
+
+        std::ifstream checkConfig(userConfigPath);
+        bool userConfigExists = checkConfig.good();
+        checkConfig.close();
+
+        if (!userConfigExists) {
+            std::ifstream defaultConfig("Default_BinaryFetch_Config.json");
+            if (defaultConfig.is_open()) {
+                std::ofstream userConfig(userConfigPath);
+                userConfig << defaultConfig.rdbuf();
+                userConfig.close();
+                defaultConfig.close();
+            } else {
+                std::ifstream shareConfig("/usr/share/binaryfetch/BinaryFetch_Config.json");
+                if (shareConfig.is_open()) {
+                    std::ofstream userConfig(userConfigPath);
+                    userConfig << shareConfig.rdbuf();
+                    userConfig.close();
+                    shareConfig.close();
+                }
+            }
+        }
+#endif
     }
 
     // ========== CONFIG LOADING ==========
@@ -248,7 +309,6 @@ int main(){
     UserInfo user;
     PerformanceInfo perf;
     DisplayInfo di;
-    ExtraInfo extra;
     SystemInfo sys;
 
     CompactAudio c_audio;
@@ -256,7 +316,6 @@ int main(){
     CompactCPU c_cpu;
    // CompactScreen c_screen;
     CompactMemory c_memory;
-    CompactSystem c_system;
     CompactGPU c_gpu;
     CompactPerformance c_perf;
     CompactUser c_user;
@@ -832,6 +891,7 @@ int main(){
         }
 
         //-----------------------------start of detailed modules----------------------//
+        if (fullMode) {
 
         // ----------------- DETAILED MEMORY SECTION ----------------- //
         if (isEnabled("detailed_memory")) {
@@ -2276,6 +2336,7 @@ int main(){
 
 
     //----------------- END OF JSON-CONTROLLED COMPACT SECTIONS -----------------//
+        } // end fullMode
 
  
 
@@ -2287,7 +2348,9 @@ int main(){
     std::cout << std::endl;
 
 
+#if PLATFORM_WINDOWS
     CoUninitialize();
+#endif
     return 0;
 }
 

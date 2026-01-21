@@ -6,7 +6,7 @@
 
 /*
  ---------------------------------------------------------
-    AsciiArt Utilities — Helper Functions (Declarations)
+    AsciiArt Utilities ï¿½ Helper Functions (Declarations)
  ---------------------------------------------------------
 
  These helpers deal with visual correctness when printing
@@ -46,7 +46,7 @@ void sanitizeLeadingInvisible(std::string& s);
    - Reporting how tall and wide the art is
    - Providing safe access to art lines for real-time display
 
-  This class does NOT print anything itself — LivePrinter
+  This class does NOT print anything itself ï¿½ LivePrinter
   handles actual on-screen printing.
 */
 class AsciiArt {
@@ -94,6 +94,7 @@ private:
 
     // Internal helper: Load art from a specific file path
     bool loadArtFromPath(const std::string& filepath);
+    bool loadArtFromString(const std::string& artContent);
 };
 
 
@@ -121,7 +122,7 @@ public:
     // Each call prints the next art line (or blank padding).
     void push(const std::string& infoLine);
 
-    // Same as push("") — convenient for spacing
+    // Same as push("") ï¿½ convenient for spacing
     void pushBlank();
 
     // After finishing all info lines, print any remaining

@@ -1,8 +1,11 @@
-﻿#pragma once
+#pragma once
 
 #include <string>
 #include <vector>
+
+#if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#endif
 
 struct ScreenInfo {
     std::string name;           // Friendly display name (e.g., "ASUS VG27AQ")
@@ -41,13 +44,17 @@ public:
 private:
     std::vector<ScreenInfo> screens;
 
-    // Population methods
+#if defined(_WIN32) || defined(_WIN64)
+    // Windows-specific population methods
     bool populateFromDXGI();
     bool enrichWithNVAPI();
     bool enrichWithADL();
-
-    // Helper to get friendly name from EDID
     std::string getFriendlyNameFromEDID(const std::wstring& deviceName);
+#else
+    // POSIX population methods
+    bool populateFromXrandr();
+    bool populateFromDRM();
+#endif
 
     // Helper to parse EDID for native resolution and name
     struct EDIDInfo {
