@@ -199,6 +199,69 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 // "use default security, auto-pick auth services, and allow WMI to
 // query system info using the current user".
 // The weird NULLs and -1 are totally normal here — Windows expects them.
+
+
+    /*
+    ### This function call looks scary.... It’s not..... :)
+
+    CoInitializeSecurity configures how COM (and WMI) handle security.
+    The reason this call looks like a pile of NULLs and magic numbers is
+    because Microsoft designed it to be *generic*, not friendly.
+
+    Why these exact values?
+
+    - NULL (1st parameter):
+      We are NOT providing a custom security descriptor.
+      Translation: "Windows, use your default security rules."
+
+    - -1 (2nd parameter):
+      Means "use ALL available authentication services".
+      We don't care which one — Windows will pick what works best.
+
+    - NULL, NULL (3rd & 4th):
+      No custom authentication services, no reserved data.
+      Again: defaults are perfectly fine for reading system info.
+
+    - RPC_C_AUTHN_LEVEL_DEFAULT:
+      Default authentication level.
+      Enough security to safely talk to WMI without overcomplicating things.
+
+    - RPC_C_IMP_LEVEL_IMPERSONATE:
+      This is IMPORTANT.
+      It allows WMI to query system information *as the current user*.
+      Without this, most WMI calls will silently fail.....
+
+    - NULL:
+      No custom authentication identity.
+      We’re using the current logged-in user.
+
+    - EOAC_NONE:
+      No extra COM capabilities needed.
+      Simple, clean, no special tricks.
+
+    - NULL (last one):
+      Reserved. Always NULL. Always weird. Always Microsoft.
+
+    TL;DR:
+    This setup basically says:
+    "Hey Windows, please let me read system information safely....
+     using default rules, as the current user."
+
+    It’s boilerplate. It’s normal. And yes — every sane WMI program does this.
+*/
+
+    hres = CoInitializeSecurity(
+        NULL,
+        -1,
+        NULL,
+        NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE,
+        NULL
+    );
+
     hres = CoInitializeSecurity(
         NULL,
         -1,
