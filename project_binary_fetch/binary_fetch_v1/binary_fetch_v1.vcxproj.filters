@@ -231,7 +231,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="text infos\Engine_info.md" />
     <None Include="text infos\locations.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
     <None Include="Default_BinaryFetch_Config.json">
