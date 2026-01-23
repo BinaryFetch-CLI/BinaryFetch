@@ -379,6 +379,39 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
     ------------------------------------------------------------
 */
 
+/*
+    🧠 How this function gets your CPU name (don’t panic, it’s cooler than it looks)
+
+    CPUs don’t store their brand name ("Ryzen 5 5600G", "Intel i7-12700K", etc.)
+    as a normal string you can just ask for. Instead, they expose it through
+    a low-level instruction called CPUID.
+
+    Think of CPUID as:
+    "Hey CPU, tell me about yourself."
+
+    The CPU brand string is split into 3 chunks of 16 bytes each.
+    To get the full name, we have to ask for all 3 parts and glue them together.
+
+    Why these magic numbers?
+    - 0x80000002 → first 16 characters
+    - 0x80000003 → next 16 characters
+    - 0x80000004 → last 16 characters
+
+    Each __cpuid call fills an array of 4 integers (4 × 4 bytes = 16 bytes).
+    We copy each chunk into the correct position in cpu_brand.
+
+    After all three calls:
+    cpu_brand contains a proper null-terminated C-string.
+    We then convert it into a std::string and return it.
+
+    This is exactly how tools like Task Manager, CPU-Z, and neofetch
+    get the CPU model name on Windows.
+
+    Yes, it looks low-level.
+    Yes, it’s a little magical.
+    And yes — this is the correct and intended way 🙂
+*/
+
 // Returns CPU brand string (same as Task Manager)
 string CPUInfo::get_cpu_info()
 {
@@ -397,6 +430,7 @@ string CPUInfo::get_cpu_info()
 
     return string(cpu_brand);
 }
+
 
 // CPU usage percentage (Task Manager style)
 float CPUInfo::get_cpu_utilization()
