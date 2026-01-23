@@ -138,26 +138,7 @@ But it WORKS — and that’s a win :)
 
 
 
-/*
-    ------------------------------------------------------------
-    CPUInfo.cpp
-    ------------------------------------------------------------
 
-    Welcome 👋
-
-    This file is responsible for collecting CPU and system-related
-    information on Windows — similar to what Task Manager shows,
-    but without the GUI and with way more control.
-
-    Expect:
-    - WMI queries (yes, the scary Windows stuff)
-    - PDH counters (CPU usage magic)
-    - CPUID instructions (bare-metal goodness)
-    - A lot of cleanup, because Windows *will* punish laziness :)
-
-    If you’re reading this in the future:
-    Take a deep breath — everything here is intentional.
-*/
 
 #include "CPUInfo.h"
 
