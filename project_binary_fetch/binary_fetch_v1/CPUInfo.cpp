@@ -195,7 +195,10 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
             return result;
     }
 
-    // Set COM security (WMI won’t answer without this)
+// Don't get afraid 😄 — this just tells Windows:
+// "use default security, auto-pick auth services, and allow WMI to
+// query system info using the current user".
+// The weird NULLs and -1 are totally normal here — Windows expects them.
     hres = CoInitializeSecurity(
         NULL,
         -1,
