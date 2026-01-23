@@ -487,6 +487,37 @@ float CPUInfo::get_cpu_utilization()
 }
 
 
+/*
+    Maximum rated CPU speed (base clock) — explained without panic :)
+
+    This value represents the CPU’s *official* maximum base frequency,
+    not the current speed and not boost clocks.
+
+    Where does it come from?
+    - Windows exposes this through WMI (Windows Management Instrumentation).
+    - The Win32_Processor class provides MaxClockSpeed in **MHz**.
+    - This is the same number Task Manager shows as "Base speed".
+
+    Why WMI?
+    - CPUID does NOT reliably expose base clock.
+    - PDH only reports usage, not hardware ratings.
+    - WMI is the cleanest and most accurate source here.
+
+    Flow:
+    1. Query Win32_Processor → MaxClockSpeed
+    2. Value comes back as a string (usually in MHz)
+    3. Convert MHz → GHz (divide by 1000)
+    4. Format nicely with two decimals
+
+    If anything goes wrong:
+    - Missing data
+    - Invalid value
+    - Conversion failure
+    We return "N/A" instead of crashing or lying :)
+
+    Stable, boring, and correct — exactly what system info code should be.
+*/
+
 // Maximum rated CPU speed (GHz)
 string CPUInfo::get_cpu_base_speed()
 {
