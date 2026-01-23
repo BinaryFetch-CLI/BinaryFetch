@@ -432,6 +432,34 @@ string CPUInfo::get_cpu_info()
 }
 
 
+/*
+    CPU usage (Task Manager style) — what’s really happening here :)
+
+    Windows does not give you "CPU usage %" as a simple function call.
+    Instead, it exposes performance counters through PDH
+    (Performance Data Helper), which is the same system Task Manager uses.
+
+    Why all the static variables?
+    - PDH queries and counters are expensive to create.
+    - Creating them every frame would be slow and unnecessary.
+    - So we initialize them once, then reuse them forever =))
+
+    How this works step-by-step:
+    1. Open a PDH query (this is the container for performance counters).
+    2. Add the "\\Processor(_Total)\\% Processor Time" counter.
+       This represents overall CPU usage across all cores.
+    3. Collect initial data (PDH needs a baseline to compare against).
+    4. Wait a short moment so PDH has time to calculate a real delta.
+
+    On every call after initialization:
+    - We ask PDH to collect fresh data.
+    - We read the formatted value as a double (percentage).
+    - We return it as a float, just like Task Manager does.
+
+    If this looks over-engineered:
+    congrats, you just discovered Windows performance APIs :)
+*/
+
 // CPU usage percentage (Task Manager style)
 float CPUInfo::get_cpu_utilization()
 {
@@ -457,6 +485,7 @@ float CPUInfo::get_cpu_utilization()
 
     return static_cast<float>(value.doubleValue);
 }
+
 
 // Maximum rated CPU speed (GHz)
 string CPUInfo::get_cpu_base_speed()
