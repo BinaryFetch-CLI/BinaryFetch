@@ -18,12 +18,12 @@ What we use:
 
 2) WMI (Windows Management Instrumentation)
    - Used for:
-	 • Base clock speed
-	 • Current clock speed
-	 • Socket count
-	 • Process count
-	 • Thread count
-	 • Handle count
+     • Base clock speed
+     • Current clock speed
+     • Socket count
+     • Process count
+     • Thread count
+     • Handle count
    - Powerful but slow and kinda sucks sometimes
    - Still the only way to get some info cleanly
 
@@ -134,123 +134,77 @@ But it WORKS — and that’s a win :)
 ================================================================================
 */
 
-
-
-
-
-
-
 #include "CPUInfo.h"
 
 #include <windows.h>   // Core Windows API — sometimes pain, sometimes power
 #include <intrin.h>    // CPUID and low-level CPU instructions
-#include <vector>      // Dynamic storage (because life isn’t fixed-size)
+#include <vector>      // Dynamic storage (because life isn't fixed-size)
 #include <sstream>     // Turning numbers into pretty strings
 #include <wbemidl.h>   // WMI — Windows answering deep existential questions
 #include <pdh.h>       // Performance counters (Task Manager vibes)
-#include <comdef.h>    // COM helpers so we don’t lose our sanity
+#include <comdef.h>    // COM helpers so we don't lose our sanity
 #include <iomanip>     // Formatting polish (decimals, padding, alignment)
 
 #pragma comment(lib, "pdh.lib")      
 // Auto-link PDH so CPU usage works without linker drama
 
 #pragma comment(lib, "wbemuuid.lib") 
-// Required for WMI / COM UUIDs — Windows won’t talk without this
+// Required for WMI / COM UUIDs — Windows won't talk without this
 
 using namespace std; // If this confuses you… we need to talk 😄
 
-
 /*
-    ------------------------------------------------------------
-    WMI Helper Function
-    ------------------------------------------------------------
+documentation (1) : WMI helper function for single-value queries
 
-    Runs a WMI query and returns ONE property as a string.
+    WMI Helper Function — the reliable messenger between you and Windows internals
 
-    Philosophy:
-    - Ask Windows nicely
-    - Take one answer
-    - Leave quietly
+    This function handles all the COM/WMI boilerplate so we don't have to repeat
+    the same 50 lines of code for every single WMI query.
+
+    How it works:
+    -------------
+    1. Initialize COM (Windows' component system)
+    2. Set up security so we can read system data
+    3. Connect to the WMI service (specifically ROOT\CIMV2, where hardware info lives)
+    4. Execute a WQL query (WMI's version of SQL)
+    5. Extract ONE property value from the first result
+    6. Clean up everything properly (no memory leaks!)
+
+    Why so much ceremony?
+    ---------------------
+    WMI is built on COM (Component Object Model), which is Microsoft's 90s-era
+    technology for software components talking to each other. COM requires:
+    - Explicit initialization
+    - Security configuration
+    - Manual reference counting
+    - Careful cleanup
+
+    This function encapsulates all that complexity so our other functions can
+    just ask for data and get a simple string back.
+
+    The alternative would be repeating this 50-line dance 15 times...
+    and nobody wants that :)
 */
+
+// Section (1) : WMI helper function for single-value queries
 string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 {
-    // COM & WMI plumbing (boring but unavoidable)
     HRESULT hres;
-    IWbemLocator* locator = NULL;           // Finds the WMI service
-    IWbemServices* services = NULL;         // Talks to WMI
-    IEnumWbemClassObject* enumerator = NULL;// Iterates query results
-    IWbemClassObject* clsObj = NULL;        // One result object
+    IWbemLocator* locator = NULL;
+    IWbemServices* services = NULL;
+    IEnumWbemClassObject* enumerator = NULL;
+    IWbemClassObject* clsObj = NULL;
     ULONG uReturn = 0;
 
-    // Default answer when Windows refuses cooperation :)
     string result = "Unknown";
 
-    // Initialize COM (prefer multithreaded)
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres))
     {
-        // Fallback — COM was probably already initialized differently
         hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
         if (FAILED(hres))
             return result;
     }
-
-// Don't get afraid 😄 — this just tells Windows:
-// "use default security, auto-pick auth services, and allow WMI to
-// query system info using the current user".
-// The weird NULLs and -1 are totally normal here — Windows expects them.
-
-
-    /*
-    ### This function call looks scary.... It’s not..... :)
-
-    CoInitializeSecurity configures how COM (and WMI) handle security.
-    The reason this call looks like a pile of NULLs and magic numbers is
-    because Microsoft designed it to be *generic*, not friendly.
-
-    Why these exact values?
-
-    - NULL (1st parameter):
-      We are NOT providing a custom security descriptor.
-      Translation: "Windows, use your default security rules."
-
-    - -1 (2nd parameter):
-      Means "use ALL available authentication services".
-      We don't care which one — Windows will pick what works best.
-
-    - NULL, NULL (3rd & 4th):
-      No custom authentication services, no reserved data.
-      Again: defaults are perfectly fine for reading system info.
-
-    - RPC_C_AUTHN_LEVEL_DEFAULT:
-      Default authentication level.
-      Enough security to safely talk to WMI without overcomplicating things.
-
-    - RPC_C_IMP_LEVEL_IMPERSONATE:
-      This is IMPORTANT.
-      It allows WMI to query system information *as the current user*.
-      Without this, most WMI calls will silently fail.....
-
-    - NULL:
-      No custom authentication identity.
-      We’re using the current logged-in user.
-
-    - EOAC_NONE:
-      No extra COM capabilities needed.
-      Simple, clean, no special tricks.
-
-    - NULL (last one):
-      Reserved. Always NULL. Always weird. Always Microsoft.
-
-    TL;DR:
-    This setup basically says:
-    "Hey Windows, please let me read system information safely....
-     using default rules, as the current user."
-
-    It’s boilerplate. It’s normal. And yes — every sane WMI program does this.
-*/
-
-
 
     hres = CoInitializeSecurity(
         NULL,
@@ -264,14 +218,12 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
         NULL
     );
 
-    // RPC_E_TOO_LATE just means security was already set — totally fine
     if (FAILED(hres) && hres != RPC_E_TOO_LATE)
     {
         CoUninitialize();
         return result;
     }
 
-    // Create WMI locator (basically a GPS for Windows internals)
     hres = CoCreateInstance(
         CLSID_WbemLocator,
         0,
@@ -285,7 +237,6 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
         return result;
     }
 
-    // Connect to ROOT\\CIMV2 — the good stuff lives here
     hres = locator->ConnectServer(
         _bstr_t(L"ROOT\\CIMV2"),
         NULL, NULL, 0, NULL, 0, 0,
@@ -298,7 +249,6 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
         return result;
     }
 
-    // Set proxy blanket so we’re allowed to read data
     hres = CoSetProxyBlanket(
         services,
         RPC_C_AUTHN_WINNT,
@@ -317,7 +267,6 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
         return result;
     }
 
-    // Execute the WQL query (fast + forward-only)
     hres = services->ExecQuery(
         _bstr_t(L"WQL"),
         _bstr_t(query),
@@ -333,7 +282,6 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
         return result;
     }
 
-    // Grab the first result — one value is all we need
     if (enumerator)
     {
         while (enumerator->Next(WBEM_INFINITE, 1, &clsObj, &uReturn) == S_OK && uReturn > 0)
@@ -344,7 +292,6 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
             hres = clsObj->Get(property_name, 0, &vtProp, 0, 0);
             if (SUCCEEDED(hres))
             {
-                // Handle common WMI data types
                 if (vtProp.vt == VT_BSTR && vtProp.bstrVal)
                     result = _bstr_t(vtProp.bstrVal);
                 else if (vtProp.vt == VT_I4)
@@ -358,13 +305,12 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
             }
 
             clsObj->Release();
-            break; // Mission accomplished :)
+            break;
         }
 
         enumerator->Release();
     }
 
-    // Clean exit — no COM leaks allowed
     if (services) services->Release();
     if (locator) locator->Release();
     CoUninitialize();
@@ -372,17 +318,12 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
     return result;
 }
 
-
 /*
-    ------------------------------------------------------------
-    CPUInfo implementation
-    ------------------------------------------------------------
-*/
+documentation (2) : CPU brand string extraction using CPUID
 
-/*
-    🧠 How this function gets your CPU name (don’t panic, it’s cooler than it looks)
+    🧠 How this function gets your CPU name (don't panic, it's cooler than it looks)
 
-    CPUs don’t store their brand name ("Ryzen 5 5600G", "Intel i7-12700K", etc.)
+    CPUs don't store their brand name ("Ryzen 5 5600G", "Intel i7-12700K", etc.)
     as a normal string you can just ask for. Instead, they expose it through
     a low-level instruction called CPUID.
 
@@ -408,17 +349,16 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
     get the CPU model name on Windows.
 
     Yes, it looks low-level.
-    Yes, it’s a little magical.
+    Yes, it's a little magical.
     And yes — this is the correct and intended way 🙂
 */
 
-// Returns CPU brand string (same as Task Manager)
+// Section (2) : CPU brand string extraction using CPUID
 string CPUInfo::get_cpu_info()
 {
     int cpu_data[4] = { -1 };
     char cpu_brand[0x40] = { 0 };
 
-    // CPUID magic — brand string lives across these calls
     __cpuid(cpu_data, 0x80000002);
     memcpy(cpu_brand, cpu_data, sizeof(cpu_data));
 
@@ -431,9 +371,10 @@ string CPUInfo::get_cpu_info()
     return string(cpu_brand);
 }
 
-
 /*
-    CPU usage (Task Manager style) — what’s really happening here :)
+documentation (3) : CPU usage percentage (Task Manager style)
+
+    CPU usage (Task Manager style) — what's really happening here :)
 
     Windows does not give you "CPU usage %" as a simple function call.
     Instead, it exposes performance counters through PDH
@@ -460,14 +401,13 @@ string CPUInfo::get_cpu_info()
     congrats, you just discovered Windows performance APIs :)
 */
 
-// CPU usage percentage (Task Manager style)
+// Section (3) : CPU usage percentage (Task Manager style)
 float CPUInfo::get_cpu_utilization()
 {
     static PDH_HQUERY query = NULL;
     static PDH_HCOUNTER counter = NULL;
     static bool initialized = false;
 
-    // One-time PDH setup
     if (!initialized)
     {
         PdhOpenQuery(NULL, 0, &query);
@@ -475,7 +415,6 @@ float CPUInfo::get_cpu_utilization()
         PdhCollectQueryData(query);
         initialized = true;
 
-        // PDH needs a short delay to stabilize
         Sleep(100);
     }
 
@@ -486,11 +425,12 @@ float CPUInfo::get_cpu_utilization()
     return static_cast<float>(value.doubleValue);
 }
 
-
 /*
+documentation (4) : Maximum rated CPU speed (base clock)
+
     Maximum rated CPU speed (base clock) — explained without panic :)
 
-    This value represents the CPU’s *official* maximum base frequency,
+    This value represents the CPU's *official* maximum base frequency,
     not the current speed and not boost clocks.
 
     Where does it come from?
@@ -518,7 +458,7 @@ float CPUInfo::get_cpu_utilization()
     Stable, boring, and correct — exactly what system info code should be.
 */
 
-// Maximum rated CPU speed (GHz)
+// Section (4) : Maximum rated CPU speed (base clock)
 string CPUInfo::get_cpu_base_speed()
 {
     string value = wmi_querysingle_value(
@@ -541,7 +481,38 @@ string CPUInfo::get_cpu_base_speed()
     }
 }
 
-// Current CPU speed (GHz)
+/*
+documentation (5) : Current CPU speed (real-time boost clock)
+
+    Current CPU speed — what the CPU is actually running at RIGHT NOW
+
+    Unlike base speed (which is static), current speed changes dynamically:
+    - Intel Turbo Boost
+    - AMD Precision Boost
+    - Power saving downclocking
+    - Thermal throttling
+
+    This function reads the REAL-TIME clock speed, which can be:
+    - Higher than base (when boosting)
+    - Lower than base (when idling)
+    - Exactly at base (when at nominal load)
+
+    Technical details:
+    ------------------
+    Source: WMI Win32_Processor.CurrentClockSpeed (in MHz)
+    This is the same value Task Manager shows in the Performance tab.
+
+    The OS reads this from CPU performance counters, not from a static table.
+    It's what the CPU is actually doing, not what it's rated for.
+
+    Why not use CPUID?
+    CPUID only tells you what the CPU CAN do (max frequency).
+    It doesn't tell you what it's DOING right now.
+
+    This is live data — refresh it often to see CPU frequency changes!
+*/
+
+// Section (5) : Current CPU speed (real-time boost clock)
 string CPUInfo::get_cpu_speed()
 {
     string value = wmi_querysingle_value
@@ -565,7 +536,38 @@ string CPUInfo::get_cpu_speed()
     }
 }
 
-// Physical CPU sockets (usually 1)
+/*
+documentation (6) : Physical CPU socket count
+
+    CPU sockets — how many physical CPUs are installed
+
+    Most consumer systems have: 1 socket
+    Servers/workstations can have: 2, 4, or even 8 sockets
+
+    Why does this matter?
+    ---------------------
+    - Each socket is a separate physical CPU package
+    - Sockets are NOT cores — they're the actual chips on the motherboard
+    - Multi-socket systems have NUMA (Non-Uniform Memory Access) considerations
+    - Task Manager shows sockets as separate "CPU" graphs
+
+    How we count them:
+    ------------------
+    Simple WMI query: SELECT COUNT(*) FROM Win32_Processor
+
+    Win32_Processor enumerates each physical CPU package.
+    If you have a dual-socket Xeon system, this returns 2.
+    If you have a normal desktop, this returns 1.
+
+    Edge case handling:
+    - Invalid result → default to 1 (safe assumption for consumer hardware)
+    - Conversion failure → default to 1
+    - WMI failure → default to 1
+
+    Because honestly, if you're running multi-socket, you probably know it :)
+*/
+
+// Section (6) : Physical CPU socket count
 int CPUInfo::get_cpu_sockets()
 {
     string value = wmi_querysingle_value
@@ -578,7 +580,43 @@ int CPUInfo::get_cpu_sockets()
     catch (...) { return 1; }
 }
 
-// Physical CPU cores
+/*
+documentation (7) : Physical CPU core count
+
+    Physical cores — the actual silicon, not the virtual threads
+
+    IMPORTANT: This counts PHYSICAL cores, not logical processors.
+    Example: Intel i7-12700K = 12 cores, 20 threads
+    This function returns: 12 (not 20!)
+
+    Why not just use GetSystemInfo()?
+    --------------------------------
+    GetSystemInfo() returns LOGICAL processors (threads).
+    We need GetLogicalProcessorInformation() to distinguish:
+    - Physical cores (RelationProcessorCore)
+    - NUMA nodes (RelationNumaNode)
+    - Cache (RelationCache)
+    - Processor packages (RelationProcessorPackage)
+
+    How it works:
+    -------------
+    1. Call GetLogicalProcessorInformation() twice:
+       - First call: get required buffer size
+       - Second call: fill buffer with actual data
+    2. Walk through the array
+    3. Count only RelationProcessorCore entries
+    4. Return the total
+
+    This is the same method Task Manager uses for "Cores" display.
+    It's accurate even with:
+    - Hybrid architectures (P-cores + E-cores)
+    - Disabled cores
+    - Asymmetric core configurations
+
+    No hyperthreading/SMT confusion here — pure physical silicon count!
+*/
+
+// Section (7) : Physical CPU core count
 int CPUInfo::get_cpu_cores()
 {
     DWORD length = 0;
@@ -602,7 +640,42 @@ int CPUInfo::get_cpu_cores()
     return cores;
 }
 
-// Logical processors (threads)
+/*
+documentation (8) : Logical processor count (threads)
+
+    Logical processors — all the threads your CPU can run simultaneously
+
+    This is: Physical cores × SMT factor
+    Where SMT factor is usually 2 (Hyper-Threading, SMT)
+
+    Examples:
+    ---------
+    - 6 cores, no HT = 6 logical processors
+    - 6 cores, with HT = 12 logical processors
+    - 8P + 8E cores, with HT = 24 logical processors
+
+    Why use GetSystemInfo()?
+    ------------------------
+    Simple, reliable, and always accurate.
+    dwNumberOfProcessors in SYSTEM_INFO = total threads Windows sees.
+
+    This matches:
+    - Task Manager "Logical processors"
+    - Device Manager processor count
+    - msconfig boot advanced options
+    - Windows thread scheduler
+
+    Important distinction:
+    ---------------------
+    This is NOT the same as "CPU cores"!
+    Cores = physical execution units
+    Logical processors = virtual threads (can be more than cores)
+
+    For most performance considerations, logical processors matter more
+    because that's how many threads Windows can schedule simultaneously.
+*/
+
+// Section (8) : Logical processor count (threads)
 int CPUInfo::get_cpu_logical_processors()
 {
     SYSTEM_INFO info;
@@ -610,7 +683,41 @@ int CPUInfo::get_cpu_logical_processors()
     return info.dwNumberOfProcessors;
 }
 
-// Virtualization status (BIOS / firmware level)
+/*
+documentation (9) : CPU virtualization status (BIOS/firmware)
+
+    Virtualization — is your CPU ready for VMs and hypervisors?
+
+    This checks if hardware virtualization is ENABLED in:
+    - BIOS/UEFI settings (Intel VT-x, AMD-V)
+    - Firmware configuration
+    - Windows hypervisor platform
+
+    What virtualization enables:
+    ---------------------------
+    - Windows Subsystem for Linux (WSL2)
+    - Hyper-V virtual machines
+    - Docker Desktop
+    - Android emulators
+    - VirtualBox/VMware (with hardware acceleration)
+
+    How it works:
+    -------------
+    IsProcessorFeaturePresent(PF_VIRT_FIRMWARE_ENABLED)
+
+    This API checks multiple things:
+    1. CPU hardware support (does the chip have VT-x/AMD-V?)
+    2. BIOS/UEFI enablement (is it turned on in firmware?)
+    3. No hypervisor conflict (is another hypervisor already running?)
+
+    Returns "Enabled" if ALL conditions are met.
+    Returns "Disabled" if ANY condition fails.
+
+    Note: This doesn't check Windows feature enablement
+    (like Hyper-V Windows feature). Just the hardware/firmware readiness.
+*/
+
+// Section (9) : CPU virtualization status (BIOS/firmware)
 string CPUInfo::get_cpu_virtualization()
 {
     return IsProcessorFeaturePresent(PF_VIRT_FIRMWARE_ENABLED)
@@ -618,7 +725,40 @@ string CPUInfo::get_cpu_virtualization()
         : "Disabled";
 }
 
-// L1 cache size
+/*
+documentation (10) : L1 cache size per core
+
+    L1 cache — the CPU's lightning-fast memory (closest to the cores)
+
+    L1 is split into:
+    - L1 Instruction cache (for code)
+    - L1 Data cache (for data)
+    This function returns the TOTAL L1 per core.
+
+    Characteristics:
+    ----------------
+    - Smallest cache (typically 32-64 KB per core)
+    - Fastest cache (1-2 cycle latency)
+    - Per-core dedicated (not shared)
+    - Critical for single-thread performance
+
+    How we calculate it:
+    -------------------
+    1. GetLogicalProcessorInformation() returns cache topology
+    2. Filter for Level == 1 (L1 cache)
+    3. Sum Size across all L1 cache entries
+    4. Convert bytes to KB
+
+    Why sum across entries?
+    Because GetLogicalProcessorInformation reports cache PER LOGICAL PROCESSOR.
+    But L1 is usually per PHYSICAL core.
+    We sum to get total L1 across all cores.
+
+    Output format: "XXX KB"
+    Example: "256 KB" (for 4 cores × 64 KB L1 each)
+*/
+
+// Section (10) : L1 cache size per core
 string CPUInfo::get_cpu_l1_cache()
 {
     DWORD length = 0;
@@ -647,7 +787,45 @@ string CPUInfo::get_cpu_l1_cache()
     return ss.str();
 }
 
-// L2 cache size
+/*
+documentation (11) : L2 cache size
+
+    L2 cache — the middle child between L1 speed and L3 capacity
+
+    L2 characteristics:
+    ------------------
+    - Larger than L1 (256 KB - 1 MB per core)
+    - Slower than L1 (10-20 cycle latency)
+    - Often shared between cores in a cluster
+    - Balances speed and capacity
+
+    Architecture variations:
+    -----------------------
+    - Intel: Usually per-core (1 MB per core)
+    - AMD Zen: Shared between core pairs (512 KB per pair)
+    - Apple M1: Shared between performance cores
+    - Hybrid CPUs: Different L2 sizes for P-cores vs E-cores
+
+    How we handle it:
+    -----------------
+    1. Get all cache information from Windows
+    2. Filter for Level == 2 (L2 cache)
+    3. Sum all L2 cache sizes
+    4. Smart formatting:
+       - < 1 MB → show as KB
+       - ≥ 1 MB → show as MB
+
+    Output examples:
+    ---------------
+    - "512 KB" (older CPUs)
+    - "2 MB" (modern 4-core CPU)
+    - "10 MB" (high-end desktop)
+    - "N/A" (if detection fails)
+
+    This matches what CPU-Z and HWiNFO show for "L2 Cache".
+*/
+
+// Section (11) : L2 cache size
 string CPUInfo::get_cpu_l2_cache()
 {
     DWORD length = 0;
@@ -676,7 +854,45 @@ string CPUInfo::get_cpu_l2_cache()
     return ss.str();
 }
 
-// L3 cache size
+/*
+documentation (12) : L3 cache size (shared, last-level cache)
+
+    L3 cache — the CPU's shared memory pool (big and strategic)
+
+    L3 is special because:
+    ---------------------
+    - Shared among ALL cores
+    - Largest cache (8-64 MB typical, up to 768 MB on server CPUs)
+    - Slowest cache (30-50 cycle latency)
+    - Critical for multi-threaded performance
+    - Acts as a coherence buffer between cores
+
+    Why L3 matters:
+    ---------------
+    - Reduces RAM access (which is 100x slower than L3)
+    - Enables efficient core-to-core communication
+    - Determines gaming performance at high resolutions
+    - Affects professional application throughput
+
+    Detection method:
+    ----------------
+    Same as L1/L2 but filtering for Level == 3.
+
+    Important: We SUM across all entries because:
+    - Some CPUs report L3 per NUMA node
+    - Some report L3 per CCX (AMD)
+    - Some report total L3 once
+    Summing ensures we get the correct total.
+
+    Smart formatting:
+    ----------------
+    - < 1 MB → show as KB (rare for L3, but handles edge cases)
+    - ≥ 1 MB → show as MB (normal for all modern CPUs)
+
+    Example outputs: "16 MB", "32 MB", "64 MB", "N/A"
+*/
+
+// Section (12) : L3 cache size (shared, last-level cache)
 string CPUInfo::get_cpu_l3_cache()
 {
     DWORD length = 0;
@@ -706,7 +922,48 @@ string CPUInfo::get_cpu_l3_cache()
     return ss.str();
 }
 
-// System uptime (days:hh:mm:ss)
+/*
+documentation (13) : System uptime calculation
+
+    System uptime — how long since the last reboot
+
+    This isn't just "how long has Windows been running" — it's literally
+    how long since the hardware last powered on. Useful for:
+    - Server stability monitoring
+    - Diagnosing random reboots
+    - Bragging rights on homelab forums :)
+
+    Calculation method:
+    ------------------
+    GetTickCount64() returns milliseconds since boot.
+    We convert:
+    - Milliseconds → seconds
+    - Seconds → minutes
+    - Minutes → hours
+    - Hours → days
+
+    Format: "days:hh:mm:ss"
+    Examples:
+    - "0:01:30:45" = 1 hour, 30 minutes, 45 seconds
+    - "14:23:15:30" = 14 days, 23 hours, 15 minutes, 30 seconds
+
+    Why not use WMI for this?
+    ------------------------
+    WMI has Win32_OperatingSystem.LastBootUpTime, but:
+    - It's slower to query
+    - Requires timezone conversion
+    - GetTickCount64() is simpler and faster
+
+    Edge cases handled:
+    ------------------
+    - System tick counter rollover (after 49.7 days) — GetTickCount64 handles it
+    - Sleep/hibernate time — NOT included (uptime pauses during sleep)
+    - Formatting always 2 digits for hours/minutes/seconds (00-99)
+
+    This matches Task Manager's "Up time" in the Performance tab.
+*/
+
+// Section (13) : System uptime calculation
 string CPUInfo::get_system_uptime()
 {
     ULONGLONG ms = GetTickCount64();
@@ -725,7 +982,45 @@ string CPUInfo::get_system_uptime()
     return ss.str();
 }
 
-// Number of running processes
+/*
+documentation (14) : Running process count
+
+    Process count — everything running on your system right now
+
+    This includes:
+    - User applications (Chrome, Word, games)
+    - System services (svchost.exe instances)
+    - Background processes (antivirus, updaters)
+    - Windows components (explorer.exe, winlogon.exe)
+
+    Why monitor process count?
+    --------------------------
+    - High counts can indicate malware (process injection)
+    - Resource usage correlation (processes vs CPU/RAM)
+    - Service monitoring (expected processes running?)
+    - Cleanup after software uninstalls (zombie processes)
+
+    How it works:
+    -------------
+    Simple WMI query: SELECT COUNT(*) FROM Win32_Process
+
+    Win32_Process includes EVERY process, regardless of:
+    - Session (console, service, user)
+    - Architecture (32-bit, 64-bit)
+    - State (running, suspended, terminated)
+    - Privilege (system, user, protected)
+
+    Typical values:
+    --------------
+    - Fresh boot: ~120-150 processes
+    - Normal use: ~150-250 processes
+    - Heavy use: 250-400+ processes
+    - Problematic: 500+ processes (investigate!)
+
+    Note: Each browser tab counts as a process in modern browsers!
+*/
+
+// Section (14) : Running process count
 int CPUInfo::get_process_count()
 {
     string value = wmi_querysingle_value
@@ -738,7 +1033,45 @@ int CPUInfo::get_process_count()
     catch (...) { return 0; }
 }
 
-// Total thread count
+/*
+documentation (15) : Total system thread count
+
+    Thread count — all execution contexts in the system
+
+    Threads vs Processes:
+    --------------------
+    - Process = container (memory, handles, security context)
+    - Thread = execution unit (runs code, has stack, scheduled by OS)
+
+    One process can have multiple threads.
+    Example: Chrome might have 100+ threads across its processes.
+
+    Why thread count matters:
+    ------------------------
+    - Thread switching overhead (context switches)
+    - Scheduler pressure (more threads = more scheduling decisions)
+    - Concurrency potential (how much can actually run in parallel)
+    - System responsiveness indicator
+
+    Source:
+    -------
+    WMI performance counter: Win32_PerfFormattedData_PerfProc_Process
+    We query for "_Total" which sums threads across ALL processes.
+
+    This is the same counter Task Manager shows in the Performance tab
+    as "Threads" (bottom of the CPU graph).
+
+    Typical values:
+    --------------
+    - Fresh boot: ~2000-3000 threads
+    - Normal use: ~4000-8000 threads
+    - Heavy use: 10000-20000+ threads
+    - Servers: Can exceed 50000 threads
+
+    High thread counts aren't necessarily bad — modern OSes handle them well.
+*/
+
+// Section (15) : Total system thread count
 int CPUInfo::get_thread_count()
 {
     string value = wmi_querysingle_value
@@ -751,7 +1084,46 @@ int CPUInfo::get_thread_count()
     catch (...) { return 0; }
 }
 
-// Total handle count
+/*
+documentation (16) : Total system handle count
+
+    Handle count — all open resources in the system
+
+    Handles are references to system objects:
+    - Files (CreateFile)
+    - Registry keys (RegOpenKey)
+    - Processes/Threads (OpenProcess, OpenThread)
+    - Windows/GUI objects
+    - Mutexes, Events, Semaphores
+    - Memory mappings
+    - Sockets, Pipes
+
+    Why monitor handles?
+    --------------------
+    - Resource leaks (handle leaks cause gradual system degradation)
+    - Process isolation (how many resources each process holds)
+    - System limits (Windows has per-process and system-wide handle limits)
+    - Performance (too many handles = slower handle table lookups)
+
+    Source:
+    -------
+    Same WMI class as thread count, different counter.
+    Win32_PerfFormattedData_PerfProc_Process.HandleCount for "_Total"
+
+    This is what Task Manager shows as "Handles" in Performance tab.
+
+    Typical values:
+    --------------
+    - Fresh boot: ~50,000-80,000 handles
+    - Normal use: ~100,000-200,000 handles
+    - Heavy use: 300,000-500,000+ handles
+    - System limit: 16,777,216 handles (24-bit limit per session)
+
+    Handle leaks are sneaky — they don't show as memory leaks
+    but can cause "out of handles" errors and system instability.
+*/
+
+// Section (16) : Total system handle count
 int CPUInfo::get_handle_count()
 {
     string value = wmi_querysingle_value
