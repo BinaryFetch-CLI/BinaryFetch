@@ -138,475 +138,490 @@ But it WORKS — and that’s a win :)
 
 
 
+/*
+    ------------------------------------------------------------
+    CPUInfo.cpp
+    ------------------------------------------------------------
 
+    Welcome 👋
 
+    This file is responsible for collecting CPU and system-related
+    information on Windows — similar to what Task Manager shows,
+    but without the GUI and with way more control.
 
+    Expect:
+    - WMI queries (yes, the scary Windows stuff)
+    - PDH counters (CPU usage magic)
+    - CPUID instructions (bare-metal goodness)
+    - A lot of cleanup, because Windows *will* punish laziness :)
 
+    If you’re reading this in the future:
+    Take a deep breath — everything here is intentional.
+*/
 
+#include "CPUInfo.h"
 
-#include "CPUInfo.h"   
-
-#include <windows.h>  // Windows API (sometimes shit, some times magic) 
-#include <intrin.h>   // Low-level CPU instructions (CPUID stuff goes brrr)
-#include <vector>     // Dynamic arrays because fixed-size arrays are too restrictive
-#include <sstream>    // String building playground (turn numbers into pretty text)
-#include <wbemidl.h>  // WMI access – asking Windows deep questions about the system
-#include <pdh.h>      // Performance Data Helper – CPU usage, Task Manager style
-#include <comdef.h>   // COM helpers so Windows APIs don’t make us cry
-#include <iomanip>    // Fancy formatting (decimals, padding, alignment, drip)
-
-
+#include <windows.h>   // Core Windows API — sometimes pain, sometimes power
+#include <intrin.h>    // CPUID and low-level CPU instructions
+#include <vector>      // Dynamic storage (because life isn’t fixed-size)
+#include <sstream>     // Turning numbers into pretty strings
+#include <wbemidl.h>   // WMI — Windows answering deep existential questions
+#include <pdh.h>       // Performance counters (Task Manager vibes)
+#include <comdef.h>    // COM helpers so we don’t lose our sanity
+#include <iomanip>    // Formatting polish (decimals, padding, alignment)
 
 #pragma comment(lib, "pdh.lib")      
-// Auto-link PDH (Performance Data Helper) so CPU usage works without linker drama
+// Auto-link PDH so CPU usage works without linker drama
 
 #pragma comment(lib, "wbemuuid.lib") 
-// Auto-link WMI UUIDs because COM + WMI won’t cooperate without this guy
+// Required for WMI / COM UUIDs — Windows won’t talk without this
+
+using namespace std; // If this confuses you… we need to talk 😄
 
 
-using namespace std; // if you don't whatt  is std...C'mon, get a life
+/*
+    ------------------------------------------------------------
+    WMI Helper Function
+    ------------------------------------------------------------
 
-//helper fucntion for WMI queries-----------------------------------------------------------------
+    Runs a WMI query and returns ONE property as a string.
 
-// Generic helper to run a WMI query and return a single value as string
-// Think of this as: "ask Windows nicely → get one answer → leave quietly"
+    Philosophy:
+    - Ask Windows nicely
+    - Take one answer
+    - Leave quietly
+*/
 string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
 {
-	// COM / WMI plumbing objects (the boring but necessary stuff)
-	HRESULT hres;
-	IWbemLocator* locator = NULL;          // Finds the WMI service
-	IWbemServices* services = NULL;        // Talks to WMI
-	IEnumWbemClassObject* enumerator = NULL; // Walks through query results
-	IWbemClassObject* clsObj = NULL;       // One result object
-	ULONG uReturn = 0;
+    // COM & WMI plumbing (boring but unavoidable)
+    HRESULT hres;
+    IWbemLocator* locator = NULL;           // Finds the WMI service
+    IWbemServices* services = NULL;         // Talks to WMI
+    IEnumWbemClassObject* enumerator = NULL;// Iterates query results
+    IWbemClassObject* clsObj = NULL;        // One result object
+    ULONG uReturn = 0;
 
-	// Default answer when Windows refuses to cooperate :)
-	string result = "Unknown";
+    // Default answer when Windows refuses cooperation :)
+    string result = "Unknown";
 
-	// Initialize COM (try multithreaded first)
-	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-	if (FAILED(hres))
-	{
-		// Fallback to apartment-threaded if MTA is already taken
-		hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
-		if (FAILED(hres)) return result;
-	}
+    // Initialize COM (prefer multithreaded)
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres))
+    {
+        // Fallback — COM was probably already initialized differently
+        hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+        if (FAILED(hres))
+            return result;
+    }
 
-	// Set up COM security so WMI doesn’t ghost us
-	hres = CoInitializeSecurity(
-		NULL,
-		-1,
-		NULL,
-		NULL,
-		RPC_C_AUTHN_LEVEL_DEFAULT,
-		RPC_C_IMP_LEVEL_IMPERSONATE,
-		NULL,
-		EOAC_NONE,
-		NULL
-	);
+    // Set COM security (WMI won’t answer without this)
+    hres = CoInitializeSecurity(
+        NULL,
+        -1,
+        NULL,
+        NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE,
+        NULL
+    );
 
-	// RPC_E_TOO_LATE just means security was already set somewhere else
-	if (FAILED(hres) && hres != RPC_E_TOO_LATE)
-	{
-		CoUninitialize();
-		return result;
-	}
+    // RPC_E_TOO_LATE just means security was already set — totally fine
+    if (FAILED(hres) && hres != RPC_E_TOO_LATE)
+    {
+        CoUninitialize();
+        return result;
+    }
 
-	// Create the WMI locator (the GPS for Windows internals)
-	hres = CoCreateInstance(
-		CLSID_WbemLocator,
-		0,
-		CLSCTX_INPROC_SERVER,
-		IID_IWbemLocator,
-		(LPVOID*)&locator
-	);
-	if (FAILED(hres))
-	{
-		CoUninitialize();
-		return result;
-	}
+    // Create WMI locator (basically a GPS for Windows internals)
+    hres = CoCreateInstance(
+        CLSID_WbemLocator,
+        0,
+        CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator,
+        (LPVOID*)&locator
+    );
+    if (FAILED(hres))
+    {
+        CoUninitialize();
+        return result;
+    }
 
-	// Connect to the default WMI namespace (ROOT\\CIMV2 = the good stuff)
-	hres = locator->ConnectServer(
-		_bstr_t(L"ROOT\\CIMV2"),
-		NULL, NULL, 0, NULL, 0, 0,
-		&services
-	);
-	if (FAILED(hres))
-	{
-		locator->Release();
-		CoUninitialize();
-		return result;
-	}
+    // Connect to ROOT\\CIMV2 — the good stuff lives here
+    hres = locator->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"),
+        NULL, NULL, 0, NULL, 0, 0,
+        &services
+    );
+    if (FAILED(hres))
+    {
+        locator->Release();
+        CoUninitialize();
+        return result;
+    }
 
-	// Give ourselves permission to actually read data
-	hres = CoSetProxyBlanket(
-		services,
-		RPC_C_AUTHN_WINNT,
-		RPC_C_AUTHZ_NONE,
-		NULL,
-		RPC_C_AUTHN_LEVEL_CALL,
-		RPC_C_IMP_LEVEL_IMPERSONATE,
-		NULL,
-		EOAC_NONE
-	);
-	if (FAILED(hres))
-	{
-		services->Release();
-		locator->Release();
-		CoUninitialize();
-		return result;
-	}
+    // Set proxy blanket so we’re allowed to read data
+    hres = CoSetProxyBlanket(
+        services,
+        RPC_C_AUTHN_WINNT,
+        RPC_C_AUTHZ_NONE,
+        NULL,
+        RPC_C_AUTHN_LEVEL_CALL,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_NONE
+    );
+    if (FAILED(hres))
+    {
+        services->Release();
+        locator->Release();
+        CoUninitialize();
+        return result;
+    }
 
-	// Fire the WQL query (fast + forward-only because we only need one value)
-	hres = services->ExecQuery(
-		_bstr_t(L"WQL"),
-		_bstr_t(query),
-		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-		NULL,
-		&enumerator
-	);
-	if (FAILED(hres))
-	{
-		services->Release();
-		locator->Release();
-		CoUninitialize();
-		return result;
-	}
+    // Execute the WQL query (fast + forward-only)
+    hres = services->ExecQuery(
+        _bstr_t(L"WQL"),
+        _bstr_t(query),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &enumerator
+    );
+    if (FAILED(hres))
+    {
+        services->Release();
+        locator->Release();
+        CoUninitialize();
+        return result;
+    }
 
-	// Grab the first result and extract the requested property
-	if (enumerator)
-	{
-		while (enumerator->Next(WBEM_INFINITE, 1, &clsObj, &uReturn) == S_OK && uReturn > 0)
-		{
-			VARIANT vtProp;
-			VariantInit(&vtProp);
+    // Grab the first result — one value is all we need
+    if (enumerator)
+    {
+        while (enumerator->Next(WBEM_INFINITE, 1, &clsObj, &uReturn) == S_OK && uReturn > 0)
+        {
+            VARIANT vtProp;
+            VariantInit(&vtProp);
 
-			hres = clsObj->Get(property_name, 0, &vtProp, 0, 0);
-			if (SUCCEEDED(hres))
-			{
-				// Handle the usual data types WMI likes to throw at us
-				if (vtProp.vt == VT_BSTR && vtProp.bstrVal != NULL)
-					result = _bstr_t(vtProp.bstrVal);
-				else if (vtProp.vt == VT_I4)
-					result = to_string(vtProp.intVal);
-				else if (vtProp.vt == VT_UI4)
-					result = to_string(vtProp.uintVal);
-				else if (vtProp.vt == VT_UI2)
-					result = to_string(vtProp.uiVal);
+            hres = clsObj->Get(property_name, 0, &vtProp, 0, 0);
+            if (SUCCEEDED(hres))
+            {
+                // Handle common WMI data types
+                if (vtProp.vt == VT_BSTR && vtProp.bstrVal)
+                    result = _bstr_t(vtProp.bstrVal);
+                else if (vtProp.vt == VT_I4)
+                    result = to_string(vtProp.intVal);
+                else if (vtProp.vt == VT_UI4)
+                    result = to_string(vtProp.uintVal);
+                else if (vtProp.vt == VT_UI2)
+                    result = to_string(vtProp.uiVal);
 
-				VariantClear(&vtProp);
-			}
+                VariantClear(&vtProp);
+            }
 
-			clsObj->Release();
-			break; // One value is all we came for :)
-		}
-		enumerator->Release();
-	}
+            clsObj->Release();
+            break; // Mission accomplished :)
+        }
 
-	// Clean exit: release COM objects and leave no mess behind
-	if (services) services->Release();
-	if (locator) locator->Release();
-	CoUninitialize();
+        enumerator->Release();
+    }
 
-	return result;
+    // Clean exit — no COM leaks allowed
+    if (services) services->Release();
+    if (locator) locator->Release();
+    CoUninitialize();
+
+    return result;
 }
 
 
-// get the cpu model and brand (like task manager shows)
+/*
+    ------------------------------------------------------------
+    CPUInfo implementation
+    ------------------------------------------------------------
+*/
+
+// Returns CPU brand string (same as Task Manager)
 string CPUInfo::get_cpu_info()
 {
-	int cpu_data[4] = { -1 };
-	char cpu_brand[0x40];
-	memset(cpu_brand, 0, sizeof(cpu_brand));
+    int cpu_data[4] = { -1 };
+    char cpu_brand[0x40] = { 0 };
 
-	//call cpu _cpuid with 0x80000002, 0x80000003, 0x80000004 to get brand string
-	__cpuid(cpu_data, 0x80000002);
-	memcpy(cpu_brand, cpu_data, sizeof(cpu_data));
+    // CPUID magic — brand string lives across these calls
+    __cpuid(cpu_data, 0x80000002);
+    memcpy(cpu_brand, cpu_data, sizeof(cpu_data));
 
-	__cpuid(cpu_data, 0x80000003);
-	memcpy(cpu_brand + 16, cpu_data, sizeof(cpu_data));
+    __cpuid(cpu_data, 0x80000003);
+    memcpy(cpu_brand + 16, cpu_data, sizeof(cpu_data));
 
-	__cpuid(cpu_data, 0x80000004);
-	memcpy(cpu_brand + 32, cpu_data, sizeof(cpu_data));
+    __cpuid(cpu_data, 0x80000004);
+    memcpy(cpu_brand + 32, cpu_data, sizeof(cpu_data));
 
-	return string(cpu_brand);
+    return string(cpu_brand);
 }
 
-// get utilization percentage (like task manager)
+// CPU usage percentage (Task Manager style)
 float CPUInfo::get_cpu_utilization()
 {
-	static PDH_HQUERY query = NULL;
-	static PDH_HCOUNTER counter = NULL;
-	static bool initialized = false;
+    static PDH_HQUERY query = NULL;
+    static PDH_HCOUNTER counter = NULL;
+    static bool initialized = false;
 
-	if (!initialized)
-	{
-		PdhOpenQuery(NULL, 0, &query);
-		PdhAddCounter(query, TEXT("\\Processor(_Total)\\% Processor Time"), 0, &counter);
-		PdhCollectQueryData(query);
-		initialized = true;
-		Sleep(100);
-	}
+    // One-time PDH setup
+    if (!initialized)
+    {
+        PdhOpenQuery(NULL, 0, &query);
+        PdhAddCounter(query, TEXT("\\Processor(_Total)\\% Processor Time"), 0, &counter);
+        PdhCollectQueryData(query);
+        initialized = true;
 
-	PDH_FMT_COUNTERVALUE value;
-	PdhCollectQueryData(query);
-	PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value);
+        // PDH needs a short delay to stabilize
+        Sleep(100);
+    }
 
-	return (float)value.doubleValue;
+    PDH_FMT_COUNTERVALUE value;
+    PdhCollectQueryData(query);
+    PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value);
+
+    return static_cast<float>(value.doubleValue);
 }
 
-// get base speed in GHz (like task manager shows)
+// Maximum rated CPU speed (GHz)
 string CPUInfo::get_cpu_base_speed()
 {
-	string base_clock_speed = wmi_querysingle_value(L"SELECT MaxClockSpeed FROM Win32_Processor", L"MaxClockSpeed");
-	if (base_clock_speed == "Unknown" || base_clock_speed.empty()) return "N/A";
-	try
-	{
-		float speed = stof(base_clock_speed) / 1000.0f;
-		ostringstream ss;
-		ss << fixed << setprecision(2) << speed << " GHz";
-		return ss.str();
-	}
-	catch (...)
-	{
-		return "N/A";
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT MaxClockSpeed FROM Win32_Processor",
+        L"MaxClockSpeed"
+    );
+
+    if (value == "Unknown" || value.empty()) return "N/A";
+
+    try
+    {
+        float ghz = stof(value) / 1000.0f;
+        ostringstream ss;
+        ss << fixed << setprecision(2) << ghz << " GHz";
+        return ss.str();
+    }
+    catch (...)
+    {
+        return "N/A";
+    }
 }
 
-// get current speed in GHz (like task manager shows)
+// Current CPU speed (GHz)
 string CPUInfo::get_cpu_speed()
 {
-	string current_clock_speed = wmi_querysingle_value(L"SELECT CurrentClockSpeed FROM Win32_Processor", L"CurrentClockSpeed");
-	if (current_clock_speed == "Unknown" || current_clock_speed.empty()) return "N/A";
-	try
-	{
-		float speed = stof(current_clock_speed) / 1000.0f;
-		ostringstream ss;
-		ss << fixed << setprecision(2) << speed << " GHz";
-		return ss.str();
-	}
-	catch (...)
-	{
-		return "N/A";
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT CurrentClockSpeed FROM Win32_Processor",
+        L"CurrentClockSpeed"
+    );
+
+    if (value == "Unknown" || value.empty()) return "N/A";
+
+    try
+    {
+        float ghz = stof(value) / 1000.0f;
+        ostringstream ss;
+        ss << fixed << setprecision(2) << ghz << " GHz";
+        return ss.str();
+    }
+    catch (...)
+    {
+        return "N/A";
+    }
 }
 
-// get sockets (usually 1 for consumer PCs)
+// Physical CPU sockets (usually 1)
 int CPUInfo::get_cpu_sockets()
 {
-	string sockets = wmi_querysingle_value(L"SELECT COUNT(*) FROM Win32_Processor", L"COUNT(*)");
-	if (sockets == "Unknown" || sockets.empty()) return 1;
-	try
-	{
-		return stoi(sockets);
-	}
-	catch (...)
-	{
-		return 1;
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT COUNT(*) FROM Win32_Processor",
+        L"COUNT(*)"
+    );
+
+    try { return stoi(value); }
+    catch (...) { return 1; }
 }
 
-// get number of cores (physical)
+// Physical CPU cores
 int CPUInfo::get_cpu_cores()
 {
-	DWORD buffer_length = 0;
-	GetLogicalProcessorInformation(NULL, &buffer_length);
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		return -1;
-	}
+    DWORD length = 0;
+    GetLogicalProcessorInformation(NULL, &length);
 
-	vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(buffer_length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-	if (!GetLogicalProcessorInformation(buffer.data(), &buffer_length))
-	{
-		return -1;
-	}
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return -1;
 
-	int physical_cores = 0;
-	for (auto& info : buffer)
-	{
-		if (info.Relationship == RelationProcessorCore)
-		{
-			physical_cores++;
-		}
-	}
-	return physical_cores;
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+        length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
+    );
+
+    if (!GetLogicalProcessorInformation(buffer.data(), &length))
+        return -1;
+
+    int cores = 0;
+    for (auto& info : buffer)
+        if (info.Relationship == RelationProcessorCore)
+            cores++;
+
+    return cores;
 }
 
-// get number of logical processors (threads)
+// Logical processors (threads)
 int CPUInfo::get_cpu_logical_processors()
 {
-	SYSTEM_INFO sys_info;
-	GetSystemInfo(&sys_info);
-	return sys_info.dwNumberOfProcessors;
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+    return info.dwNumberOfProcessors;
 }
 
-// get virtualization status
+// Virtualization status (BIOS / firmware level)
 string CPUInfo::get_cpu_virtualization()
 {
-	BOOL isEnabled = IsProcessorFeaturePresent(PF_VIRT_FIRMWARE_ENABLED);
-	return std::string(isEnabled ? "Enabled" : "Disabled");
+    return IsProcessorFeaturePresent(PF_VIRT_FIRMWARE_ENABLED)
+        ? "Enabled"
+        : "Disabled";
 }
 
-// get L1 cache
+// L1 cache size
 string CPUInfo::get_cpu_l1_cache()
 {
-	DWORD buffer_length = 0;
-	GetLogicalProcessorInformation(NULL, &buffer_length);
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		return "N/A";
-	}
+    DWORD length = 0;
+    GetLogicalProcessorInformation(NULL, &length);
 
-	vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(buffer_length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-	if (!GetLogicalProcessorInformation(buffer.data(), &buffer_length))
-	{
-		return "N/A";
-	}
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return "N/A";
 
-	DWORD l1_cache = 0;
-	for (auto& info : buffer)
-	{
-		if (info.Relationship == RelationCache && info.Cache.Level == 1)
-		{
-			l1_cache += info.Cache.Size;
-		}
-	}
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+        length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
+    );
 
-	if (l1_cache == 0) return "N/A";
+    if (!GetLogicalProcessorInformation(buffer.data(), &length))
+        return "N/A";
 
-	ostringstream ss;
-	ss << (l1_cache / 1024) << " KB";
-	return ss.str();
+    DWORD size = 0;
+    for (auto& info : buffer)
+        if (info.Relationship == RelationCache && info.Cache.Level == 1)
+            size += info.Cache.Size;
+
+    if (!size) return "N/A";
+
+    ostringstream ss;
+    ss << (size / 1024) << " KB";
+    return ss.str();
 }
 
-// get L2 cache
+// L2 cache size
 string CPUInfo::get_cpu_l2_cache()
 {
-	DWORD buffer_length = 0;
-	GetLogicalProcessorInformation(NULL, &buffer_length);
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		return "N/A";
-	}
+    DWORD length = 0;
+    GetLogicalProcessorInformation(NULL, &length);
 
-	vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(buffer_length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-	if (!GetLogicalProcessorInformation(buffer.data(), &buffer_length))
-	{
-		return "N/A";
-	}
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return "N/A";
 
-	DWORD l2_cache = 0;
-	for (auto& info : buffer)
-	{
-		if (info.Relationship == RelationCache && info.Cache.Level == 2)
-		{
-			l2_cache += info.Cache.Size;
-		}
-	}
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+        length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
+    );
 
-	if (l2_cache == 0) return "N/A";
+    if (!GetLogicalProcessorInformation(buffer.data(), &length))
+        return "N/A";
 
-	ostringstream ss;
-	if (l2_cache >= 1024 * 1024)
-		ss << (l2_cache / (1024 * 1024)) << " MB";
-	else
-		ss << (l2_cache / 1024) << " KB";
-	return ss.str();
+    DWORD size = 0;
+    for (auto& info : buffer)
+        if (info.Relationship == RelationCache && info.Cache.Level == 2)
+            size += info.Cache.Size;
+
+    if (!size) return "N/A";
+
+    ostringstream ss;
+    ss << (size >= 1024 * 1024 ? size / (1024 * 1024) : size / 1024)
+        << (size >= 1024 * 1024 ? " MB" : " KB");
+    return ss.str();
 }
 
-// get L3 cache
+// L3 cache size
 string CPUInfo::get_cpu_l3_cache()
 {
-	DWORD buffer_length = 0;
-	GetLogicalProcessorInformation(NULL, &buffer_length);
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		return "N/A";
-	}
+    DWORD length = 0;
+    GetLogicalProcessorInformation(NULL, &length);
 
-	vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(buffer_length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
-	if (!GetLogicalProcessorInformation(buffer.data(), &buffer_length))
-	{
-		return "N/A";
-	}
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return "N/A";
 
-	DWORD l3_cache = 0;
-	for (auto& info : buffer)
-	{
-		if (info.Relationship == RelationCache && info.Cache.Level == 3)
-		{
-			l3_cache += info.Cache.Size;
-		}
-	}
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+        length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
+    );
 
-	if (l3_cache == 0) return "N/A";
+    if (!GetLogicalProcessorInformation(buffer.data(), &length))
+        return "N/A";
 
-	ostringstream ss;
-	if (l3_cache >= 1024 * 1024)
-		ss << (l3_cache / (1024 * 1024)) << " MB";
-	else
-		ss << (l3_cache / 1024) << " KB";
-	return ss.str();
+    DWORD size = 0;
+    for (auto& info : buffer)
+        if (info.Relationship == RelationCache && info.Cache.Level == 3)
+            size += info.Cache.Size;
+
+    if (!size) return "N/A";
+
+    ostringstream ss;
+    ss << (size >= 1024 * 1024 ? size / (1024 * 1024) : size / 1024)
+        << (size >= 1024 * 1024 ? " MB" : " KB");
+    return ss.str();
 }
 
-// get uptime (system uptime)
+// System uptime (days:hh:mm:ss)
 string CPUInfo::get_system_uptime()
 {
-	ULONGLONG uptime_ms = GetTickCount64();
-	ULONGLONG seconds = uptime_ms / 1000;
-	ULONGLONG minutes = seconds / 60;
-	ULONGLONG hours = minutes / 60;
-	ULONGLONG days = hours / 24;
+    ULONGLONG ms = GetTickCount64();
 
-	ostringstream ss;
-	ss << days << ":" << setfill('0') << setw(2) << (hours % 24) << ":"
-		<< setw(2) << (minutes % 60) << ":" << setw(2) << (seconds % 60);
-	return ss.str();
+    ULONGLONG seconds = ms / 1000;
+    ULONGLONG minutes = seconds / 60;
+    ULONGLONG hours = minutes / 60;
+    ULONGLONG days = hours / 24;
+
+    ostringstream ss;
+    ss << days << ":"
+        << setw(2) << setfill('0') << (hours % 24) << ":"
+        << setw(2) << (minutes % 60) << ":"
+        << setw(2) << (seconds % 60);
+
+    return ss.str();
 }
 
-// get number of processes
+// Number of running processes
 int CPUInfo::get_process_count()
 {
-	string processes = wmi_querysingle_value(L"SELECT COUNT(*) FROM Win32_Process", L"COUNT(*)");
-	if (processes == "Unknown" || processes.empty()) return 0;
-	try
-	{
-		return stoi(processes);
-	}
-	catch (...)
-	{
-		return 0;
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT COUNT(*) FROM Win32_Process",
+        L"COUNT(*)"
+    );
+
+    try { return stoi(value); }
+    catch (...) { return 0; }
 }
 
-// get number of threads
+// Total thread count
 int CPUInfo::get_thread_count()
 {
-	string threads = wmi_querysingle_value(L"SELECT ThreadCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'", L"ThreadCount");
-	if (threads == "Unknown" || threads.empty()) return 0;
-	try
-	{
-		return stoi(threads);
-	}
-	catch (...)
-	{
-		return 0;
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT ThreadCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'",
+        L"ThreadCount"
+    );
+
+    try { return stoi(value); }
+    catch (...) { return 0; }
 }
 
-// get number of handles
+// Total handle count
 int CPUInfo::get_handle_count()
 {
-	string handles = wmi_querysingle_value(L"SELECT HandleCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'", L"HandleCount");
-	if (handles == "Unknown" || handles.empty()) return 0;
-	try
-	{
-		return stoi(handles);
-	}
-	catch (...)
-	{
-		return 0;
-	}
+    string value = wmi_querysingle_value(
+        L"SELECT HandleCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'",
+        L"HandleCount"
+    );
+
+    try { return stoi(value); }
+    catch (...) { return 0; }
 }
