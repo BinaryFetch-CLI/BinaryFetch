@@ -111,8 +111,8 @@ Each system category is implemented as an **independent class** with no side eff
 
 **TOTAL MODULES & SUB-MODULES:**
 
-**Modules (Classes):** 34  
-**Sub-Modules (Functions):** 158
+## Modules (Classes): 34
+## Sub-Modules (Functions): 158
 
 **Breakdown:**
 - **Core Modules:** 12 (compact mode)
