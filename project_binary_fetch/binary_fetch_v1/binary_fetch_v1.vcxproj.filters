@@ -123,7 +123,6 @@
       <Filter>Resources</Filter>
     </Text>
     <Text Include="text infos\developement_note.txt" />
-    <Text Include="text infos\temp_json_modification.txt" />
     <Text Include="text infos\main.cpp with out josn.txt" />
   </ItemGroup>
   <ItemGroup>
