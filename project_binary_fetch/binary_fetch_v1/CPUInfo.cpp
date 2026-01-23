@@ -250,17 +250,7 @@ string wmi_querysingle_value(const wchar_t* query, const wchar_t* property_name)
     It’s boilerplate. It’s normal. And yes — every sane WMI program does this.
 */
 
-    hres = CoInitializeSecurity(
-        NULL,
-        -1,
-        NULL,
-        NULL,
-        RPC_C_AUTHN_LEVEL_DEFAULT,
-        RPC_C_IMP_LEVEL_IMPERSONATE,
-        NULL,
-        EOAC_NONE,
-        NULL
-    );
+
 
     hres = CoInitializeSecurity(
         NULL,
