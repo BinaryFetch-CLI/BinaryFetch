@@ -450,7 +450,8 @@ string CPUInfo::get_cpu_base_speed()
 // Current CPU speed (GHz)
 string CPUInfo::get_cpu_speed()
 {
-    string value = wmi_querysingle_value(
+    string value = wmi_querysingle_value
+    (
         L"SELECT CurrentClockSpeed FROM Win32_Processor",
         L"CurrentClockSpeed"
     );
@@ -473,7 +474,8 @@ string CPUInfo::get_cpu_speed()
 // Physical CPU sockets (usually 1)
 int CPUInfo::get_cpu_sockets()
 {
-    string value = wmi_querysingle_value(
+    string value = wmi_querysingle_value
+    (
         L"SELECT COUNT(*) FROM Win32_Processor",
         L"COUNT(*)"
     );
@@ -531,7 +533,8 @@ string CPUInfo::get_cpu_l1_cache()
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return "N/A";
 
-    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer
+    (
         length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
     );
 
@@ -588,7 +591,8 @@ string CPUInfo::get_cpu_l3_cache()
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return "N/A";
 
-    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer(
+    vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> buffer
+    (
         length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION)
     );
 
@@ -630,7 +634,8 @@ string CPUInfo::get_system_uptime()
 // Number of running processes
 int CPUInfo::get_process_count()
 {
-    string value = wmi_querysingle_value(
+    string value = wmi_querysingle_value
+    (
         L"SELECT COUNT(*) FROM Win32_Process",
         L"COUNT(*)"
     );
@@ -642,7 +647,8 @@ int CPUInfo::get_process_count()
 // Total thread count
 int CPUInfo::get_thread_count()
 {
-    string value = wmi_querysingle_value(
+    string value = wmi_querysingle_value
+    (
         L"SELECT ThreadCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'",
         L"ThreadCount"
     );
@@ -654,7 +660,8 @@ int CPUInfo::get_thread_count()
 // Total handle count
 int CPUInfo::get_handle_count()
 {
-    string value = wmi_querysingle_value(
+    string value = wmi_querysingle_value
+    (
         L"SELECT HandleCount FROM Win32_PerfFormattedData_PerfProc_Process WHERE Name='_Total'",
         L"HandleCount"
     );
