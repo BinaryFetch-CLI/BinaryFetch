@@ -21,7 +21,6 @@ Built for Windows. Built to last. Built to be shared.
 
 ## 🚀 What Makes BinaryFetch Different?
 
-### 🧠 Engine-First Design
 
 BinaryFetch guarantees that **the program never crashes due to missing user files**.
 
