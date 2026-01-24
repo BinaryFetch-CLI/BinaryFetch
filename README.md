@@ -510,3 +510,10 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 3. **Data Structures:** Well-defined structures for complex data types
 4. **Configuration Integration:** All output is JSON-configurable via helper functions
 5. **Separation of Concerns:** Compact vs Detailed modules for different display needs
+
+
+
+
+# Q: What about the linux version of Binary Fetch ?
+# A: It's under develpement.
+
