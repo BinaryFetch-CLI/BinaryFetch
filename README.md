@@ -522,3 +522,4 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 # A: Straight No.
 # Q: Does Binary Fetch run in the background ?
 # A: Since it's a CLI tool, it only runs whenever user type the command on terminal.
+
