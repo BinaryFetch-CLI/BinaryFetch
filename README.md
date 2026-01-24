@@ -516,4 +516,5 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 
 # Q: What about the linux version of Binary Fetch ?
 # A: It's under develpement.
-
+# Q: will Linux users also get as much featurs as windows version ?
+# A: Of course, even more.
