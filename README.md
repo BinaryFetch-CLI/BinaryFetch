@@ -520,3 +520,4 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 # A: Of course, even more.
 # Q: Does Binary Fetch Share user data ?
 # A: Straight No.
+# Q: Does Binary Fetch run in the background ?
