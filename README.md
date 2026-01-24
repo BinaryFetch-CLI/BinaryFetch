@@ -518,3 +518,5 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 # A: It's under develpement.
 # Q: will Linux users also get as much featurs as windows version ?
 # A: Of course, even more.
+# Q: Does Binary Fetch Share user data ?
+# A: Straight No.
