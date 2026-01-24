@@ -521,3 +521,4 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 # Q: Does Binary Fetch Share user data ?
 # A: Straight No.
 # Q: Does Binary Fetch run in the background ?
+# A: Since it's a CLI tool, it only runs whenever user type the command on terminal.
