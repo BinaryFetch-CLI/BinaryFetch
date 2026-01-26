@@ -1,0 +1,134 @@
+cmake_minimum_required(VERSION 3.16)
+project(BinaryFetch LANGUAGES CXX)
+
+# ---- Basic settings --------------------------------------------------------
+set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)   # only if you really need it
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# ---- Helpers / optional includes -------------------------------------------
+# If you have a CMake/Utils.cmake, include it; otherwise ignore silently.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Utils.cmake")
+    include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/Utils.cmake")
+else()
+    message(STATUS "CMake/Utils.cmake not found — continuing without it.")
+endif()
+
+# ---- Files (use exact list so VS shows them in solution) -------------------
+set(PROJECT_NAME BinaryFetch)
+
+# Fix typo: DtailedGPUInfo.cpp -> DetailedGPUInfo.cpp (adjust if file really is misspelled)
+set(SRC_FILES
+    src/AsciiArt.cpp
+    src/compact_disk_info.cpp
+    src/CompactAudio.cpp
+    src/CompactCPU.cpp
+    src/CompactGPU.cpp
+    src/CompactMemory.cpp
+    src/CompactNetwork.cpp
+    src/CompactOS.cpp
+    src/CompactPerformance.cpp
+    src/CompactScreen.cpp
+    src/CompactSystem.cpp
+    src/CompactUser.cpp
+    src/CPUInfo.cpp
+    src/DisplayInfo.cpp
+    src/DetailedGPUInfo.cpp   # corrected name — make sure this file exists or rename it
+    src/ExtraInfo.cpp
+    src/GPUInfo.cpp
+    src/main.cpp
+    src/MemoryInfo.cpp
+    src/NetworkInfo.cpp
+    src/OSInfo.cpp
+    src/PerformanceInfo.cpp
+    src/personalization_info.cpp
+    src/StorageInfo.cpp
+    src/SystemInfo.cpp
+    src/TimeInfo.cpp
+    src/UserInfo.cpp
+    src/ConsoleUtils.cpp
+    src/ConfigReader.cpp
+    src/Helpers.cpp
+)
+
+# Add resource file(s) if present
+set(RESOURCE_FILES
+    resources.rc
+    version_info.rc
+)
+
+# Add other docs/configs so VS shows them (optional)
+set(OTHER_FILES
+    Documentation/BinaryFetch\ documentation.md
+    Default_BinaryFetch_Config.json
+    DefaultAsciiArt.txt
+    AsciiArt_Documentation.md
+    nlohmann/json.hpp
+)
+
+set(ALL_FILES ${SRC_FILES} ${RESOURCE_FILES} ${OTHER_FILES})
+
+# ---- Target ----------------------------------------------------------------
+add_executable(${PROJECT_NAME} ${ALL_FILES})
+
+# ---- Include directories ---------------------------------------------------
+# Use project-local include directories instead of hard-coded absolute file paths.
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann"
+)
+
+# ---- Compile options & definitions -----------------------------------------
+# Example: define debug/release specific defines and common ones
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    UNICODE
+    _UNICODE
+    $<$<CONFIG:Debug>:_DEBUG>
+    $<$<CONFIG:Release>:NDEBUG>
+)
+
+if(MSVC)
+    # Common MSVC compiler options (add/remove as needed)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        /permissive-;
+        /sdl;
+        /W3;
+        $<$<CONFIG:Release>:/O2; /Oi; /Gy>
+    )
+    # Example: set MSVC runtime (use modern CMake values)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+    )
+endif()
+
+# ---- Link libraries --------------------------------------------------------
+# Prefer CMake libraries. For system libraries, specify them plainly.
+# If nvapi is provided as a library file in a directory, use find_library or give an absolute path.
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    nvapi64   # if library is available in link dirs
+    Shell32
+)
+
+# If you need different link libraries for Debug vs Release:
+# target_link_libraries(${PROJECT_NAME} PRIVATE
+#     $<$<CONFIG:Debug>:advapi32;user32;ole32;Gdi32>
+#     $<$<CONFIG:Release>:advapi32;user32;ole32;Gdi32>
+# )
+
+# ---- Link directories (if you have vendor libs) -----------------------------
+# Prefer absolute paths or use find_library. Example:
+if(EXISTS "C:/NVAPI/nvapi-main/amd64/nvapi64.lib")
+    target_link_directories(${PROJECT_NAME} PRIVATE "C:/NVAPI/nvapi-main/amd64")
+endif()
+
+# ---- Resource handling: ensure .rc files included for Win32 builds -----------
+# (We already added them to ALL_FILES so they'll be compiled by MSVC.)
+
+# ---- Visual Studio folders (nice to organize) -------------------------------
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "BinaryFetch")
+
+# ---- Optional: install, tests, packaging -----------------------------------
+# (Add later if you need)
+
+message(STATUS "Project ready. Sources: ${#SRC_FILES}")
