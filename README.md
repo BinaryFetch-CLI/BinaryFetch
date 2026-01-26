@@ -511,15 +511,16 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 4. **Configuration Integration:** All output is JSON-configurable via helper functions
 5. **Separation of Concerns:** Compact vs Detailed modules for different display needs
 
+---
 
+**Q: What about the Linux version of Binary Fetch?**  
+**A:** The Linux version is currently under development.  
 
+**Q: Will Linux users get the same features as the Windows version?**  
+**A:** Yes, Linux will have all the features of the Windows version — and potentially more.  
 
-# Q: What about the linux version of Binary Fetch ?
-# A: It's under develpement.
-# Q: will Linux users also get as much featurs as windows version ?
-# A: Of course, even more.
-# Q: Does Binary Fetch Share user data ?
-# A: Straight No.
-# Q: Does Binary Fetch run in the background ?
-# A: Since it's a CLI tool, it only runs whenever user type the command on terminal.
+**Q: Does Binary Fetch share user data?**  
+**A:** No. Binary Fetch does not collect or share any user data.  
 
+**Q: Does Binary Fetch run in the background?**  
+**A:** No. Binary Fetch is a CLI tool and only runs when the command is executed in the terminal.
