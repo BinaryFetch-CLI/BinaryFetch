@@ -2340,7 +2340,12 @@ int main(){
 
 
     // End of CoUninitialize 
-    
+    CoUninitialize(); 
+    // Uninitializes the COM library for the current thread, releasing 
+    // resources allocated by COM and cleaning up any COM-related 
+    // state. Should be called once for every successful CoInitialize() 
+    // or CoInitializeEx() call to avoid memory/resource leaks.
+
     return 0;
 }
 
