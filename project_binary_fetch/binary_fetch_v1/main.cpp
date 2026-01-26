@@ -2340,7 +2340,7 @@ int main(){
 
 
     // End of CoUninitialize 
-    CoUninitialize();
+    
     return 0;
 }
 
