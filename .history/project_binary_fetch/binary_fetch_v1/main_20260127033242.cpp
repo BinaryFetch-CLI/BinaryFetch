@@ -32,7 +32,7 @@
 #include "SystemInfo.h"         // Motherboard, BIOS, system manufacturer
 #include "DisplayInfo.h"        // Monitor resolution, refresh rate, scaling
 #include "ExtraInfo.h"          // Additional misc system data
- 
+
 
 
 // ------------------ Compact Mode Output Modules ------------------
