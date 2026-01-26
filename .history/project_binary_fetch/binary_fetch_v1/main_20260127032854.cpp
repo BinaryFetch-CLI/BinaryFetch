@@ -6,7 +6,7 @@
 #include <functional>     // Function objects and wrappers (std::function) 
 #include <sstream>        // String stream operations for parsing/conversion 
 #include <fstream>        // File stream operations (reading/writing files) 
-#include <string>         // Standard string class and methods 
+#include <string>         // Standard string class and methods ✍
 #include <regex>          // Regular expressions for pattern matching 
 #include <windows.h>      // Core Windows API functions (handles, processes) 
 #include <shlobj.h>       // Shell object functions (folder paths, UI) 
@@ -32,7 +32,7 @@
 #include "SystemInfo.h"         // Motherboard, BIOS, system manufacturer
 #include "DisplayInfo.h"        // Monitor resolution, refresh rate, scaling
 #include "ExtraInfo.h"          // Additional misc system data
- 
+
 
 
 // ------------------ Compact Mode Output Modules ------------------
