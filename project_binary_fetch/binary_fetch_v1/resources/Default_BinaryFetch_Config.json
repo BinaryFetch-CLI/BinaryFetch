@@ -234,7 +234,7 @@
     }
   },
   "compact_network": {
-    "enabled": false,
+    "enabled": true,
     "show_name": true,
     "show_type": true,
     "show_ip": true,
@@ -252,7 +252,7 @@
     }
   },
   "dummy_compact_network": {
-    "enabled": true,
+    "enabled": false,
     "show_name": true,
     "show_type": true,
     "show_ip": true,
@@ -410,7 +410,7 @@
     }
   },
   "network_info": {
-    "enabled": false,
+    "enabled": true,
     "show_header": true,
     "show_name": true,
     "show_type": true,
@@ -443,7 +443,7 @@
     "download_value_color": "blue"
   },
   "dummy_network_info": {
-    "enabled": true,
+    "enabled": false,
     "show_header": true,
     "show_name": true,
     "show_type": true,
