@@ -112,7 +112,7 @@
     <Text Include="text infos\main-7 copy.txt" />
     <Text Include="text infos\better output format.txt" />
     <Text Include="text infos\main 8.txt" />
-    <Text Include="Art_Collections.txt">
+    <Text Include="text infos\Art_Collections.txt">
       <Filter>Resources</Filter>
     </Text>
     <Text Include="text infos\Commit_Info.txt" />
