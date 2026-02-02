@@ -1,4 +1,4 @@
-#include "CompactCPU.h"
+#include "include\CompactCPU.h"
 #include <windows.h>
 #include <pdh.h>
 #include <pdhmsg.h>

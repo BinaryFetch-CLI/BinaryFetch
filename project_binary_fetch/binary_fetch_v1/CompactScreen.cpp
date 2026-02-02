@@ -1,4 +1,4 @@
-﻿#include "CompactScreen.h"
+﻿#include "include\CompactScreen.h"
 
 #include <windows.h>
 #include <dxgi1_6.h>

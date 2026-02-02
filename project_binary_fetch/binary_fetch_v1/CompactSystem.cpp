@@ -1,4 +1,4 @@
-#include "CompactSystem.h"
+#include "include\CompactSystem.h"
 #include <windows.h>
 #include <string>
 #include <iostream>

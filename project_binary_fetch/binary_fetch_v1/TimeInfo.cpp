@@ -1,4 +1,4 @@
-#include "TimeInfo.h"
+#include "include\TimeInfo.h"
 
 // Constructor - gets current system time
 TimeInfo::TimeInfo() {

@@ -16,38 +16,38 @@
 
 
 // ASCII Art functionality
-#include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+#include "include\AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
 
 
 // ------------------ Full System Info Modules ------------------
-#include "OSInfo.h"             // OS name, version, build info
-#include "CPUInfo.h"            // CPU model, threads, cores, base/boost clocks
-#include "MemoryInfo.h"         // RAM capacity, usage, speed, type
-#include "GPUInfo.h"            // GPU model and basic information
-#include "StorageInfo.h"        // Disk drives, partitions, used/free space
-#include "NetworkInfo.h"        // Active network adapters, IP, speeds
-#include "DetailedGPUInfo.h"    // Deep GPU details: VRAM usage, clocks, temps
-#include "PerformanceInfo.h"    // CPU load, RAM load, GPU usage
-#include "UserInfo.h"           // Username, PC name, domain
-#include "SystemInfo.h"         // Motherboard, BIOS, system manufacturer
-#include "DisplayInfo.h"        // Monitor resolution, refresh rate, scaling
-#include "ExtraInfo.h"          // Additional misc system data
+#include "include\OSInfo.h"             // OS name, version, build info
+#include "include\CPUInfo.h"            // CPU model, threads, cores, base/boost clocks
+#include "include\MemoryInfo.h"         // RAM capacity, usage, speed, type
+#include "include\GPUInfo.h"            // GPU model and basic information
+#include "include\StorageInfo.h"        // Disk drives, partitions, used/free space
+#include "include\NetworkInfo.h"        // Active network adapters, IP, speeds
+#include "include\DetailedGPUInfo.h"    // Deep GPU details: VRAM usage, clocks, temps
+#include "include\PerformanceInfo.h"    // CPU load, RAM load, GPU usage
+#include "include\UserInfo.h"           // Username, PC name, domain
+#include "include\SystemInfo.h"         // Motherboard, BIOS, system manufacturer
+#include "include\DisplayInfo.h"        // Monitor resolution, refresh rate, scaling
+#include "include\ExtraInfo.h"          // Additional misc system data
 
 
 
 // ------------------ Compact Mode Output Modules ------------------
-#include "CompactAudio.h"       // Audio device summary for compact mode
-#include "CompactOS.h"          // Lightweight OS summary
-#include "CompactCPU.h"         // Lightweight CPU summary
-#include "CompactMemory.h"      // Lightweight RAM summary
-#include "CompactScreen.h"      // Lightweight screen resolution summary
-#include "CompactSystem.h"      // Lightweight motherboard/system summary
-#include "CompactGPU.h"         // Lightweight GPU summary
-#include "CompactPerformance.h" // Lightweight performance stats
-#include "CompactUser.h"        // Lightweight user info
-#include "CompactNetwork.h"     // Lightweight network info
-#include "compact_disk_info.h"  // Lightweight storage/disk info (compact mode)
-#include "TimeInfo.h"           //returns current time info (second, minute, hour, day, week, month, year, leap year, etc)
+#include "include\CompactAudio.h"       // Audio device summary for compact mode
+#include "include\CompactOS.h"          // Lightweight OS summary
+#include "include\CompactCPU.h"         // Lightweight CPU summary
+#include "include\CompactMemory.h"      // Lightweight RAM summary
+#include "include\CompactScreen.h"      // Lightweight screen resolution summary
+#include "include\CompactSystem.h"      // Lightweight motherboard/system summary
+#include "include\CompactGPU.h"         // Lightweight GPU summary
+#include "include\CompactPerformance.h" // Lightweight performance stats
+#include "include\CompactUser.h"        // Lightweight user info
+#include "include\CompactNetwork.h"     // Lightweight network info
+#include "include\compact_disk_info.h"  // Lightweight storage/disk info (compact mode)
+#include "include\TimeInfo.h"           //returns current time info (second, minute, hour, day, week, month, year, leap year, etc)
 
 
 

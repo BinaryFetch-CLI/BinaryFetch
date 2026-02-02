@@ -1,4 +1,4 @@
-#include "MemoryInfo.h"
+#include "include\MemoryInfo.h"
 #include <windows.h>
 #include <comdef.h>
 #include <Wbemidl.h>

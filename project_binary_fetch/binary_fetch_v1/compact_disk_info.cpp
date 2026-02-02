@@ -1,4 +1,4 @@
-#include "compact_disk_info.h"
+#include "include\compact_disk_info.h"
 #include <windows.h>
 
 DiskInfo::DiskInfo() {

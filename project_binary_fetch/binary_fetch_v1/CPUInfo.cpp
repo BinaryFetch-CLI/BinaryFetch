@@ -134,7 +134,7 @@ But it WORKS — and that’s a win :)
 ================================================================================
 */
 
-#include "CPUInfo.h"
+#include "include\CPUInfo.h"
 
 #include <windows.h>   // Core Windows API — sometimes pain, sometimes power
 #include <intrin.h>    // CPUID and low-level CPU instructions

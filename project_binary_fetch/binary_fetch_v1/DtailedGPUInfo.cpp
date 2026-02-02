@@ -1,4 +1,4 @@
-﻿#include "DetailedGPUInfo.h"
+﻿#include "include\DetailedGPUInfo.h"
 #include <windows.h> // The base library for Windows development. It provides the core API for memory management and hardware interaction.
 #include <dxgi.h> // DirectX Graphics Infrastructure. Used to enumerate physical adapters (GPUs), check video memory capacity, and identify monitor outputs.
 #include <vector> // Standard C++ library for using the vector container.

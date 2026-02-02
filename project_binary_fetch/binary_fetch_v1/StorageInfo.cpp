@@ -14,7 +14,7 @@
 #define _WIN32_WINNT 0x0603  // Windows 8.1 or newer
 #endif
 
-#include "StorageInfo.h"
+#include "include\StorageInfo.h"
 #include <Windows.h>
 #include <sstream>
 #include <iomanip>

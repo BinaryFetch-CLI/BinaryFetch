@@ -22,86 +22,80 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SystemInfo.h">
+    <ClInclude Include="include\SystemInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CPUInfo.h">
+    <ClInclude Include="include\CPUInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="GPUInfo.h">
+    <ClInclude Include="include\GPUInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="OSInfo.h">
+    <ClInclude Include="include\OSInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryInfo.h">
+    <ClInclude Include="include\MemoryInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="StorageInfo.h">
+    <ClInclude Include="include\StorageInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkInfo.h">
+    <ClInclude Include="include\NetworkInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="PerformanceInfo.h">
+    <ClInclude Include="include\PerformanceInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="UserInfo.h">
+    <ClInclude Include="include\UserInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="ExtraInfo.h">
+    <ClInclude Include="include\ExtraInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="json.hpp">
+    <ClInclude Include="include\json.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactMemory.h">
+    <ClInclude Include="include\CompactMemory.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactAudio.h">
+    <ClInclude Include="include\CompactAudio.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactOS.h">
+    <ClInclude Include="include\CompactOS.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactCPU.h">
+    <ClInclude Include="include\CompactCPU.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactScreen.h">
+    <ClInclude Include="include\CompactScreen.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactSystem.h">
+    <ClInclude Include="include\CompactSystem.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactGPU.h">
+    <ClInclude Include="include\CompactGPU.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactPerformance.h">
+    <ClInclude Include="include\CompactPerformance.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactUser.h">
+    <ClInclude Include="include\CompactUser.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="CompactNetwork.h">
+    <ClInclude Include="include\CompactNetwork.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="AsciiArt.h">
+    <ClInclude Include="include\AsciiArt.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="personalization_info.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="compact_disk_info.h">
+    <ClInclude Include="include\compact_disk_info.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="ConfigReader.h">
-      <Filter>include\Utlis</Filter>
-    </ClInclude>
-    <ClInclude Include="TimeInfo.h">
+    <ClInclude Include="include\TimeInfo.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="include\resource.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -157,22 +151,16 @@
     <ClCompile Include="MemoryInfo.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="DisplayInfo.h">
+    <ClCompile Include="include\DisplayInfo.h">
       <Filter>include</Filter>
     </ClCompile>
     <ClCompile Include="DisplayInfo.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="ConfigReader.cpp">
-      <Filter>include\Utlis</Filter>
-    </ClCompile>
-    <ClCompile Include="ConsoleUtils.cpp">
-      <Filter>include\Utlis</Filter>
-    </ClCompile>
     <ClCompile Include="Helpers.cpp">
       <Filter>include\Utlis</Filter>
     </ClCompile>
-    <ClCompile Include="DetailedGPUInfo.h">
+    <ClCompile Include="include\DetailedGPUInfo.h">
       <Filter>include</Filter>
     </ClCompile>
     <ClCompile Include="DtailedGPUInfo.cpp">

@@ -1,4 +1,4 @@
-#include "OSInfo.h"
+#include "include\OSInfo.h"
 #include <Windows.h>
 #include <VersionHelpers.h>
 #include <comdef.h>

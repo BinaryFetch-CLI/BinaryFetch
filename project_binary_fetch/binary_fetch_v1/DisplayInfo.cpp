@@ -1,4 +1,4 @@
-#include "DisplayInfo.h"
+#include "include\DisplayInfo.h"
 
 #include <windows.h>
 #include <dxgi1_6.h>

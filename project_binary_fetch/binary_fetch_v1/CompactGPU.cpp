@@ -1,4 +1,4 @@
-#include "CompactGPU.h"
+#include "include\CompactGPU.h"
 #include <windows.h>
 #include <wbemidl.h>
 #include <comdef.h>

@@ -1,4 +1,4 @@
-#include "CompactAudio.h"
+#include "include\CompactAudio.h"
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <functiondiscoverykeys_devpkey.h>

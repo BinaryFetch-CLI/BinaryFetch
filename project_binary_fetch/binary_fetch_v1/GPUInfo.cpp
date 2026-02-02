@@ -1,4 +1,4 @@
-﻿#include "GPUInfo.h"
+﻿#include "include\GPUInfo.h"
 #include <windows.h> // Core Windows API (often sucks)
 #include <dxgi1_6.h> // DirectX Graphics Infrastructure (DXGI) for GPU enumeration
 #include <d3d12.h>  // Direct3D 12 (not directly used here, but often included with DXGI)

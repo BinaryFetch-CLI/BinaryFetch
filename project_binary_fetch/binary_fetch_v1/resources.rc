@@ -1,4 +1,4 @@
-#include "resource.h"
+#include "include\resource.h"
 
 IDR_DEFAULT_CONFIG    RCDATA    "Default_BinaryFetch_Config.json"
 IDR_DEFAULT_ASCII     RCDATA    "DefaultAsciiArt.txt"

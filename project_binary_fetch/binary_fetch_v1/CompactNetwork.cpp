@@ -1,4 +1,4 @@
-#include "CompactNetwork.h"
+#include "include\CompactNetwork.h"
 #include <string>
 #include <vector>
 #include <winsock2.h>

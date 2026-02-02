@@ -19,34 +19,32 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AsciiArt.h" />
-    <ClInclude Include="CompactAudio.h" />
-    <ClInclude Include="CompactCPU.h" />
-    <ClInclude Include="CompactGPU.h" />
-    <ClInclude Include="CompactMemory.h" />
-    <ClInclude Include="CompactNetwork.h" />
-    <ClInclude Include="CompactOS.h" />
-    <ClInclude Include="CompactPerformance.h" />
-    <ClInclude Include="CompactScreen.h" />
-    <ClInclude Include="CompactSystem.h" />
-    <ClInclude Include="CompactUser.h" />
-    <ClInclude Include="compact_disk_info.h" />
-    <ClInclude Include="ConfigReader.h" />
-    <ClInclude Include="CPUInfo.h" />
-    <ClInclude Include="ExtraInfo.h" />
-    <ClInclude Include="GPUInfo.h" />
-    <ClInclude Include="json.hpp" />
-    <ClInclude Include="MemoryInfo.h" />
-    <ClInclude Include="NetworkInfo.h" />
+    <ClInclude Include="include\AsciiArt.h" />
+    <ClInclude Include="include\CompactAudio.h" />
+    <ClInclude Include="include\CompactCPU.h" />
+    <ClInclude Include="include\CompactGPU.h" />
+    <ClInclude Include="include\CompactMemory.h" />
+    <ClInclude Include="include\CompactNetwork.h" />
+    <ClInclude Include="include\CompactOS.h" />
+    <ClInclude Include="include\CompactPerformance.h" />
+    <ClInclude Include="include\CompactScreen.h" />
+    <ClInclude Include="include\CompactSystem.h" />
+    <ClInclude Include="include\CompactUser.h" />
+    <ClInclude Include="include\compact_disk_info.h" />
+    <ClInclude Include="include\CPUInfo.h" />
+    <ClInclude Include="include\ExtraInfo.h" />
+    <ClInclude Include="include\GPUInfo.h" />
+    <ClInclude Include="include\json.hpp" />
+    <ClInclude Include="include\MemoryInfo.h" />
+    <ClInclude Include="include\NetworkInfo.h" />
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="OSInfo.h" />
-    <ClInclude Include="PerformanceInfo.h" />
-    <ClInclude Include="personalization_info.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="StorageInfo.h" />
-    <ClInclude Include="SystemInfo.h" />
-    <ClInclude Include="TimeInfo.h" />
-    <ClInclude Include="UserInfo.h" />
+    <ClInclude Include="include\OSInfo.h" />
+    <ClInclude Include="include\PerformanceInfo.h" />
+    <ClInclude Include="include\resource.h" />
+    <ClInclude Include="include\StorageInfo.h" />
+    <ClInclude Include="include\SystemInfo.h" />
+    <ClInclude Include="include\TimeInfo.h" />
+    <ClInclude Include="include\UserInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Art_Collections.txt" />
@@ -79,12 +77,10 @@
     <ClCompile Include="CompactSystem.cpp" />
     <ClCompile Include="CompactUser.cpp" />
     <ClCompile Include="compact_disk_info.cpp" />
-    <ClCompile Include="ConfigReader.cpp" />
-    <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="CPUInfo.cpp" />
-    <ClCompile Include="DetailedGPUInfo.h" />
+    <ClCompile Include="include\DetailedGPUInfo.h" />
     <ClCompile Include="DisplayInfo.cpp" />
-    <ClCompile Include="DisplayInfo.h" />
+    <ClCompile Include="include\DisplayInfo.h" />
     <ClCompile Include="DtailedGPUInfo.cpp" />
     <ClCompile Include="ExtraInfo.cpp" />
     <ClCompile Include="GPUInfo.cpp" />

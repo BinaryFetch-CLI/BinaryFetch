@@ -1,6 +1,6 @@
 ﻿
-#include "AsciiArt.h"
-#include "resource.h" // Essential for IDR_DEFAULT_ASCII
+#include "include\AsciiArt.h"
+#include "include\resource.h" // Essential for IDR_DEFAULT_ASCII
 #include <iostream>
 #include <fstream>
 #include <regex>

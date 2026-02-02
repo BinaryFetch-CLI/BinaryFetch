@@ -1,4 +1,4 @@
-#include "CompactPerformance.h"
+#include "include\CompactPerformance.h"
 #include <pdh.h>
 #include <pdhmsg.h>
 #include <thread>
