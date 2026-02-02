@@ -101,7 +101,7 @@
     <None Include="AsciiArt_Documentation.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
     <None Include="Default_BinaryFetch_Config.json" />
-    <None Include="Standalone Json File management.md" />
+    <None Include="text infos\Standalone Json File management.md" />
     <None Include="text infos\locations.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
