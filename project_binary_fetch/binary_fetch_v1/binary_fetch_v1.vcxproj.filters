@@ -224,7 +224,7 @@
     <None Include="Default_BinaryFetch_Config.json">
       <Filter>Config</Filter>
     </None>
-    <None Include="AsciiArt_Documentation.md">
+    <None Include="text infos\AsciiArt_Documentation.md">
       <Filter>Resources</Filter>
     </None>
     <None Include="text infos\Standalone Json File management.md">
