@@ -129,7 +129,7 @@ int main(){
 
     // ========== AUTO CONFIG FILE SETUP ==========
     // true = dev mode (loads local file), false = production mode (extracts from EXE)
-    bool LOAD_DEFAULT_CONFIG = false; // must be false for production releases
+    bool LOAD_DEFAULT_CONFIG = true; // must be false for production releases
 
     std::string configDir = "C:\\Users\\Public\\BinaryFetch";
     std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
@@ -137,7 +137,7 @@ int main(){
 
     if (LOAD_DEFAULT_CONFIG) {
         // DEV MODE: Load directly from project folder for fast iteration 🧪
-        configPath = "Default_BinaryFetch_Config.json";
+        configPath = "resources\\Default_BinaryFetch_Config.json";
     }
     else {
         // PRODUCTION MODE: Use constant public folder 🛰️

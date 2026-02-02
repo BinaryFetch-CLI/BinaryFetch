@@ -100,7 +100,7 @@
   <ItemGroup>
     <None Include="text infos\AsciiArt_Documentation.md" />
     <None Include="Documentation\BinaryFetch documentation.md" />
-    <None Include="Default_BinaryFetch_Config.json" />
+    <None Include="resources\Default_BinaryFetch_Config.json" />
     <None Include="text infos\Standalone Json File management.md" />
     <None Include="text infos\locations.md" />
   </ItemGroup>
