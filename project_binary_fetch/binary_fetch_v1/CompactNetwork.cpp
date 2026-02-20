@@ -1,11 +1,57 @@
-#include "include\CompactNetwork.h"
-#include <string>
-#include <vector>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <wlanapi.h>
-#include <windows.h>
+#include "include\CompactNetwork.h"  
+// Custom project header file.
+// Likely contains declarations for the CompactNetwork class,
+// function prototypes, constants, and internal networking logic.
+
+#include <string>  
+// Provides std::string for safe and flexible text handling.
+// Useful for storing IP addresses, SSIDs, adapter names, etc.
+
+#include <vector>  
+// Provides std::vector (dynamic array container).
+// Useful for storing collections like adapter lists,
+// available Wi-Fi networks, or socket results.
+
+#include <winsock2.h>  
+// Core Windows Sockets (Winsock) API.
+// Enables TCP/UDP networking using socket(), bind(), connect(),
+// send(), recv(), closesocket(), etc.
+// Foundation for low-level network communication.
+
+#include <ws2tcpip.h>  
+// Winsock extensions for modern networking.
+// Adds support for IPv6 and advanced utilities like:
+// - getaddrinfo()
+// - inet_pton()
+// - inet_ntop()
+// Provides protocol-independent address handling.
+
+#include <iphlpapi.h>  
+// IP Helper API (Windows).
+// Used to retrieve detailed network adapter information such as:
+// - IP addresses
+// - MAC addresses
+// - Gateway info
+// - Network statistics
+// Common functions: GetAdaptersInfo(), GetAdaptersAddresses().
+
+#include <wlanapi.h>  
+// Windows WLAN (Wi-Fi) API.
+// Used for wireless-specific operations:
+// - Scanning available Wi-Fi networks
+// - Retrieving SSID and signal strength
+// - Managing wireless profiles
+// - Connecting/disconnecting Wi-Fi networks
+
+#include <windows.h>  
+// Core Windows operating system API.
+// Provides access to system-level features such as:
+// - Handles
+// - Threads
+// - Processes
+// - Memory management
+// - System services
+// Required for many low-level Windows functions.
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
