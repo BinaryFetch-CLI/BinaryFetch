@@ -230,5 +230,6 @@
     <None Include="text infos\Standalone Json File management.md">
       <Filter>Resources</Filter>
     </None>
+    <None Include="Environment Setup\Readme.md" />
   </ItemGroup>
 </Project>
