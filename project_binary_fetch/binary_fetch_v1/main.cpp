@@ -82,6 +82,10 @@ it is a sign that the logic should be moved into a new module.
 */
 
 
+//Initialize Global Variables (if any) here ------ (start)
+
+//Initialize Global Variables (if any) here ------ (end)
+
 int main(){
 
     // Initialize COM 
