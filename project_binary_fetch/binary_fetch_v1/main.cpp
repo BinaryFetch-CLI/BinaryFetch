@@ -1100,33 +1100,9 @@ int main(){
 
                     ss << getNestedColor("storage_summary.total_GIB", "white") << " GiB  " << r;
 
-                    // Percentage with underscore prefix and special formatting for <10%
+                    // Percentage
                     if (getNestedBool("storage_summary.show_used_percentage", true)) {
-                        // Extract the numeric percentage from d.used_percentage (which might be like "(97%)" or "97%")
-                        std::string percentStr = d.used_percentage;
-                        // Remove parentheses if they exist
-                        if (percentStr.front() == '(' && percentStr.back() == ')') {
-                            percentStr = percentStr.substr(1, percentStr.length() - 2);
-                        }
-                        // Remove % sign if it exists
-                        if (percentStr.back() == '%') {
-                            percentStr = percentStr.substr(0, percentStr.length() - 1);
-                        }
-
-                        // Convert to number to check if less than 10
-                        try {
-                            int percentValue = std::stoi(percentStr);
-                            if (percentValue < 10) {
-                                ss << getNestedColor("storage_summary.used_percentage_color", "white") << "--" << percentValue << "%" << r;
-                            }
-                            else {
-                                ss << getNestedColor("storage_summary.used_percentage_color", "white") << "_" << percentValue << "%" << r;
-                            }
-                        }
-                        catch (...) {
-                            // Fallback to original if conversion fails
-                            ss << getNestedColor("storage_summary.used_percentage_color", "white") << "_" << d.used_percentage << r;
-                        }
+                        ss << getNestedColor("storage_summary.used_percentage_color", "white") << d.used_percentage << r;
                     }
 
                     // Separator
