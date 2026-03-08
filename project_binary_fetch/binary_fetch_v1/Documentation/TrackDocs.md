@@ -1,9 +1,9 @@
-
+﻿
 ## BinaryFetch Documentation Checklist
 
 ### Core / Entry
 
-* [ ] `main.cpp`
+* [✅] `main.cpp`
 * [ ] `Helpers.cpp`
 * [ ] `resource.h`
 * [ ] `json.hpp`
