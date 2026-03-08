@@ -231,5 +231,6 @@
       <Filter>Resources</Filter>
     </None>
     <None Include="Environment Setup\Readme.md" />
+    <None Include="Documentation\TrackDocs.md" />
   </ItemGroup>
 </Project>
