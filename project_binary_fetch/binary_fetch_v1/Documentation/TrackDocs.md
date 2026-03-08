@@ -29,7 +29,7 @@
 * [ ] `CompactGPU.cpp`
 * [ ] `CompactMemory.h`
 * [ ] `CompactMemory.cpp`
-* [ ] `CompactNetwork.h`
+* [✅] `CompactNetwork.h`
 * [ ] `CompactNetwork.cpp`
 * [ ] `CompactOS.h`
 * [ ] `CompactOS.cpp`
