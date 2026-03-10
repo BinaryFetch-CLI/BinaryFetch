@@ -17,6 +17,11 @@ Built for Windows. Built to last. Built to be shared.
 * Clean separation between *data*, *logic*, and *presentation*
 
 
+<details>
+  <summary><b>Click to expand Project Previews</b></summary>
+  
+ 
+  </details>
 
 
 ## 🚀 What Makes BinaryFetch Different?
