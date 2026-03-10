@@ -6,22 +6,12 @@ An advanced Windows system information fetcher written in C++ — featuring self
 Built for Windows. Built to last. Built to be shared.
 
 
-## ✨ Key Philosophy
-
-> **Simplicity is the priority.**
-
-* Two user-editable files
-* Self-healing engine
-* Modular, scalable design
-* Clean separation between *data*, *logic*, and *presentation*
-
-
 <details>
-  <summary><b>Click to expand Project Previews</b></summary>
+ <summary><h2> [ Click to expand Project Previews ] </h2></summary>
 
 ![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/06_preview.jpg)
 ![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/05_preview.jpg)
-
+  
   </details>
 
 
