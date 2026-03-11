@@ -3,7 +3,7 @@
 #include <iostream>       // Standard input/output stream (cin, cout) 
 #include <iomanip>        // Formatting utilities (setw, precision, setfill) 
 #include <vector>         // Dynamic array container 
-#include <functional>     // Function objects and wrappers (std::function) 
+#include <functional>     // Function objects and wrappers (function) 
 #include <sstream>        // String stream operations for parsing/conversion 
 #include <fstream>        // File stream operations (reading/writing files) 
 #include <string>         // Standard string class and methods 
@@ -110,8 +110,8 @@ int main(){
 	//com initialization
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
-        std::cout << "Failed to initialize COM library. Error: 0x"
-            << std::hex << hr << std::endl;
+        cout << "Failed to initialize COM library. Error: 0x"
+            << hex << hr << endl;
         return 1;
     }
 
@@ -127,7 +127,7 @@ int main(){
 	SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console (for emoji printing)
     AsciiArt art;
     if (!art.loadFromFile()) {
-        std::cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
+        cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
         // Program continues even if art fails to load
     }
 
@@ -135,9 +135,9 @@ int main(){
     // true = dev mode (loads local file), false = production mode (extracts from EXE)
     bool LOAD_DEFAULT_CONFIG = false; // must be false for production releases
 
-    std::string configDir = "C:\\Users\\Public\\BinaryFetch";
-    std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
-    std::string configPath;
+    string configDir = "C:\\Users\\Public\\BinaryFetch";
+    string userConfigPath = configDir + "\\BinaryFetch_Config.json";
+    string configPath;
 
     if (LOAD_DEFAULT_CONFIG) {
         // DEV MODE: Load directly from project folder for fast iteration 🧪
@@ -153,7 +153,7 @@ int main(){
         }
 
         // 2. Self-Healing: Check if user config exists, if not, extract from EXE memory
-        std::ifstream checkConfig(userConfigPath);
+        ifstream checkConfig(userConfigPath);
         bool userConfigExists = checkConfig.good();
         checkConfig.close();
 
@@ -165,14 +165,14 @@ int main(){
                 DWORD size = SizeofResource(NULL, hRes);
                 const char* data = static_cast<const char*>(LockResource(hData));
 
-                std::ofstream userConfig(userConfigPath, std::ios::binary);
+                ofstream userConfig(userConfigPath, ios::binary);
                 if (userConfig.is_open()) {
                     userConfig.write(data, size);
                     userConfig.close();
                 }
             }
             else {
-                std::cout << "Warning: Internal resource IDR_DEFAULT_CONFIG not found." << std::endl;
+                cout << "Warning: Internal resource IDR_DEFAULT_CONFIG not found." << endl;
             }
         }
     } 
@@ -181,21 +181,21 @@ int main(){
     json config;
     bool config_loaded = false; // must be false by default
 
-    std::ifstream config_file(configPath);
+    ifstream config_file(configPath);
     if (config_file.is_open()) {
         try {
             config = json::parse(config_file);
             config_loaded = true; // if the json is successfully loaded
         }
-        catch (const std::exception& e) {
-            std::cout << "Warning: Failed to parse config file. Using hardcoded defaults." << std::endl;
+        catch (const exception& e) {
+            cout << "Warning: Failed to parse config file. Using hardcoded defaults." << endl;
 
             // provide warning msg if the json parsing fails
         }
         config_file.close(); // close the file after reading 
     }
     else {
-        std::cout << "Warning: Could not open config file: " << configPath << std::endl;
+        cout << "Warning: Could not open config file: " << configPath << endl;
     }
 
 	// Color map (for ANSI escape codes) 
@@ -212,19 +212,19 @@ int main(){
 
     // Helper functions 
     // here, we've assigned the default color as white 
-    auto getColor = [&](const std::string& section, const std::string& key, const std::string& defaultColor = "white") -> std::string 
+    auto getColor = [&](const string& section, const string& key, const string& defaultColor = "white") -> string 
      {
         if (!config_loaded || !config.contains(section)) return colors[defaultColor];
 
         // First...try to get the color from the nested "colors" object
         if (config[section].contains("colors") && config[section]["colors"].contains(key)) 
         {
-            std::string colorName = config[section]["colors"][key].get<std::string>();
+            string colorName = config[section]["colors"][key].get<string>();
             return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
         }
         // next...try to get the color directly from the section
         if (config[section].contains(key)) {
-            std::string colorName = config[section][key].get<std::string>();
+            string colorName = config[section][key].get<string>();
             return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
         }
 
@@ -233,14 +233,14 @@ int main(){
 
     // check for each section, is it enabled or not (Aka Core-Module)
     // Example of core-module: CPU,GPU,OS,Netwrok....bla bla bla
-    auto isEnabled = [&](const std::string& section) -> bool {
+    auto isEnabled = [&](const string& section) -> bool {
         if (!config_loaded || !config.contains(section)) return true;
         return config[section].value("enabled", true);
         };
     // check for each subsection inside a section,
     // is it enabled or not (Aka sub-module)
 	// example of sub-module: CPU base speed, CPU cores, CPU threads...bla bla bla
-    auto isSubEnabled = [&](const std::string& section, const std::string& key) -> bool {
+    auto isSubEnabled = [&](const string& section, const string& key) -> bool {
         if (!config_loaded || !config.contains(section)) return true;
         return config[section].value(key, true);
         };
@@ -255,7 +255,7 @@ int main(){
      // - if the module has no "sections" block, allow all sections
      // - otherwise, read the value from: config[module]["sections"][section]
      // - if the section key is missing, default to true...
-    auto isSectionEnabled = [&](const std::string& module, const std::string& section) -> bool {
+    auto isSectionEnabled = [&](const string& module, const string& section) -> bool {
         if (!config_loaded || !config.contains(module)) return true;
         if (!config[module].contains("sections")) return true;
         return config[module]["sections"].value(section, true);
@@ -273,13 +273,13 @@ int main(){
      // - if the section does not exist inside the module, allow it
      // - otherwise, read the value from: config[module][section][key]
      // - if the key is missing, default to true
-    auto isNestedEnabled = [&](const std::string& module, const std::string& section, const std::string& key) -> bool {
+    auto isNestedEnabled = [&](const string& module, const string& section, const string& key) -> bool {
         if (!config_loaded || !config.contains(module)) return true;
         if (!config[module].contains(section)) return true;
         return config[module][section].value(key, true);
         };
 
-    std::string r = colors["reset"];
+    string r = colors["reset"];
 
 	// Anyway....this is how we're allowed to print emojis in C++ console
     // :cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
@@ -335,7 +335,7 @@ int main(){
 
         // BinaryFetch Header
         if (isEnabled("header")) {
-            std::ostringstream ss;
+            ostringstream ss;
             ss << getColor("header", "prefix_color", "bright_red") << "~>> " << r
                 << getColor("header", "title_color", "green") << "BinaryFetch" << r
                 << getColor("header", "line_color", "red") << r;
@@ -351,18 +351,18 @@ int main(){
         if (isEnabled("compact_time"))
         {
             TimeInfo time;
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_time", "show_emoji")) ss << getColor("compact_time", "emoji_color", "white") << u8"📅" << r << " ";
 
             // Helper to get colors from nested time structure
-            auto getTimeColor = [&](const std::string& subsection, const std::string& key, const std::string& defaultColor = "white") -> std::string {
+            auto getTimeColor = [&](const string& subsection, const string& key, const string& defaultColor = "white") -> string {
                 if (!config_loaded || !config.contains("compact_time")) return colors[defaultColor];
                 if (!config["compact_time"].contains(subsection)) return colors[defaultColor];
                 if (!config["compact_time"][subsection].contains("colors")) return colors[defaultColor];
                 if (!config["compact_time"][subsection]["colors"].contains(key)) return colors[defaultColor];
 
-                std::string colorName = config["compact_time"][subsection]["colors"][key].get<std::string>();
+                string colorName = config["compact_time"][subsection]["colors"][key].get<string>();
                 return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
                 };
 
@@ -378,21 +378,21 @@ int main(){
 
                 if (isNestedEnabled("compact_time", "time_section", "show_hour")) {
                     ss << getTimeColor("time_section", "hour", "white")
-                        << std::setw(2) << std::setfill('0') << time.getHour() << r;
+                        << setw(2) << setfill('0') << time.getHour() << r;
                     wrote = true;
                 }
 
                 if (isNestedEnabled("compact_time", "time_section", "show_minute")) {
                     if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
                     ss << getTimeColor("time_section", "minute", "white")
-                        << std::setw(2) << std::setfill('0') << time.getMinute() << r;
+                        << setw(2) << setfill('0') << time.getMinute() << r;
                     wrote = true;
                 }
 
                 if (isNestedEnabled("compact_time", "time_section", "show_second")) {
                     if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
                     ss << getTimeColor("time_section", "second", "white")
-                        << std::setw(2) << std::setfill('0') << time.getSecond() << r;
+                        << setw(2) << setfill('0') << time.getSecond() << r;
                 }
 
                 ss << getTimeColor("time_section", "bracket", "white") << ") " << r;
@@ -411,7 +411,7 @@ int main(){
 
                 if (isNestedEnabled("compact_time", "date_section", "show_day")) {
                     ss << getTimeColor("date_section", "day", "white")
-                        << std::setw(2) << std::setfill('0') << time.getDay() << r;
+                        << setw(2) << setfill('0') << time.getDay() << r;
                     wrote = true;
                 }
 
@@ -425,7 +425,7 @@ int main(){
                 if (isNestedEnabled("compact_time", "date_section", "show_month_num")) {
                     if (wrote) ss << " ";
                     ss << getTimeColor("date_section", "month_num", "white")
-                        << std::setw(2) << std::setfill('0') << time.getMonthNumber() << r;
+                        << setw(2) << setfill('0') << time.getMonthNumber() << r;
                     wrote = true;
                 }
 
@@ -484,7 +484,7 @@ int main(){
 
         // Compact OS
         if (isEnabled("compact_os")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_os", "show_emoji")) ss << getColor("compact_os", "emoji_color", "white") << u8"🚀 " << r ;
 
@@ -512,7 +512,7 @@ int main(){
 
         // Compact CPU
         if (isEnabled("compact_cpu")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_cpu", "show_emoji")) ss << getColor("compact_cpu", "emoji_color", "white") << u8"🧠 " << r;
 
@@ -530,7 +530,7 @@ int main(){
             }
              
             if (isSubEnabled("compact_cpu", "show_clock")) {
-                ss << std::fixed << std::setprecision(2)
+                ss << fixed << setprecision(2)
                     << getColor("compact_cpu", "at_symbol_color", "white") << " @" << r
                     << getColor("compact_cpu", "clock_color", "white") << " " << c_cpu.getClockSpeed() << " GHz" << r;
             }
@@ -540,7 +540,7 @@ int main(){
 
         // Compact GPU
         if (isEnabled("compact_gpu")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_gpu", "show_emoji")) ss << getColor("compact_gpu", "emoji_color", "white") << u8"🔥" << r << " ";
 
@@ -575,14 +575,14 @@ int main(){
         if (isEnabled("compact_screen")) {
             CompactScreen screenDetector;
             auto screens = screenDetector.getScreens();
-            std::ostringstream ss;
+            ostringstream ss;
 
 
             
 
             if (screens.empty()) {
                 // No displays detected - show error message
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("compact_screen", "Display", "white") << "Display" << r
                     << getColor("compact_screen", "Display_:", "blue") << ": " << r
                     << getColor("compact_screen", "name_color", "white") << "No displays detected" << r;
@@ -592,7 +592,7 @@ int main(){
                 // Display each detected screen
                 for (size_t i = 0; i < screens.size(); ++i) {
                     const auto& screen = screens[i];
-                    std::ostringstream ss;
+                    ostringstream ss;
 
                     if (isSubEnabled("compact_screen", "show_emoji")) ss << getColor("compact_screen", "emoji_color", "white") << u8"📺" << r << " ";
 
@@ -676,7 +676,7 @@ int main(){
 
         // Compact Memory
         if (isEnabled("compact_memory")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_memory", "show_emoji")) ss << getColor("compact_memory", "emoji_color", "white") << u8"📟" << r << " ";
 
@@ -706,7 +706,7 @@ int main(){
         // Compact Audio
         if (isEnabled("compact_audio")) {
             if (isSubEnabled("compact_audio", "show_input")) {
-                std::ostringstream ss1;
+                ostringstream ss1;
 
                 if (isSubEnabled("compact_audio", "show_audio_input_emoji")) ss1 << getColor("compact_audio", "audio_output_emoji_color", "white") << u8"🎙️" << r << " ";
 
@@ -719,7 +719,7 @@ int main(){
                 lp.push(ss1.str());
             }
             if (isSubEnabled("compact_audio", "show_output")) {
-                std::ostringstream ss2;
+                ostringstream ss2;
 
                 if (isSubEnabled("compact_audio", "show_audio_output_emoji")) ss2 << getColor("compact_audio", "audio_input_emoji_color", "white") << u8"🎧" << r << " ";
 
@@ -735,14 +735,14 @@ int main(){
 
         // Compact Performance
         if (isEnabled("compact_performance")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_performancec", "show_emoji")) ss << getColor("compact_performance", "emoji_color", "white") << u8"🔋" << r << " ";
 
             ss << getColor("compact_performance", "Performance", "white") << "Performance" << r
                 << getColor("compact_performance", "Performance_:", "white") << ": " << r;
 
-            auto addP = [&](const std::string& subKey, const std::string& label, const std::string& colorKey, auto val) {
+            auto addP = [&](const string& subKey, const string& label, const string& colorKey, auto val) {
                 if (isSubEnabled("compact_performance", subKey)) {
                     ss << getColor("compact_performance", "(", "white") << "(" << r
                         << getColor("compact_performance", "label_color", "white") << label << ": " << r
@@ -759,7 +759,7 @@ int main(){
 
         // Compact User
         if (isEnabled("compact_user")) {
-            std::ostringstream ss;
+            ostringstream ss;
 
             if (isSubEnabled("compact_user", "show_emoji")) ss << getColor("compact_user", "emoji_color", "white") << u8"☕" << r << " ";
 
@@ -786,7 +786,7 @@ int main(){
 
             // Compact Network (real)
             if (isEnabled("compact_network")) {
-                std::ostringstream ss;
+                ostringstream ss;
 
                 if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
 
@@ -820,7 +820,7 @@ int main(){
 
             // Compact Network (dummy)
             if (isEnabled("dummy_compact_network")) {
-                std::ostringstream ss;
+                ostringstream ss;
 
                 if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
 
@@ -856,14 +856,14 @@ int main(){
         if (isEnabled("compact_disk")) {
             if (isSubEnabled("compact_disk", "show_usage")) {
                 auto disks = disk.getAllDiskUsage();
-                std::ostringstream ss;
+                ostringstream ss;
 
                 if (isSubEnabled("compact_disk", "show_disk_usage_emoji")) ss << getColor("compact_disk", "disk_usage_emoji_color", "white") << u8"📂" << r << " ";
 
                 ss << getColor("compact_disk", "Disk Usage", "white") << "Disk Usage" << r << getColor("compact_disk", "Disk_Usage_:", "white") << ": " << r;
                 for (const auto& d : disks) {
                     ss << getColor("compact_disk", "(", "white") << "(" << r << getColor("compact_disk", "letter_color", "white") << d.first[0] << ":" << r
-                        << " " << getColor("compact_disk", "percent_color", "white") << std::fixed << std::setprecision(1) << d.second << "%" << r
+                        << " " << getColor("compact_disk", "percent_color", "white") << fixed << setprecision(1) << d.second << "%" << r
                         << getColor("compact_disk", ")", "white") << ") " << r;
                 }
                 lp.push(ss.str());
@@ -871,7 +871,7 @@ int main(){
 
             if (isSubEnabled("compact_disk", "show_capacity")) {
                 auto caps = disk.getDiskCapacity();
-                std::ostringstream sc;
+                ostringstream sc;
 
                 if (isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"📊" << r << " ";
 
@@ -893,7 +893,7 @@ int main(){
 
             // ---------- HEADER ----------
             if (isSectionEnabled("detailed_memory", "header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("detailed_memory", ">>~", "white") << ">>~ " << r
                     << getColor("detailed_memory", "header_title", "white") << "Memory Info" << r
                     << getColor("detailed_memory", "-------------------------*", "white") << " -------------------------*" << r;
@@ -904,7 +904,7 @@ int main(){
             if (isSectionEnabled("detailed_memory", "total") ||
                 isSectionEnabled("detailed_memory", "free") ||
                 isSectionEnabled("detailed_memory", "used_percentage")) {
-                std::ostringstream ss;
+                ostringstream ss;
 
                 // ---------- TOTAL ----------
                 if (isSectionEnabled("detailed_memory", "total")) {
@@ -939,14 +939,14 @@ int main(){
                 const auto& modules = ram.getModules();
                 for (size_t i = 0; i < modules.size(); ++i) {
                     // --- Zero-pad capacity ---
-                    std::string cap = modules[i].capacity;
+                    string cap = modules[i].capacity;
                     int num = 0;
-                    try { num = std::stoi(cap); }
+                    try { num = stoi(cap); }
                     catch (...) { num = 0; }
-                    std::ostringstream capOut;
-                    capOut << std::setw(2) << std::setfill('0') << num << "GB";
+                    ostringstream capOut;
+                    capOut << setw(2) << setfill('0') << num << "GB";
 
-                    std::ostringstream ss;
+                    ostringstream ss;
                     // Structural Marker and Label
                     ss << getColor("detailed_memory", "~", "white") << "~ " << r
                         << getColor("detailed_memory", "module_label", "white") << "Memory " << i << r
@@ -974,13 +974,13 @@ int main(){
             lp.push("");
 
             // Helper function to get nested color values - Defaulted to white
-            auto getNestedColor = [&](const std::string& path, const std::string& defaultColor = "white") -> std::string {
+            auto getNestedColor = [&](const string& path, const string& defaultColor = "white") -> string {
                 if (!config_loaded || !config.contains("detailed_storage")) return colors[defaultColor];
 
-                std::vector<std::string> keys;
-                std::stringstream ss(path);
-                std::string key;
-                while (std::getline(ss, key, '.')) {
+                vector<string> keys;
+                stringstream ss(path);
+                string key;
+                while (getline(ss, key, '.')) {
                     keys.push_back(key);
                 }
 
@@ -991,20 +991,20 @@ int main(){
                 }
 
                 if (current.is_string()) {
-                    std::string colorName = current.get<std::string>();
+                    string colorName = current.get<string>();
                     return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
                 }
                 return colors[defaultColor];
                 };
 
             // Helper to check nested boolean values
-            auto getNestedBool = [&](const std::string& path, bool defaultValue = true) -> bool {
+            auto getNestedBool = [&](const string& path, bool defaultValue = true) -> bool {
                 if (!config_loaded || !config.contains("detailed_storage")) return defaultValue;
 
-                std::vector<std::string> keys;
-                std::stringstream ss(path);
-                std::string key;
-                while (std::getline(ss, key, '.')) {
+                vector<string> keys;
+                stringstream ss(path);
+                string key;
+                while (getline(ss, key, '.')) {
                     keys.push_back(key);
                 }
 
@@ -1020,37 +1020,37 @@ int main(){
                 return defaultValue;
                 };
 
-            auto fmt_storage = [](const std::string& s) -> std::string {
-                std::ostringstream oss;
+            auto fmt_storage = [](const string& s) -> string {
+                ostringstream oss;
                 double v = 0.0;
                 try { v = stod(s); }
                 catch (...) { v = 0.0; }
-                oss << std::fixed << std::setprecision(2)
-                    << std::setw(7) << std::right << std::setfill(' ')
+                oss << fixed << setprecision(2)
+                    << setw(7) << right << setfill(' ')
                     << v;
                 return oss.str();
                 };
 
-            auto fmt_speed = [](const std::string& s) -> std::string {
-                std::ostringstream tmp;
+            auto fmt_speed = [](const string& s) -> string {
+                ostringstream tmp;
                 double v = 0.0;
                 try { v = stod(s); }
                 catch (...) { v = 0.0; }
-                tmp << std::fixed << std::setprecision(2) << v;
-                std::string val = tmp.str();
+                tmp << fixed << setprecision(2) << v;
+                string val = tmp.str();
                 int padding = 7 - (int)val.size();
                 if (padding < 0) padding = 0;
-                return std::string(padding, ' ') + val;
+                return string(padding, ' ') + val;
                 };
 
-            std::vector<storage_data> all_disks_captured;
+            vector<storage_data> all_disks_captured;
 
             // STORAGE SUMMARY SECTION
             if (getNestedBool("sections.storage_summary", true)) {
 
                 // Header
                 if (getNestedBool("storage_summary.header.show_header", true)) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getNestedColor("storage_summary.header.line_color", "white") << "------------------------- " << r
                         << getNestedColor("storage_summary.header.title_color", "white") << "STORAGE SUMMARY" << r
                         << getNestedColor("storage_summary.header.line_color", "white") << " --------------------------" << r;
@@ -1061,7 +1061,7 @@ int main(){
                 storage.process_storage_info([&](const storage_data& d) {
                     all_disks_captured.push_back(d);
 
-                    std::ostringstream ss;
+                    ostringstream ss;
 
                     // Storage type
                     if (getNestedBool("storage_summary.show_storage_type", true)) {
@@ -1112,12 +1112,12 @@ int main(){
 
                     // Percentage
                     if (getNestedBool("storage_summary.show_used_percentage", true)) {
-                        auto fmt_percentage = [](int percentage) -> std::string {
-                            std::ostringstream oss;
+                        auto fmt_percentage = [](int percentage) -> string {
+                            ostringstream oss;
 
                             // Use a FIXED width for all percentages (4 chars: " 99%" or "100%")
                             // This ensures proper alignment
-                            oss << std::right << std::setw(4) << percentage << "%";
+                            oss << right << setw(4) << percentage << "%";
                             return oss.str();
                             };
 
@@ -1158,7 +1158,7 @@ int main(){
 
                 // Header
                 if (getNestedBool("disk_performance.header.show_header", true)) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getNestedColor("disk_performance.header.line_color", "white") << "-------------------- " << r
                         << getNestedColor("disk_performance.header.title_color", "white") << "DISK PERFORMANCE & DETAILS" << r
                         << getNestedColor("disk_performance.header.line_color", "white") << " --------------------" << r;
@@ -1166,7 +1166,7 @@ int main(){
                 }
 
                 for (const auto& d : all_disks_captured) {
-                    std::ostringstream ss;
+                    ostringstream ss;
 
                     // Drive letter
                     if (getNestedBool("disk_performance.show_drive_letter", true)) {
@@ -1221,7 +1221,7 @@ int main(){
 
                 // Header
                 if (getNestedBool("disk_performance_predicted.header.show_header", true)) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getNestedColor("disk_performance_predicted.header.line_color", "white") << "---------------- " << r
                         << getNestedColor("disk_performance_predicted.header.title_color", "white") << "DISK PERFORMANCE & DETAILS (Predicted)" << r
                         << getNestedColor("disk_performance_predicted.header.line_color", "white") << " ------------" << r;
@@ -1229,7 +1229,7 @@ int main(){
                 }
 
                 for (const auto& d : all_disks_captured) {
-                    std::ostringstream ss;
+                    ostringstream ss;
 
                     // Drive letter
                     if (getNestedBool("disk_performance_predicted.show_drive_letter", true)) {
@@ -1294,7 +1294,7 @@ int main(){
 
                 // Header
                 if (isSubEnabled("network_info", "show_header")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "#-", "white") << "#- " << r
                         << getColor("network_info", "header_text_color", "white") << "Network Info " << r
                         << getColor("network_info", "separator_line", "white")
@@ -1304,7 +1304,7 @@ int main(){
 
                 // Network Name
                 if (isSubEnabled("network_info", "show_name")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "name_label_color", "white") // Fixed level color
                         << "Network Name              " << r
@@ -1316,7 +1316,7 @@ int main(){
 
                 // Network Type
                 if (isSubEnabled("network_info", "show_type")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "type_label_color", "white") // Fixed level color
                         << "Network Type              " << r
@@ -1328,7 +1328,7 @@ int main(){
 
                 // local IP 
                 if (isSubEnabled("network_info", "show_local_ip")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "local_ip_label_color", "white") // Fixed level color
                         << "Local IP                  " << r
@@ -1340,7 +1340,7 @@ int main(){
 
                 // public ip
                 if (isSubEnabled("network_info", "show_public_ip")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "public_ip_label_color", "white") // Fixed level color
                         << "Public IP:                " << r
@@ -1352,7 +1352,7 @@ int main(){
 
                 // Locale
                 if (isSubEnabled("network_info", "show_locale")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "locale_label_color", "white") // Fixed level color
                         << "Locale                    " << r
@@ -1364,7 +1364,7 @@ int main(){
 
                 // MAC Address
                 if (isSubEnabled("network_info", "show_mac")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "mac_label_color", "white") // Fixed level color
                         << "Mac address               " << r
@@ -1376,7 +1376,7 @@ int main(){
 
                 // Upload Speed
                 if (isSubEnabled("network_info", "show_upload")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "upload_label_color", "white") // Fixed level color
                         << "avg upload speed          " << r
@@ -1388,7 +1388,7 @@ int main(){
 
                 // Download Speed
                 if (isSubEnabled("network_info", "show_download")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "download_label_color", "white") // Fixed level color
                         << "avg download speed        " << r
@@ -1408,7 +1408,7 @@ int main(){
 
                 // Header
                 if (isSubEnabled("network_info", "show_header")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "#-", "white") << "#- " << r
                         << getColor("network_info", "header_text_color", "white") << "Network Info " << r
                         << getColor("network_info", "separator_line", "white")
@@ -1418,7 +1418,7 @@ int main(){
 
                 // Network Name
                 if (isSubEnabled("network_info", "show_name")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "name_label_color", "white") // Fixed level color
                         << "Network Name              " << r
@@ -1430,7 +1430,7 @@ int main(){
 
                 // Network Type
                 if (isSubEnabled("network_info", "show_type")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "type_label_color", "white") // Fixed level color
                         << "Network Type              " << r
@@ -1442,7 +1442,7 @@ int main(){
 
                 // local IP 
                 if (isSubEnabled("network_info", "show_local_ip")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "local_ip_label_color", "white") // Fixed level color
                         << "Local IP                  " << r
@@ -1454,7 +1454,7 @@ int main(){
 
                 // public ip
                 if (isSubEnabled("network_info", "show_public_ip")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "public_ip_label_color", "white") // Fixed level color
                         << "Public IP:                " << r
@@ -1466,7 +1466,7 @@ int main(){
 
                 // Locale
                 if (isSubEnabled("network_info", "show_locale")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "locale_label_color", "white") // Fixed level color
                         << "Locale                    " << r
@@ -1478,7 +1478,7 @@ int main(){
 
                 // MAC Address
                 if (isSubEnabled("network_info", "show_mac")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "mac_label_color", "white") // Fixed level color
                         << "Mac address               " << r
@@ -1490,7 +1490,7 @@ int main(){
 
                 // Upload Speed
                 if (isSubEnabled("network_info", "show_upload")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "upload_label_color", "white") // Fixed level color
                         << "avg upload speed          " << r
@@ -1502,7 +1502,7 @@ int main(){
 
                 // Download Speed
                 if (isSubEnabled("network_info", "show_download")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("network_info", "~", "white") << "~ " << r
                         << getColor("network_info", "download_label_color", "white") // Fixed level color
                         << "avg download speed        " << r
@@ -1525,7 +1525,7 @@ int main(){
 
             // Header
             if (isSubEnabled("os_info", "show_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "#-", "white") << "#- " << r
                     << getColor("os_info", "header_text_color", "white") << "Operating System " << r
                     << getColor("os_info", "separator_line", "white")
@@ -1535,7 +1535,7 @@ int main(){
 
             // Name
             if (isSubEnabled("os_info", "show_name")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "name_label_color", "white") << "Name                      " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1545,7 +1545,7 @@ int main(){
 
             // Build
             if (isSubEnabled("os_info", "show_build")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "build_label_color", "white") << "Build                     " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1555,7 +1555,7 @@ int main(){
 
             // Architecture
             if (isSubEnabled("os_info", "show_architecture")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "arch_label_color", "white") << "Architecture              " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1565,7 +1565,7 @@ int main(){
 
             // Kernel
             if (isSubEnabled("os_info", "show_kernel")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "kernel_label_color", "white") << "Kernel                    " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1575,7 +1575,7 @@ int main(){
 
             // Uptime
             if (isSubEnabled("os_info", "show_uptime")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "uptime_label_color", "white") << "Uptime                    " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1585,7 +1585,7 @@ int main(){
 
             // Install Date
             if (isSubEnabled("os_info", "show_install_date")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "install_date_label_color", "white") << "Install Date              " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1596,7 +1596,7 @@ int main(){
 
             // Serial
             if (isSubEnabled("os_info", "show_serial")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("os_info", "~", "white") << "~ " << r
                     << getColor("os_info", "serial_label_color", "white") << "Serial                    " << r
                     << getColor("os_info", ":", "white") << ": " << r
@@ -1615,7 +1615,7 @@ int main(){
 
             // Header
             if (isSubEnabled("cpu_info", "show_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "#-", "white") << "#- " << r
                     << getColor("cpu_info", "header_text_color", "white") << "CPU Info " << r
                     << getColor("cpu_info", "separator_line", "white")
@@ -1625,7 +1625,7 @@ int main(){
 
             // Brand
             if (isSubEnabled("cpu_info", "show_brand")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "brand_label_color", "white") << "Brand                     " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1635,7 +1635,7 @@ int main(){
 
             // Utilization
             if (isSubEnabled("cpu_info", "show_utilization")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "utilization_label_color", "white") << "Utilization               " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1646,7 +1646,7 @@ int main(){
 
             // Speed
             if (isSubEnabled("cpu_info", "show_speed")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "speed_label_color", "white") << "Speed                     " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1656,7 +1656,7 @@ int main(){
 
             // Base Speed
             if (isSubEnabled("cpu_info", "show_base_speed")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "base_speed_label_color", "white") << "Base Speed                " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1666,7 +1666,7 @@ int main(){
 
             // Cores
             if (isSubEnabled("cpu_info", "show_cores")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "cores_label_color", "white") << "Cores                     " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1676,7 +1676,7 @@ int main(){
 
             // Logical Processors
             if (isSubEnabled("cpu_info", "show_logical_processors")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "logical_processors_label_color", "white") << "Logical Processors        " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1686,7 +1686,7 @@ int main(){
 
             // Sockets
             if (isSubEnabled("cpu_info", "show_sockets")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "sockets_label_color", "white") << "Sockets                   " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1696,7 +1696,7 @@ int main(){
 
             // Virtualization
             if (isSubEnabled("cpu_info", "show_virtualization")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "virtualization_label_color", "white") << "Virtualization            " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1706,7 +1706,7 @@ int main(){
 
             // L1 Cache
             if (isSubEnabled("cpu_info", "show_l1_cache")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "l1_cache_label_color", "white") << "L1 Cache                  " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1716,7 +1716,7 @@ int main(){
 
             // L2 Cache
             if (isSubEnabled("cpu_info", "show_l2_cache")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "l2_cache_label_color", "white") << "L2 Cache                  " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1726,7 +1726,7 @@ int main(){
 
             // L3 Cache
             if (isSubEnabled("cpu_info", "show_l3_cache")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("cpu_info", "~", "white") << "~ " << r
                     << getColor("cpu_info", "l3_cache_label_color", "white") << "L3 Cache                  " << r
                     << getColor("cpu_info", ":", "white") << ": " << r
@@ -1745,7 +1745,7 @@ int main(){
 
             if (all_gpu_info.empty()) {
                 if (isSubEnabled("gpu_info", "show_header")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("gpu_info", "#-", "white") << "#- " << r
                         << getColor("gpu_info", "header_text_color", "white") << "GPU Info " << r
                         << getColor("gpu_info", "separator_line", "white")
@@ -1757,7 +1757,7 @@ int main(){
             else {
                 // Main Header
                 if (isSubEnabled("gpu_info", "show_header")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("gpu_info", "#-", "white") << "#- " << r
                         << getColor("gpu_info", "header_text_color", "white") << "GPU Info " << r
                         << getColor("gpu_info", "separator_line", "white")
@@ -1770,7 +1770,7 @@ int main(){
 
                     // GPU index line
                     if (isSubEnabled("gpu_info", "show_gpu_index")) {
-                        std::ostringstream label;
+                        ostringstream label;
                         if (i == 0) {
                             label << getColor("gpu_info", "gpu_index_label_color", "white") << "GPU " << (i + 1) << r;
                         }
@@ -1781,13 +1781,13 @@ int main(){
                                 << " ----------------------------------------------------------#" << r;
                         }
 
-                        std::string lbl = label.str();
-                        if (lbl.length() < 27) lbl += std::string(27 - lbl.length(), ' ');
+                        string lbl = label.str();
+                        if (lbl.length() < 27) lbl += string(27 - lbl.length(), ' ');
                         lp.push(lbl);
                     }
 
                     if (isSubEnabled("gpu_info", "show_name")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "name_label_color", "white") << "Name                   " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1796,7 +1796,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_memory")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "memory_label_color", "white") << "Memory                 " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1805,7 +1805,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_usage")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "usage_label_color", "white") << "Usage                  " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1815,7 +1815,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_vendor")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "vendor_label_color", "white") << "Vendor                 " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1824,7 +1824,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_driver")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "driver_label_color", "white") << "Driver Version         " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1833,7 +1833,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_temperature")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "temp_label_color", "white") << "Temperature            " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1843,7 +1843,7 @@ int main(){
                     }
 
                     if (isSubEnabled("gpu_info", "show_cores")) {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "#->", "white") << "#-> " << r
                             << getColor("gpu_info", "cores_label_color", "white") << "Core Count             " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1856,7 +1856,7 @@ int main(){
                 auto primary = detailed_gpu_info.primary_gpu_info();
                 if (isSubEnabled("gpu_info", "show_primary_details")) {
                     lp.push("");
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("gpu_info", "#-", "white") << "#- " << r
                         << getColor("gpu_info", "primary_header_color", "white") << "Primary GPU Details" << r
                         << getColor("gpu_info", "separator_line", "white")
@@ -1865,7 +1865,7 @@ int main(){
 
                     // Primary Name
                     {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "p_name_label_color", "white") << "Name                   " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1874,7 +1874,7 @@ int main(){
                     }
                     // Primary VRAM
                     {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "|->", "white") << "|-> " << r
                             << getColor("gpu_info", "p_vram_label_color", "white") << "VRAM                   " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1884,7 +1884,7 @@ int main(){
                     }
                     // Primary Frequency
                     {
-                        std::ostringstream ss;
+                        ostringstream ss;
                         ss << getColor("gpu_info", "#->", "white") << "#-> " << r
                             << getColor("gpu_info", "p_freq_label_color", "white") << "Frequency              " << r
                             << getColor("gpu_info", ":", "white") << ": " << r
@@ -1908,7 +1908,7 @@ int main(){
 
                 // ---------- Display Banner ----------
                 if (isSubEnabled("display_info", "show_display_banner")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("display_info", "#-", "blue") << "#- " << r
                         << getColor("display_info", "display_banner_text", "cyan")
                         << "Display " << (i + 1) << " " << r
@@ -1929,7 +1929,7 @@ int main(){
 
                 // ---------- Applied Resolution ----------
                 if (isSubEnabled("display_info", "show_applied_resolution")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("display_info", "|->", "cyan") << "|-> " << r
                         << getColor("display_info", "applied_res_label_color", "blue")
                         << "Applied Resolution     " << r
@@ -1970,7 +1970,7 @@ int main(){
 
                 // ---------- Scaling ----------
                 if (isSubEnabled("display_info", "show_scaling")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("display_info", "|->", "cyan") << "|-> " << r
                         << getColor("display_info", "scaling_label_color", "blue")
                         << "Scaling                " << r
@@ -1995,7 +1995,7 @@ int main(){
 
                 // ---------- DSR / VSR ----------
                 if (isSubEnabled("display_info", "show_dsr")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("display_info", "|->", "cyan") << "|-> " << r
                         << getColor("display_info", "dsr_label_color", "blue")
                         << "DSR / VSR              " << r
@@ -2029,7 +2029,7 @@ int main(){
 
             // Header
             if (isSubEnabled("bios_mb_info", "show_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "#-", "white") << "#- " << r
                     << getColor("bios_mb_info", "header_text_color", "white") << "BIOS & Motherboard Info " << r
                     << getColor("bios_mb_info", "separator_line", "white")
@@ -2039,7 +2039,7 @@ int main(){
 
             // Bios Vendor
             if (isSubEnabled("bios_mb_info", "show_bios_vendor")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
                     << getColor("bios_mb_info", "vendor_label_color", "white") << "Bios Vendor               " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
@@ -2049,7 +2049,7 @@ int main(){
 
             // Bios Version
             if (isSubEnabled("bios_mb_info", "show_bios_version")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
                     << getColor("bios_mb_info", "version_label_color", "white") << "Bios Version              " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
@@ -2059,7 +2059,7 @@ int main(){
 
             // Bios Date
             if (isSubEnabled("bios_mb_info", "show_bios_date")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
                     << getColor("bios_mb_info", "date_label_color", "white") << "Bios Date                 " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
@@ -2069,7 +2069,7 @@ int main(){
 
             // Motherboard Model
             if (isSubEnabled("bios_mb_info", "show_mb_model")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
                     << getColor("bios_mb_info", "model_label_color", "white") << "Motherboard Model         " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
@@ -2079,7 +2079,7 @@ int main(){
 
             // Motherboard Manufacturer
             if (isSubEnabled("bios_mb_info", "show_mb_manufacturer")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("bios_mb_info", "~", "white") << "~ " << r
                     << getColor("bios_mb_info", "mfg_label_color", "white") << "Motherboard Manufacturer  " << r
                     << getColor("bios_mb_info", ":", "white") << ": " << r
@@ -2096,7 +2096,7 @@ int main(){
 
             // Header
             if (isSubEnabled("user_info", "show_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("user_info", "#-", "white") << "#- " << r
                     << getColor("user_info", "header_text_color", "white") << "User Info " << r
                     << getColor("user_info", "separator_line", "white")
@@ -2106,7 +2106,7 @@ int main(){
 
             // Username
             if (isSubEnabled("user_info", "show_username")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
                     << getColor("user_info", "username_label_color", "white") << "Username                  " << r
                     << getColor("user_info", ":", "white") << ": " << r
@@ -2116,7 +2116,7 @@ int main(){
 
             // Computer Name
             if (isSubEnabled("user_info", "show_computer_name")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
                     << getColor("user_info", "computer_name_label_color", "white") << "Computer Name             " << r
                     << getColor("user_info", ":", "white") << ": " << r
@@ -2126,7 +2126,7 @@ int main(){
 
             // Domain
             if (isSubEnabled("user_info", "show_domain")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("user_info", "~", "white") << "~ " << r
                     << getColor("user_info", "domain_label_color", "white") << "Domain                    " << r
                     << getColor("user_info", ":", "white") << ": " << r
@@ -2143,7 +2143,7 @@ int main(){
 
             // Header
             if (isSubEnabled("performance_info", "show_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "#-", "white") << "#- " << r
                     << getColor("performance_info", "header_text_color", "white") << "Performance Info " << r
                     << getColor("performance_info", "separator_line", "white")
@@ -2153,7 +2153,7 @@ int main(){
 
             // System Uptime
             if (isSubEnabled("performance_info", "show_uptime")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "~", "white") << "~ " << r
                     << getColor("performance_info", "uptime_label_color", "white") << "System Uptime            " << r
                     << getColor("performance_info", ":", "white") << ": " << r
@@ -2163,7 +2163,7 @@ int main(){
 
             // CPU Usage
             if (isSubEnabled("performance_info", "show_cpu_usage")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "~", "white") << "~ " << r
                     << getColor("performance_info", "cpu_usage_label_color", "white") << "CPU Usage                " << r
                     << getColor("performance_info", ":", "white") << ": " << r
@@ -2174,7 +2174,7 @@ int main(){
 
             // RAM Usage
             if (isSubEnabled("performance_info", "show_ram_usage")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "~", "white") << "~ " << r
                     << getColor("performance_info", "ram_usage_label_color", "white") << "RAM Usage                " << r
                     << getColor("performance_info", ":", "white") << ": " << r
@@ -2185,7 +2185,7 @@ int main(){
 
             // Disk Usage
             if (isSubEnabled("performance_info", "show_disk_usage")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "~", "white") << "~ " << r
                     << getColor("performance_info", "disk_usage_label_color", "white") << "Disk Usage               " << r
                     << getColor("performance_info", ":", "white") << ": " << r
@@ -2196,7 +2196,7 @@ int main(){
 
             // GPU Usage
             if (isSubEnabled("performance_info", "show_gpu_usage")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("performance_info", "~", "white") << "~ " << r
                     << getColor("performance_info", "gpu_usage_label_color", "white") << "GPU Usage                " << r
                     << getColor("performance_info", ":", "white") << ": " << r
@@ -2218,7 +2218,7 @@ int main(){
             vector<AudioDevice> outputDevices = audio.get_output_devices();
 
             if (isSubEnabled("audio_power_info", "show_output_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("audio_power_info", "#-", "white") << "#- " << r
                     << getColor("audio_power_info", "header_text_color", "white") << "Audio Output " << r
                     << getColor("audio_power_info", "separator_line", "white")
@@ -2244,7 +2244,7 @@ int main(){
             vector<AudioDevice> inputDevices = audio.get_input_devices();
 
             if (isSubEnabled("audio_power_info", "show_input_header")) {
-                std::ostringstream ss;
+                ostringstream ss;
                 ss << getColor("audio_power_info", "#-", "white") << "#- " << r
                     << getColor("audio_power_info", "header_text_color", "white") << "Audio Input " << r
                     << getColor("audio_power_info", "separator_line", "white")
@@ -2272,7 +2272,7 @@ int main(){
                 PowerStatus power = audio.get_power_status();
 
                 if (isSubEnabled("audio_power_info", "show_power_header")) {
-                    std::ostringstream ss;
+                    ostringstream ss;
                     ss << getColor("audio_power_info", "#-", "white") << "#- " << r
                         << getColor("audio_power_info", "header_text_color", "white") << "Power  " << r
                         << getColor("audio_power_info", "separator_line", "white")
@@ -2359,7 +2359,7 @@ int main(){
     // Print remaining ASCII art lines (if art is taller than info)
     lp.finish();
 
-    std::cout << std::endl;
+    cout << endl;
 
 
 
@@ -2715,7 +2715,7 @@ FUNCTIONS:
 CLASS: LivePrinter
 OBJECT: lp
 FUNCTIONS:
-1. push(std::string) - Adds formatted line to output queue
+1. push(string) - Adds formatted line to output queue
 2. finish() - Prints remaining ASCII art lines
 
 CLASS: OSInfo
