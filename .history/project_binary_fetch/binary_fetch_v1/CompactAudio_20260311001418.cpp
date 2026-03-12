@@ -5,9 +5,8 @@
 #include <comdef.h>
 #include <atlbase.h>
 #include <string>
-using namespace std;
 
-string get_audio_device_name(EDataFlow flow) {
+std::string get_audio_device_name(EDataFlow flow) {
     CoInitialize(NULL);
     CComPtr<IMMDeviceEnumerator> pEnum;
     pEnum.CoCreateInstance(__uuidof(MMDeviceEnumerator));
@@ -25,9 +24,9 @@ string get_audio_device_name(EDataFlow flow) {
     PropVariantInit(&varName);
     pProps->GetValue(PKEY_Device_FriendlyName, &varName);
 
-    // Convert wide string to string
-    wstring ws(varName.pwszVal);
-    string result(ws.begin(), ws.end());  // simple conversion
+    // Convert wide string to std::string
+    std::wstring ws(varName.pwszVal);
+    std::string result(ws.begin(), ws.end());  // simple conversion
 
     PropVariantClear(&varName);
     CoUninitialize();
@@ -35,18 +34,18 @@ string get_audio_device_name(EDataFlow flow) {
 }
 
 
-string CompactAudio::active_audio_output() {
+std::string CompactAudio::active_audio_output() {
     return get_audio_device_name(eRender);
 }
 
-string CompactAudio::active_audio_output_status() {
+std::string CompactAudio::active_audio_output_status() {
     return "Active"; // Currently only fetching default active device
 }
 
-string CompactAudio::active_audio_input() {
+std::string CompactAudio::active_audio_input() {
     return get_audio_device_name(eCapture);
 }
 
-string CompactAudio::active_audio_input_status() {
+std::string CompactAudio::active_audio_input_status() {
     return "Active"; // Currently only fetching default active device
 }

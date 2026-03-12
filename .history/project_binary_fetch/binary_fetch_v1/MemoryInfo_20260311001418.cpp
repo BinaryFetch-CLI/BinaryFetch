@@ -5,7 +5,6 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-using namespace std;
 
 #pragma comment(lib, "wbemuuid.lib")
 
@@ -128,7 +127,7 @@ void MemoryInfo::fetchModulesInfo() {
                 if (bytes % (1024 * 1024 * 1024) != 0) {
                     gb++;  // Round up to nearest GB
                 }
-                module.capacity = to_string(gb) + "GB";
+                module.capacity = std::to_string(gb) + "GB";
             }
             else {
                 module.capacity = "Unknown";
@@ -143,12 +142,12 @@ void MemoryInfo::fetchModulesInfo() {
         hr = pclsObj->Get(L"Speed", 0, &vtProp, 0, 0);
         if (SUCCEEDED(hr)) {
             if (vtProp.vt == VT_I4 || vtProp.vt == VT_UI4) {
-                module.speed = to_string(vtProp.uintVal) + " MHz";
+                module.speed = std::to_string(vtProp.uintVal) + " MHz";
             }
             else if (vtProp.vt == VT_BSTR) {
-                // Convert BSTR to string
-                wstring ws(vtProp.bstrVal);
-                string speedStr(ws.begin(), ws.end());
+                // Convert BSTR to std::string
+                std::wstring ws(vtProp.bstrVal);
+                std::string speedStr(ws.begin(), ws.end());
                 module.speed = speedStr + " MHz";
             }
             else {
@@ -235,4 +234,4 @@ int MemoryInfo::getUsedPercentage() const {
     if (percentage < 0.0) percentage = 0.0;
     return static_cast<int>(percentage);
 }
-const vector<MemoryModule>& MemoryInfo::getModules() const { return modules; }
+const std::vector<MemoryModule>& MemoryInfo::getModules() const { return modules; }

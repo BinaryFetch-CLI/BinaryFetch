@@ -74,7 +74,7 @@ int TimeInfo::getWeekNumber() const {
 }
 
 // Get day name
-string TimeInfo::getDayName() const {
+std::string TimeInfo::getDayName() const {
     const char* days[] = { "Sunday", "Monday", "Tuesday", "Wednesday",
                           "Thursday", "Friday", "Saturday" };
     return days[systemTime.wDayOfWeek];
@@ -86,7 +86,7 @@ int TimeInfo::getMonthNumber() const {
 }
 
 // Get month name
-string TimeInfo::getMonthName() const {
+std::string TimeInfo::getMonthName() const {
     const char* months[] = { "", "January", "February", "March", "April",
                             "May", "June", "July", "August", "September",
                             "October", "November", "December" };
@@ -99,7 +99,7 @@ int TimeInfo::getYearNumber() const {
 }
 
 // Get leap year status
-string TimeInfo::getLeapYear() const {
+std::string TimeInfo::getLeapYear() const {
     return isLeapYear(systemTime.wYear) ? "Yes" : "No";
 }
 

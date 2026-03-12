@@ -1,9 +1,8 @@
 #include "include\CompactMemory.h"
 #include <comdef.h>
 #include <Wbemidl.h>
-using namespace std;
 #pragma comment(lib, "wbemuuid.lib")
-
+using namespace std;
 // ---------------------
 // Basic RAM info
 // ---------------------

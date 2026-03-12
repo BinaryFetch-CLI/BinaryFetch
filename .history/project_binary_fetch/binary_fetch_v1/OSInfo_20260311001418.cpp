@@ -5,13 +5,12 @@
 #include <Wbemidl.h>
 #include <winreg.h>
 #include <tchar.h>
-using namespace std;
 #pragma comment(lib, "wbemuuid.lib")
 
 // Get Windows version using RtlGetVersion----------------------------------------------------------------------------------
 typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
-string OSInfo::GetOSVersion() {
+std::string OSInfo::GetOSVersion() {
     HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
     if (hMod) {
         RtlGetVersionPtr fn = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
@@ -19,9 +18,9 @@ string OSInfo::GetOSVersion() {
             RTL_OSVERSIONINFOW rovi = { 0 };
             rovi.dwOSVersionInfoSize = sizeof(rovi);
             if (fn(&rovi) == 0) {
-                return "Windows " + to_string(rovi.dwMajorVersion) + "." +
-                    to_string(rovi.dwMinorVersion) + " Build " +
-                    to_string(rovi.dwBuildNumber);
+                return "Windows " + std::to_string(rovi.dwMajorVersion) + "." +
+                    std::to_string(rovi.dwMinorVersion) + " Build " +
+                    std::to_string(rovi.dwBuildNumber);
             }
         }
     }
@@ -29,7 +28,7 @@ string OSInfo::GetOSVersion() {
 }
 
 // Get 32-bit or 64-bit architecture------------------------------------------------------------------------------------
-string OSInfo::GetOSArchitecture() {
+std::string OSInfo::GetOSArchitecture() {
     BOOL is64bitOS = FALSE;
 #ifdef _WIN64
     is64bitOS = TRUE; // 64-bit program on 64-bit Windows
@@ -44,7 +43,7 @@ string OSInfo::GetOSArchitecture() {
 }
 
 // Get Windows edition (Home, Pro, Enterprise) via WMI--------------------------------------------------------------------------
-string OSInfo::GetOSName() {
+std::string OSInfo::GetOSName() {
     HRESULT hres;
 
     // Initialize COM
@@ -96,14 +95,14 @@ string OSInfo::GetOSName() {
 
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
-    string osName = "Unknown Edition";
+    std::string osName = "Unknown Edition";
 
     if (pEnumerator) {
         if (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
             VARIANT vtProp;
             if (SUCCEEDED(pclsObj->Get(L"Caption", 0, &vtProp, 0, 0))) {
                 _bstr_t bstrOS(vtProp.bstrVal);
-                osName = string((char*)bstrOS);
+                osName = std::string((char*)bstrOS);
             }
             VariantClear(&vtProp);
             pclsObj->Release();
@@ -118,9 +117,9 @@ string OSInfo::GetOSName() {
     return osName;
 }
 //function to get os serial number-----------------------------------------------------------------------------------------
-string OSInfo::get_os_serial_number()
+std::string OSInfo::get_os_serial_number()
 {
-    string serial_number = "Unknown"; //initially it's unknown
+    std::string serial_number = "Unknown"; //initially it's unknown
 
     if (FAILED(CoInitializeEx(0, COINIT_MULTITHREADED)))
         return serial_number;
@@ -161,7 +160,7 @@ string OSInfo::get_os_serial_number()
     return serial_number;
 }
 // function to show os uptime----------------------------------------------------------------------------------------------
-string OSInfo::get_os_uptime()
+std::string OSInfo::get_os_uptime()
 {
     // Get the number of milliseconds since the system started
     ULONGLONG ms = GetTickCount64();
@@ -175,18 +174,18 @@ string OSInfo::get_os_uptime()
     ULONGLONG minutes = (total_seconds % 3600) / 60;             // remaining minutes after hours
 
     // String to store the final uptime
-    string result = "";
+    std::string result = "";
 
     // Add days to the string if there are any
     if (days > 0)
     {
         if (days == 1)
         {
-            result += to_string(days) + " day, ";           // singular
+            result += std::to_string(days) + " day, ";           // singular
         }
         else
         {
-            result += to_string(days) + " days, ";          // plural
+            result += std::to_string(days) + " days, ";          // plural
         }
     }
     // Add hours to the string if there are any
@@ -194,21 +193,21 @@ string OSInfo::get_os_uptime()
     {
         if (hours == 1)
         {
-            result += to_string(hours) + " hour, ";         // singular
+            result += std::to_string(hours) + " hour, ";         // singular
         }
         else
         {
-            result += to_string(hours) + " hours, ";       // plural
+            result += std::to_string(hours) + " hours, ";       // plural
         }
     }
     // Always add minutes (even if zero)
     if (minutes == 1)
     {
-        result += to_string(minutes) + " minute";          // singular
+        result += std::to_string(minutes) + " minute";          // singular
     }
     else
     {
-        result += to_string(minutes) + " minutes";         // plural
+        result += std::to_string(minutes) + " minutes";         // plural
     }
     // Return the final human-readable uptime string
     return result;
@@ -216,7 +215,7 @@ string OSInfo::get_os_uptime()
 
 
 //function to get os install date-------------------------------------------------------------------------------------------
-string OSInfo::get_os_install_date()
+std::string OSInfo::get_os_install_date()
 {
     HRESULT hres;
     hres = CoInitializeEx(0, COINITBASE_MULTITHREADED);
@@ -266,16 +265,16 @@ string OSInfo::get_os_install_date()
 
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
-    string installDate = "Unknown";
+    std::string installDate = "Unknown";
 
     if (pEnumerator && pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
         VARIANT vtProp;
         if (SUCCEEDED(pclsObj->Get(L"InstallDate", 0, &vtProp, 0, 0))) {
             // Convert WMI datetime string to readable format YYYY-MM-DD
-            wstring wstr(vtProp.bstrVal, SysStringLen(vtProp.bstrVal));
-            installDate = string(wstr.begin(), wstr.begin() + 4) + "-" +  // Year
-                string(wstr.begin() + 4, wstr.begin() + 6) + "-" + // Month
-                string(wstr.begin() + 6, wstr.begin() + 8);        // Day
+            std::wstring wstr(vtProp.bstrVal, SysStringLen(vtProp.bstrVal));
+            installDate = std::string(wstr.begin(), wstr.begin() + 4) + "-" +  // Year
+                std::string(wstr.begin() + 4, wstr.begin() + 6) + "-" + // Month
+                std::string(wstr.begin() + 6, wstr.begin() + 8);        // Day
         }
         VariantClear(&vtProp);
         pclsObj->Release();
@@ -291,9 +290,9 @@ string OSInfo::get_os_install_date()
 }
 
 //get os kernel version (major.major.build)
-string OSInfo::get_os_kernel_info()
+std::string OSInfo::get_os_kernel_info()
 {
-    string result = "WIN32_NT "; // platform prefix
+    std::string result = "WIN32_NT "; // platform prefix
 
     // Step 1: Get Major.Minor.Build
     HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
@@ -307,9 +306,9 @@ string OSInfo::get_os_kernel_info()
             rovi.dwOSVersionInfoSize = sizeof(rovi);
             if (fn(&rovi) == 0)
             {
-                result += to_string(rovi.dwMajorVersion) + "." +
-                    to_string(rovi.dwMinorVersion) + "." +
-                    to_string(rovi.dwBuildNumber);
+                result += std::to_string(rovi.dwMajorVersion) + "." +
+                    std::to_string(rovi.dwMinorVersion) + "." +
+                    std::to_string(rovi.dwBuildNumber);
             }
         }
     }
@@ -327,7 +326,7 @@ string OSInfo::get_os_kernel_info()
         RegCloseKey(hKey);
         if (ubr != 0)
         {
-            result += "." + to_string(ubr);
+            result += "." + std::to_string(ubr);
         }
     }
 
@@ -344,8 +343,8 @@ string OSInfo::get_os_kernel_info()
         RegCloseKey(hKey2);
         if (wcslen(releaseId) > 0)
         {
-            wstring ws(releaseId);
-            string version(ws.begin(), ws.end());
+            std::wstring ws(releaseId);
+            std::string version(ws.begin(), ws.end());
             result += " (" + version + ")";
         }
     }

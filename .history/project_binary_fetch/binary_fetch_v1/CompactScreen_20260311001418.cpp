@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <algorithm>
 #include <cwctype>
-using namespace std;
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "Shcore.lib")
@@ -19,11 +18,11 @@ using namespace std;
 #pragma comment(lib, "cfgmgr32.lib")
 
 // Helper: UTF-16 -> UTF-8
-static string WideToUtf8(const wchar_t* w) {
+static std::string WideToUtf8(const wchar_t* w) {
     if (!w) return {};
     int len = WideCharToMultiByte(CP_UTF8, 0, w, -1, nullptr, 0, nullptr, nullptr);
     if (len <= 0) return {};
-    string s(len, '\0');
+    std::string s(len, '\0');
     WideCharToMultiByte(CP_UTF8, 0, w, -1, &s[0], len, nullptr, nullptr);
     if (!s.empty() && s.back() == '\0') s.pop_back();
     return s;
@@ -41,7 +40,7 @@ bool CompactScreen::refresh() {
     return !screens.empty();
 }
 
-string CompactScreen::scaleMultiplier(int scalePercent) {
+std::string CompactScreen::scaleMultiplier(int scalePercent) {
     float mul = scalePercent / 100.0f;
     char buf[32];
     if (fabsf(mul - roundf(mul)) < 0.001f) {
@@ -49,23 +48,23 @@ string CompactScreen::scaleMultiplier(int scalePercent) {
     }
     else {
         snprintf(buf, sizeof(buf), "%.2fx", mul);
-        string s(buf);
+        std::string s(buf);
         size_t dot = s.find('.');
-        if (dot != string::npos) {
+        if (dot != std::string::npos) {
             while (!s.empty() && s.back() == '0') s.pop_back();
             if (!s.empty() && s.back() == '.') s.pop_back();
             s += 'x';
             return s;
         }
     }
-    return string(buf);
+    return std::string(buf);
 }
 
 int CompactScreen::computeUpscaleFactor(int currentWidth, int nativeWidth) {
     if (nativeWidth <= 0 || currentWidth <= 0) return 1;
     float ratio = static_cast<float>(currentWidth) / static_cast<float>(nativeWidth);
     if (ratio < 1.25f) return 1;
-    return static_cast<int>(round(ratio));
+    return static_cast<int>(std::round(ratio));
 }
 
 bool CompactScreen::isNvidiaPresent() {
@@ -112,7 +111,7 @@ CompactScreen::EDIDInfo CompactScreen::parseEDID(const unsigned char* edid, size
     for (int i = 54; i < 126; i += 18) {
         if (i + 17 >= size) break;
         if (edid[i] == 0x00 && edid[i + 1] == 0x00 && edid[i + 3] == 0xFC) {
-            string name;
+            std::string name;
             for (int j = 5; j < 18; ++j) {
                 if (edid[i + j] == 0x0A || edid[i + j] == 0x00) break;
                 if (edid[i + j] >= 0x20 && edid[i + j] <= 0x7E) {
@@ -129,11 +128,11 @@ CompactScreen::EDIDInfo CompactScreen::parseEDID(const unsigned char* edid, size
     return info;
 }
 
-string CompactScreen::getFriendlyNameFromEDID(const wstring& deviceName) {
+std::string CompactScreen::getFriendlyNameFromEDID(const std::wstring& deviceName) {
     // Attempt to derive the monitor hardware ID for this DXGI device name.
     // This improves matching against the registry entries under
     // SYSTEM\\CurrentControlSet\\Enum\\DISPLAY\\<vendor>\\<instance>\\Device Parameters\\EDID
-    wstring monitorHardwareId; // e.g., L"MONITOR\\DEL4067\\{...}"
+    std::wstring monitorHardwareId; // e.g., L"MONITOR\\DEL4067\\{...}"
     DISPLAY_DEVICEW ddMon{};
     ddMon.cb = sizeof(ddMon);
     for (DWORD iMon = 0; EnumDisplayDevicesW(deviceName.c_str(), iMon, &ddMon, 0); ++iMon) {
@@ -150,18 +149,18 @@ string CompactScreen::getFriendlyNameFromEDID(const wstring& deviceName) {
         return "Generic PnP Monitor";
     }
 
-    string friendlyName = "Generic PnP Monitor";
+    std::string friendlyName = "Generic PnP Monitor";
     WCHAR subKeyName[256];
     DWORD subKeyIndex = 0;
 
     // Extract vendor part from monitorHardwareId (between first and second backslash):
     // MONITOR\DEL4067\{...}  -> vendorPart = DEL4067
-    wstring vendorPart;
+    std::wstring vendorPart;
     if (!monitorHardwareId.empty()) {
         size_t p1 = monitorHardwareId.find(L'\\');
-        if (p1 != wstring::npos) {
+        if (p1 != std::wstring::npos) {
             size_t p2 = monitorHardwareId.find(L'\\', p1 + 1);
-            if (p2 != wstring::npos && p2 > p1 + 1)
+            if (p2 != std::wstring::npos && p2 > p1 + 1)
                 vendorPart = monitorHardwareId.substr(p1 + 1, p2 - p1 - 1);
             else
                 vendorPart = monitorHardwareId.substr(p1 + 1);
@@ -169,20 +168,20 @@ string CompactScreen::getFriendlyNameFromEDID(const wstring& deviceName) {
     }
 
     // Normalize vendorPart to lowercase for comparisons
-    wstring vendLower;
+    std::wstring vendLower;
     if (!vendorPart.empty()) {
         vendLower = vendorPart;
-        transform(vendLower.begin(), vendLower.end(), vendLower.begin(), towlower);
+        std::transform(vendLower.begin(), vendLower.end(), vendLower.begin(), towlower);
     }
 
     // First pass: try to find a matching vendor key and read EDID from instances under it.
     while (RegEnumKeyW(hKeyMonitors, subKeyIndex++, subKeyName, 256) == ERROR_SUCCESS) {
-        wstring subKeyStr(subKeyName);
+        std::wstring subKeyStr(subKeyName);
 
         // If we have a vendorPart, only consider keys that begin with that vendorPart (case-insensitive).
         if (!vendLower.empty()) {
-            wstring subLower = subKeyStr;
-            transform(subLower.begin(), subLower.end(), subLower.begin(), towlower);
+            std::wstring subLower = subKeyStr;
+            std::transform(subLower.begin(), subLower.end(), subLower.begin(), towlower);
             if (subLower.find(vendLower) != 0) {
                 continue; // skip non-matching vendor keys
             }
@@ -292,8 +291,8 @@ bool CompactScreen::populateFromDXGI() {
 
                     // ===== GET MONITOR FRIENDLY NAME =====
                     // Pass the full device name (e.g., \\.\DISPLAY1)
-                    wstring deviceNameW = desc1.DeviceName;
-                    string friendlyName = getFriendlyNameFromEDID(deviceNameW);
+                    std::wstring deviceNameW = desc1.DeviceName;
+                    std::string friendlyName = getFriendlyNameFromEDID(deviceNameW);
 
                     // ===== GET NATIVE PANEL RESOLUTION (FROM EDID) =====
                     int nativeW = 0, nativeH = 0;
@@ -352,7 +351,7 @@ bool CompactScreen::populateFromDXGI() {
 
                     // Method 1: Read from Registry (most accurate - what Windows Settings shows)
                     HKEY hKeyDisplay;
-                    wstring devicePath = desc1.DeviceName;
+                    std::wstring devicePath = desc1.DeviceName;
 
                     // Try to get the device ID for registry lookup
                     DISPLAY_DEVICEW ddMon{};
@@ -361,10 +360,10 @@ bool CompactScreen::populateFromDXGI() {
                     for (DWORD iMon = 0; EnumDisplayDevicesW(desc1.DeviceName, iMon, &ddMon, 0); ++iMon) {
                         if (ddMon.StateFlags & DISPLAY_DEVICE_ACTIVE) {
                             // Extract monitor ID from DeviceID (e.g., "MONITOR\DEL4067\{...}")
-                            wstring monitorID = ddMon.DeviceID;
+                            std::wstring monitorID = ddMon.DeviceID;
 
                             // Try to find scaling in registry
-                            wstring regPath = L"SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers\\Configuration";
+                            std::wstring regPath = L"SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers\\Configuration";
                             HKEY hKeyConfig;
 
                             if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, regPath.c_str(), 0, KEY_READ, &hKeyConfig) == ERROR_SUCCESS) {
@@ -384,7 +383,7 @@ bool CompactScreen::populateFromDXGI() {
 
                                             if (RegQueryValueExW(hKey00, L"DpiValue", nullptr, nullptr, (BYTE*)&dpiValue, &dpiSize) == ERROR_SUCCESS) {
                                                 if (dpiValue > 0 && dpiValue != 0xFFFFFFFF) {
-                                                    scalePercent = static_cast<int>(round((dpiValue / 96.0f) * 100.0f));
+                                                    scalePercent = static_cast<int>(std::round((dpiValue / 96.0f) * 100.0f));
                                                     RegCloseKey(hKey00);
                                                     RegCloseKey(hKeyConfigSub);
                                                     RegCloseKey(hKeyConfig);
@@ -409,7 +408,7 @@ bool CompactScreen::populateFromDXGI() {
                     if (scalePercent == 100) {
                         UINT dpiX = 96, dpiY = 96;
                         if (SUCCEEDED(GetDpiForMonitor(desc1.Monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY))) {
-                            scalePercent = static_cast<int>(round((dpiX / 96.0f) * 100.0f));
+                            scalePercent = static_cast<int>(std::round((dpiX / 96.0f) * 100.0f));
                         }
                     }
 
@@ -419,7 +418,7 @@ bool CompactScreen::populateFromDXGI() {
                         if (hdc) {
                             int logPixelsX = GetDeviceCaps(hdc, LOGPIXELSX);
                             if (logPixelsX > 0 && logPixelsX != 96) {
-                                scalePercent = static_cast<int>(round((logPixelsX / 96.0f) * 100.0f));
+                                scalePercent = static_cast<int>(std::round((logPixelsX / 96.0f) * 100.0f));
                             }
                             DeleteDC(hdc);
                         }
@@ -432,7 +431,7 @@ bool CompactScreen::populateFromDXGI() {
 
                         if (desktopW > 0 && currentW > 0 && desktopW != currentW) {
                             float scaleRatio = static_cast<float>(currentW) / static_cast<float>(desktopW);
-                            int calculatedScale = static_cast<int>(round(scaleRatio * 100.0f));
+                            int calculatedScale = static_cast<int>(std::round(scaleRatio * 100.0f));
 
                             // Snap to common Windows scaling values
                             if (calculatedScale >= 95 && calculatedScale <= 105) scalePercent = 100;
@@ -448,7 +447,7 @@ bool CompactScreen::populateFromDXGI() {
 
                     // ===== COMPUTE DSR/VSR UPSCALE FACTOR =====
                     int upscaleFactor = computeUpscaleFactor(currentW, nativeW);
-                    string upscaleStr = "1x"; // Default: no upscaling
+                    std::string upscaleStr = "1x"; // Default: no upscaling
 
                     if (upscaleFactor > 1) {
                         char tmp[16];

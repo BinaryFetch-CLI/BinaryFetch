@@ -4,7 +4,7 @@
 #include <chrono>
 #include <vector>
 #include "nvapi.h"
-using namespace std;
+
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "nvapi64.lib")
 

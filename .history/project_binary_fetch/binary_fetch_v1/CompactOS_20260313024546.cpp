@@ -9,7 +9,7 @@ using namespace std;
 typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOEXW);
 
 //---------------- Get OS Name ------------------
-string CompactOS::getOSName()
+std::string CompactOS::getOSName()
 {
     RTL_OSVERSIONINFOEXW rovi = { 0 };
     rovi.dwOSVersionInfoSize = sizeof(rovi);
@@ -43,7 +43,7 @@ string CompactOS::getOSName()
 }
 
 //---------------- Get OS Build ------------------
-string CompactOS::getOSBuild()
+std::string CompactOS::getOSBuild()
 {
     RTL_OSVERSIONINFOEXW rovi = { 0 };
     rovi.dwOSVersionInfoSize = sizeof(rovi);
@@ -55,14 +55,14 @@ string CompactOS::getOSBuild()
         if (fx) fx(&rovi);
     }
 
-    ostringstream oss;
+    std::ostringstream oss;
     oss << rovi.dwMajorVersion << "." << rovi.dwMinorVersion
         << " (Build " << rovi.dwBuildNumber << ")";
     return oss.str();
 }
 
 //---------------- Get OS Uptime -----------------
-string CompactOS::getUptime()
+std::string CompactOS::getUptime()
 {
     ULONGLONG ms = GetTickCount64();
     ULONGLONG seconds = ms / 1000;
@@ -70,7 +70,7 @@ string CompactOS::getUptime()
     int hours = (int)((seconds % 86400) / 3600);
     int minutes = (int)((seconds % 3600) / 60);
 
-    ostringstream oss;
+    std::ostringstream oss;
     if (days > 0) oss << days << "d ";
     if (hours > 0) oss << hours << "h ";
     oss << minutes << "m";
@@ -78,7 +78,7 @@ string CompactOS::getUptime()
 }
 
 //---------------- Get System Architecture -------
-string CompactOS::getArchitecture()
+std::string CompactOS::getArchitecture()
 {
     SYSTEM_INFO si = { 0 };
     GetNativeSystemInfo(&si);

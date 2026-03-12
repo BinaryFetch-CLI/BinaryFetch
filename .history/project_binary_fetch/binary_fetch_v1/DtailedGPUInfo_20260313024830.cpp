@@ -7,7 +7,7 @@
 #include <comdef.h> // Provides definitions for COM error handling and smart pointers.
 #include "nvapi.h"
 
-using namespace std;
+using namespca
 
 /*
 ===============================================================================

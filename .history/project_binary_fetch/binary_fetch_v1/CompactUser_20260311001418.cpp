@@ -16,15 +16,15 @@ string CompactUser::getUsername()
 	}else { return "Uknown User"; }
 }
 
-string CompactUser::getDomain() {
+std::string CompactUser::getDomain() {
     char computerName[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
     if (GetComputerNameA(computerName, &size))
-        return string(computerName);
+        return std::string(computerName);
     return "UnknownDomain";
 }
 
-string CompactUser::isAdmin() {
+std::string CompactUser::isAdmin() {
     BOOL isAdmin = FALSE;
     HANDLE hToken = NULL;
     DWORD size = 0;

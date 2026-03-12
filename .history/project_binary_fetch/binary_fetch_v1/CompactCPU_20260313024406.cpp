@@ -13,7 +13,7 @@ using namespace std;
 #pragma comment(lib, "pdh.lib")
 
 //---------------- Get CPU Name ------------------
-string CompactCPU::getCPUName()
+std::string CompactCPU::getCPUName()
 {
     int cpuInfo[4] = { -1 };
     char cpuBrand[0x40];
@@ -29,18 +29,18 @@ string CompactCPU::getCPUName()
         else if (i == 0x80000004) memcpy(cpuBrand + 32, cpuInfo, sizeof(cpuInfo));
     }
 
-    string name(cpuBrand);
+    std::string name(cpuBrand);
     name.erase(name.find_last_not_of(' ') + 1);
     return name;
 }
 
 //---------------- Get CPU Core Count ------------------
-string CompactCPU::getCPUCores()
+std::string CompactCPU::getCPUCores()
 {
     DWORD coreCount = 0;
     DWORD returnLength = 0;
     GetLogicalProcessorInformation(nullptr, &returnLength);
-    vector<uint8_t> buffer(returnLength);
+    std::vector<uint8_t> buffer(returnLength);
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION info =
         reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(buffer.data());
 
@@ -50,13 +50,13 @@ string CompactCPU::getCPUCores()
         for (size_t i = 0; i < count; ++i)
             if (info[i].Relationship == RelationProcessorCore) coreCount++;
     }
-    return to_string(coreCount);
+    return std::to_string(coreCount);
 }
 
 //---------------- Get CPU Thread Count ------------------
-string CompactCPU::getCPUThreads()
+std::string CompactCPU::getCPUThreads()
 {
-    return to_string(GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
+    return std::to_string(GetActiveProcessorCount(ALL_PROCESSOR_GROUPS));
 }
 
 //---------------- Get CPU Clock Speed (GHz) ------------------
@@ -87,7 +87,7 @@ double CompactCPU::getUsagePercent()
     PdhOpenQuery(nullptr, 0, &query);
     PdhAddCounter(query, L"\\Processor(_Total)\\% Processor Time", 0, &counter);
     PdhCollectQueryData(query);
-    this_thread::sleep_for(chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     PdhCollectQueryData(query);
     PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, nullptr, &counterVal);
     double usage = counterVal.doubleValue;

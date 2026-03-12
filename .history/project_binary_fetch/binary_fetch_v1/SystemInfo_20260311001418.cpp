@@ -1,7 +1,6 @@
 #include "include\SystemInfo.h"
 #include <windows.h>
 #include <iostream>
-using namespace std;
 
 SystemInfo::SystemInfo() {
     // Nothing to initialize, using registry only
@@ -12,7 +11,7 @@ SystemInfo::~SystemInfo() {
 }
 
 // Registry reading function (internal)
-string SystemInfo::read_registry_value(const string& subkey, const string& valueName) {
+std::string SystemInfo::read_registry_value(const std::string& subkey, const std::string& valueName) {
     HKEY hKey;
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, subkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
         return "N/A";
@@ -27,27 +26,27 @@ string SystemInfo::read_registry_value(const string& subkey, const string& value
     }
 
     RegCloseKey(hKey);
-    return string(value);
+    return std::string(value);
 }
 
 // BIOS info
-string SystemInfo::get_bios_vendor() {
+std::string SystemInfo::get_bios_vendor() {
     return read_registry_value("HARDWARE\\DESCRIPTION\\System\\BIOS", "BIOSVendor");
 }
 
-string SystemInfo::get_bios_version() {
+std::string SystemInfo::get_bios_version() {
     return read_registry_value("HARDWARE\\DESCRIPTION\\System\\BIOS", "BIOSVersion");
 }
 
-string SystemInfo::get_bios_date() {
+std::string SystemInfo::get_bios_date() {
     return read_registry_value("HARDWARE\\DESCRIPTION\\System\\BIOS", "BIOSReleaseDate");
 }
 
 // Motherboard info
-string SystemInfo::get_motherboard_model() {
+std::string SystemInfo::get_motherboard_model() {
     return read_registry_value("HARDWARE\\DESCRIPTION\\System\\BIOS", "BaseBoardProduct");
 }
 
-string SystemInfo::get_motherboard_manufacturer() {
+std::string SystemInfo::get_motherboard_manufacturer() {
     return read_registry_value("HARDWARE\\DESCRIPTION\\System\\BIOS", "BaseBoardManufacturer");
 }

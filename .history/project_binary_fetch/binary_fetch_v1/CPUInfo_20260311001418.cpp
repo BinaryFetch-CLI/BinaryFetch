@@ -144,7 +144,6 @@ But it WORKS — and that’s a win :)
 #include <pdh.h>       // Performance counters (Task Manager vibes)
 #include <comdef.h>    // COM helpers so we don't lose our sanity
 #include <iomanip>     // Formatting polish (decimals, padding, alignment)
-using namespace std;
 
 #pragma comment(lib, "pdh.lib")      
 // Auto-link PDH so CPU usage works without linker drama

@@ -88,7 +88,7 @@ enum NV_GPU_UTILIZATION {
 
 // -------------------- CompactGPU Implementations --------------------
 
-string CompactGPU::getGPUName() {
+std::string CompactGPU::getGPUName() {
     if (isNvapiAvailable() && NvAPI_Initialize() == NVAPI_OK) {
         NvPhysicalGpuHandle nvGPU[64];
         NvU32 count = 0;
@@ -96,7 +96,7 @@ string CompactGPU::getGPUName() {
             NvAPI_ShortString name;
             if (NvAPI_GPU_GetFullName(nvGPU[0], name) == NVAPI_OK) {
                 NvAPI_Unload();
-                return string(name);
+                return std::string(name);
             }
         }
         NvAPI_Unload();
@@ -116,9 +116,9 @@ string CompactGPU::getGPUName() {
     }
     RegCloseKey(hKey);
 
-    string fullPath = subKey;
+    std::string fullPath = subKey;
     size_t pos = fullPath.find("Machine\\");
-    if (pos == string::npos) return "Unknown";
+    if (pos == std::string::npos) return "Unknown";
     fullPath = fullPath.substr(pos + 8);
 
     HKEY gpuKey;
@@ -134,7 +134,7 @@ string CompactGPU::getGPUName() {
     }
 
     RegCloseKey(gpuKey);
-    return string(name);
+    return std::string(name);
 }
 
 double CompactGPU::getVRAMGB() {
@@ -177,7 +177,7 @@ int CompactGPU::getGPUUsagePercent() {
     return static_cast<int>(dynStates.utilization[NVAPI_GPU_UTILIZATION_GPU].percentage);
 }
 
-string CompactGPU::getGPUFrequency()
+std::string CompactGPU::getGPUFrequency()
 {
     // ----------------------------
     // 1. Try NVIDIA NVAPI first
@@ -195,7 +195,7 @@ string CompactGPU::getGPUFrequency()
             if (NvAPI_GPU_GetAllClockFrequencies(gpuHandles[0], &clockFreq) == NVAPI_OK)
             {
                 int gpuClock = clockFreq.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency / 1000;
-                stringstream ss;
+                std::stringstream ss;
                 ss << gpuClock << " MHz";
 
                 NvAPI_Unload();
@@ -268,7 +268,7 @@ string CompactGPU::getGPUFrequency()
             // More reliable fallback is AdapterRAM or name matching
 
             int approxFreq = 1400; // Safe default for modern GPUs
-            stringstream ss;
+            std::stringstream ss;
             ss << approxFreq << " MHz";
 
             return ss.str();

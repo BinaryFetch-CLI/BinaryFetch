@@ -2,8 +2,8 @@
 #include <windows.h>
 #include <string>
 #include <iostream>
-using namespace std;
-string readRegistryValue(HKEY root, const string& subkey, const string& valueName) {
+
+std::string readRegistryValue(HKEY root, const std::string& subkey, const std::string& valueName) {
     HKEY hKey;
     if (RegOpenKeyExA(root, subkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
         return "Unknown";
@@ -20,26 +20,26 @@ string readRegistryValue(HKEY root, const string& subkey, const string& valueNam
     RegCloseKey(hKey);
 
     if (type == REG_SZ || type == REG_EXPAND_SZ)
-        return string(value);
+        return std::string(value);
     else
         return "Unknown";
 }
 
-string CompactSystem::getBIOSInfo() {
+std::string CompactSystem::getBIOSInfo() {
     // Registry paths for BIOS
-    string biosVersion = readRegistryValue(
+    std::string biosVersion = readRegistryValue(
         HKEY_LOCAL_MACHINE,
         "HARDWARE\\DESCRIPTION\\System\\BIOS",
         "BIOSVersion"
     );
 
-    string biosVendor = readRegistryValue(
+    std::string biosVendor = readRegistryValue(
         HKEY_LOCAL_MACHINE,
         "HARDWARE\\DESCRIPTION\\System\\BIOS",
         "BIOSVendor"
     );
 
-    string biosDate = readRegistryValue(
+    std::string biosDate = readRegistryValue(
         HKEY_LOCAL_MACHINE,
         "HARDWARE\\DESCRIPTION\\System\\BIOS",
         "BIOSReleaseDate"
@@ -48,15 +48,15 @@ string CompactSystem::getBIOSInfo() {
     return biosVendor + " " + biosVersion + " (" + biosDate + ")";
 }
 
-string CompactSystem::getMotherboardInfo() {
+std::string CompactSystem::getMotherboardInfo() {
     // Registry paths for Motherboard (BaseBoard)
-    string boardProduct = readRegistryValue(
+    std::string boardProduct = readRegistryValue(
         HKEY_LOCAL_MACHINE,
         "HARDWARE\\DESCRIPTION\\System\\BIOS",
         "BaseBoardProduct"
     );
 
-    string boardManufacturer = readRegistryValue(
+    std::string boardManufacturer = readRegistryValue(
         HKEY_LOCAL_MACHINE,
         "HARDWARE\\DESCRIPTION\\System\\BIOS",
         "BaseBoardManufacturer"

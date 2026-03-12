@@ -16,12 +16,12 @@
 using namespace std;
 
 // ----------------------------------------------------
-// Helper: convert wide string → UTF-8 string
-static string wstr_to_utf8(const wstring& w)
+// Helper: convert wide string → UTF-8 std::string
+static std::string wstr_to_utf8(const std::wstring& w)
 {
     if (w.empty()) return {};
     int sz = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    string r(sz - 1, 0);
+    std::string r(sz - 1, 0);
     WideCharToMultiByte(CP_UTF8, 0, w.c_str(), -1, &r[0], sz, nullptr, nullptr);
     return r;
 }
@@ -511,9 +511,9 @@ static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
 // Main GPU info collector
 //
 // This is where everything comes together 🧠
-vector<gpu_data> GPUInfo::get_all_gpu_info()
+std::vector<gpu_data> GPUInfo::get_all_gpu_info()
 {
-    vector<gpu_data> list;
+    std::vector<gpu_data> list;
 
     IDXGIFactory6* factory = nullptr;
     if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
@@ -556,16 +556,16 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
 
         double memGB = static_cast<double>(desc.DedicatedVideoMemory) /
             (1024.0 * 1024.0 * 1024.0);
-        ostringstream memStream;
+        std::ostringstream memStream;
         memStream.precision(1);
-        memStream << fixed << memGB;
+        memStream << std::fixed << memGB;
         d.gpu_memory = memStream.str() + " GB";
 
         // Driver version
         LARGE_INTEGER driverVersion{};
         if (SUCCEEDED(adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion)))
         {
-            ostringstream oss;
+            std::ostringstream oss;
             oss << HIWORD(driverVersion.HighPart) << "."
                 << LOWORD(driverVersion.HighPart) << "."
                 << HIWORD(driverVersion.LowPart) << "."
