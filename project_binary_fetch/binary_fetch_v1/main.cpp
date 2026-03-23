@@ -1,4 +1,37 @@
-﻿// Welcome to BinaryFetch entry point (main.cpp) 
+﻿/*
+
+Funciton list: compact_disk_info.h
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+//Welcome to BinaryFetch entry point (main.cpp) 
 
 #include <iostream>       // Standard input/output stream (cin, cout) 
 #include <iomanip>        // Formatting utilities (setw, precision, setfill) 
