@@ -9,10 +9,10 @@ using namespace std;
 // GPU data structure
 struct gpu_data
 {
-    string gpu_name;
-    string gpu_memory;
-    string gpu_driver_version;
-    string gpu_vendor;
+    std::string gpu_name;
+    std::string gpu_memory;
+    std::string gpu_driver_version;
+    std::string gpu_vendor;
     float gpu_usage;
     float gpu_temperature;
     int gpu_core_count;
@@ -26,7 +26,7 @@ class GPUInfo
 {
 public:
     // Get all GPU information
-    static vector<gpu_data> get_all_gpu_info();
+    static std::vector<gpu_data> get_all_gpu_info();
 
     // Get GPU usage percentage
     static float get_gpu_usage();

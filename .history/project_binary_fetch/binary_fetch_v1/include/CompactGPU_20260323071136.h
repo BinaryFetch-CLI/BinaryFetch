@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
-using namespace std;
+
 class CompactGPU {
 public:
-    static string getGPUName();
+    static std::string getGPUName();
     static double getVRAMGB();
     static int getGPUUsagePercent();  // Keep this
-    static string getGPUFrequency();
+    static std::string getGPUFrequency();
     static double getGPUTemperature();
 };
