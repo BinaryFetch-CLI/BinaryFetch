@@ -7,15 +7,15 @@ public:
     DiskInfo();  // Constructor
 
     // Get usage of all disks as integers (%)
-    vector<pair<string, int>> getAllDiskUsage();
+    std::vector<std::pair<std::string, int>> getAllDiskUsage();
 
     // Get capacity of all disks as integers (GB)
-    vector<pair<string, int>> getDiskCapacity();
+    std::vector<std::pair<std::string, int>> getDiskCapacity();
 
 private:
     // Helper: calculate used percentage
-    int calculateUsedPercentage(const string& driveLetter);
+    int calculateUsedPercentage(const std::string& driveLetter);
 
     // Helper: calculate total capacity in GB
-    int calculateCapacityGB(const string& driveLetter);
+    int calculateCapacityGB(const std::string& driveLetter);
 };
