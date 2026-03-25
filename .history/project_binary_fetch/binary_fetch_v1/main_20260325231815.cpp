@@ -1,4 +1,33 @@
-﻿
+﻿/*
+
+Funciton list: compact_disk_info.h
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
 
 
 
@@ -62,9 +91,7 @@ using json = nlohmann::json;
 using namespace std;
 //since we've decleared std, we may no longer need it 
 
-// (start) - place holder for global
-int global_memory_capacity = 0;
-
+// (start) - place holder for global 
 // (end) - place holder for global varaibles
 
 

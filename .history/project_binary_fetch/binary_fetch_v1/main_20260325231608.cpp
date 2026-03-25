@@ -1,8 +1,4 @@
-﻿
-
-
-
-//Welcome to BinaryFetch entry point (main.cpp) 
+﻿// Welcome to BinaryFetch entry point (main.cpp) 
 
 #include <iostream>       // Standard input/output stream (cin, cout) 
 #include <iomanip>        // Formatting utilities (setw, precision, setfill) 
@@ -62,10 +58,7 @@ using json = nlohmann::json;
 using namespace std;
 //since we've decleared std, we may no longer need it 
 
-// (start) - place holder for global
-int global_memory_capacity = 0;
-
-// (end) - place holder for global varaibles
+// 
 
 
 

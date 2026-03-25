@@ -3,7 +3,7 @@
 using namespace std;
 class CompactCPU {
 public:
-    string getCPUName();       // returns "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz"
+    string getCPUName();
     string getCPUCores();      // returns "6" (core)
     string getCPUThreads();    // returns "12" (threds)
     double getClockSpeed();    // returns 4.40 (ghz)

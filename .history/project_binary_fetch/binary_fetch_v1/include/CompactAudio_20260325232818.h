@@ -6,7 +6,7 @@ class CompactAudio {
 public:
     CompactAudio() = default;
 
-    // Audio Output (Speaker / Headphones/ virtual audio device)
+    // Audio Output (Speaker / Headphones/ virtual audio)
     string active_audio_output();        // Returns device name
     string active_audio_output_status(); // Returns "(Active)" or "(Inactive)"
 
