@@ -1,4 +1,33 @@
-﻿
+﻿/*
+
+Funciton list: compact_disk_info.h
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
 
 
 
@@ -64,7 +93,6 @@ using namespace std;
 
 // (start) - place holder for global
 int global_memory_capacity = 0;
-
 // (end) - place holder for global varaibles
 
 
