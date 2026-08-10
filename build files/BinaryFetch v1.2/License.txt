@@ -1,0 +1,130 @@
+BinaryFetch – End User License Agreement (EULA)
+
+Copyright (c) 2026 github.com/InterCentury
+
+Last updated: January 2026
+
+IMPORTANT
+
+This license applies ONLY to the BinaryFetch compiled software (installer / executable).
+It does NOT apply to the source code.
+
+The source code of BinaryFetch is governed by a separate license and policy.
+
+────────────────────────────────────────────────────────
+
+1. GRANT OF LICENSE
+
+BinaryFetch is provided as FREE SOFTWARE.
+
+You are granted a non-exclusive, worldwide, royalty-free license to:
+
+Use the software for personal, educational, or non-commercial professional purposes
+
+Distribute the software freely, without charge
+
+Share the installer or executable in original, unmodified form
+
+This software is FREE FOREVER.
+
+────────────────────────────────────────────────────────
+
+2. NON-COMMERCIAL USE ONLY
+
+BinaryFetch may NOT be used for any form of financial gain.
+
+You may NOT, directly or indirectly:
+
+Use BinaryFetch to generate revenue or profit
+
+Sell the software, bundled or standalone
+
+Include the software in paid products, services, or subscriptions
+
+Use the software in commercial environments where its use contributes to profit
+
+Monetize redistribution of the software in any form
+
+Any use of BinaryFetch for financial benefit is strictly prohibited.
+
+────────────────────────────────────────────────────────
+
+3. RESTRICTIONS
+
+You may NOT:
+
+Claim ownership or authorship of BinaryFetch
+
+Rebrand, rename, or redistribute the software under a different identity
+
+Modify, reverse-engineer, or alter the executable or bundled resources
+
+Sell the software or any modified version of it
+
+Misrepresent the origin or creator of the software
+
+Authorship and ownership are exclusively reserved for the original author.
+
+BinaryFetch may NOT be used for any form of financial gain.
+
+Any redistribution of this software for financial profit is strictly forbidden and constitutes a direct violation of this license.
+
+────────────────────────────────────────────────────────
+
+4. SOURCE CODE NOTICE
+
+This license does NOT grant any rights to the source code.
+
+The source code of BinaryFetch is governed by a separate license
+
+Access, modification, or redistribution of source code is subject to its own policy
+
+This EULA applies only to the compiled software and installer
+
+────────────────────────────────────────────────────────
+
+5. DISCLAIMER OF WARRANTY
+
+BinaryFetch is provided "AS IS", without warranty of any kind.
+
+The author shall not be held liable for:
+
+Data loss
+
+System issues
+
+Security issues
+
+Unexpected or undesired behavior
+
+Any direct or indirect damages arising from use of the software
+
+Use the software at your own risk.
+
+────────────────────────────────────────────────────────
+
+6. TERMINATION
+
+This license is automatically terminated if you violate any of its terms.
+
+Upon termination, you must immediately:
+
+Stop using the software
+
+Stop distributing the software
+
+Remove all copies in your possession
+
+────────────────────────────────────────────────────────
+
+7. AUTHOR & OWNERSHIP
+
+Author: Maruf Hasan (aka InterCentury)
+Project Founder: Maruf Hasan (InterCentury)
+Administration: https://github.com/InterCentury
+
+All rights not explicitly granted in this license are reserved by the author.
+
+────────────────────────────────────────────────────────
+
+By installing or using BinaryFetch, you acknowledge that you have read, understood, and agreed to this End User License Agreement.
