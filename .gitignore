@@ -52,3 +52,6 @@ binary_fetch/Release/
 
 # Ignore history folders
 .project_binary_fetch/.history/
+
+# vscode
+.history/
