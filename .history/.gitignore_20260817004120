@@ -54,4 +54,4 @@ binary_fetch/Release/
 .project_binary_fetch/.history/
 
 # vscode
-
+.history/
