@@ -1,4 +1,4 @@
-﻿
+﻿// AsciiArt.cpp
 #include "include\AsciiArt.h"
 #include "include\resource.h" // Essential for IDR_DEFAULT_ASCII
 #include <iostream>
