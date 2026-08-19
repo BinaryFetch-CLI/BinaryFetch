@@ -93,6 +93,9 @@
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactAudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -151,9 +154,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\PerformanceInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\StorageInfo.h">

@@ -128,7 +128,7 @@ set(BINARYFETCH_HEADERS
 
     ${BINARYFETCH_INCLUDE}/core/AsciiArt.h
     ${BINARYFETCH_INCLUDE}/core/json.hpp
-
+    ${BINARYFETCH_INCLUDE}/core/resource.h
     # --------------------------------------------------------
     # Compact
     # --------------------------------------------------------
@@ -158,7 +158,6 @@ set(BINARYFETCH_HEADERS
     ${BINARYFETCH_INCLUDE}/detailed/NetworkInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/OSInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/PerformanceInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/resource.h
     ${BINARYFETCH_INCLUDE}/detailed/StorageInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/SystemInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/TimeInfo.h
