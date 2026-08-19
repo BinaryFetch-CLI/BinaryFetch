@@ -2,35 +2,41 @@
 #define TIMEINFO_H
 
 #include <string>
-#include <windows.h>
-using namespace std;
+
 class TimeInfo {
 private:
-    SYSTEMTIME systemTime;
+    int second;
+    int minute;
+    int hour;
+
+    int day;
+    int weekNumber;
+    int monthNumber;
+    int year;
+
+    std::string dayName;
+    std::string monthName;
+    std::string leapYear;
 
     void updateTime();
     bool isLeapYear(int year) const;
     int calculateWeekNumber() const;
 
 public:
-    // Constructor - automatically fetches current system time
     TimeInfo();
 
-    // Time components
     int getSecond() const;
     int getMinute() const;
     int getHour() const;
 
-    // Date components
     int getDay() const;
     int getWeekNumber() const;
-    string getDayName() const;
+    std::string getDayName() const;
     int getMonthNumber() const;
-    string getMonthName() const;
+    std::string getMonthName() const;
     int getYearNumber() const;
-    string getLeapYear() const;  // Returns "Yes" or "No"
+    std::string getLeapYear() const;
 
-    // Refresh system time
     void refresh();
 };
 
