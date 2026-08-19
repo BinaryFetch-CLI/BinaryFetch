@@ -15,7 +15,7 @@ Built for Windows. Built to last. Built to be shared.
   </details>
 
 
-## 🚀 What Makes BinaryFetch Different?
+##  What Makes BinaryFetch Different?
 
 
 BinaryFetch guarantees that **the program never crashes due to missing user files**.
@@ -32,7 +32,7 @@ If a user:
 
 ![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/Ascii_art_tutorial.png?raw=true)
 
-## 🗂️ User Customization (Only 2 Files)
+##  User Customization (Only 2 Files)
 you can modify and customize them safely from,
 
 `C:\Users\Public\BinaryFetch\`
@@ -84,7 +84,7 @@ Output: Green → Yellow → Red
 Output: Standard white text
 
 
-## 🧩 Core Features Overview
+##  Core Features Overview
 
 * Modular system info engine
 * Compact mode & expanded mode
@@ -98,7 +98,7 @@ Output: Standard white text
 
 ---
 
-## 🧱 Project Architecture
+##  Project Architecture
 
 BinaryFetch follows a **module-per-domain** architecture.
 
@@ -115,7 +115,7 @@ Each system category is implemented as an **independent class** with no side eff
 - **Utility Modules:** 10 (support/helper classes)
 **Each module has 1-11 sub-modules for specific data retrieval.**
 
-## 🛡️ Self-Healing file management system (Worst-Case Handling)
+##  Self-Healing file management system (Worst-Case Handling)
 
 BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 
@@ -130,7 +130,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 
 ---
 
-## 🧪 Engineering Back-Bone
+##  Engineering Back-Bone
 
 * ✅ First run always succeeds
 * ✅ User customization preserved
@@ -140,7 +140,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 * ✅ Future-proof modularity
 
 
-# BinaryFetch feature lists text preview...you can toggle and customize each module 🍀
+# BinaryFetch feature lists text preview...you can toggle and customize each module 
 
 
 
@@ -150,7 +150,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 
 # **BInaryFetch Feature Overview**
 
-## **📊 Core Modules: 12**
+## ** Core Modules: 12**
 1. **Header Module** - System banner/logo display
 2. **Compact Time Module** - Real-time clock display
 3. **Compact OS Module** - OS summary
@@ -164,7 +164,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 11. **Compact Network Module** - Network connection status
 12. **Compact Disk Module** - Storage usage summary
 
-## **🔍 Detailed/Expanded Modules: 12**
+## ** Detailed/Expanded Modules: 12**
 1. **Detailed Memory Module** - In-depth RAM analysis
 2. **Detailed Storage Module** - Comprehensive disk info
 3. **Network Info Module** - Complete network details
@@ -178,7 +178,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 11. **Performance Info Module** - System performance metrics
 12. **Audio & Power Info Module** - Audio devices and power status
 
-## **🎨 Configuration Features:**
+## ** Configuration Features:**
 - **Color Customization**: 14+ color options per module
 - **Toggle Controls**: Individual enable/disable for each module
 - **Granular Display**: Control over every element's visibility
@@ -193,7 +193,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 - **Sub-section Controls**: 60+ detailed display options
 - **Customizable Elements**: 200+ individually configurable components
 
-## **🎯 Key Capabilities:**
+## ** Key Capabilities:**
 - **Snapshot form realtime data**: e.g. Disk information inlcuding read\write\used
 - **Hardware Profiling**: Detailed component specifications
 - **Performance Tracking**: CPU/GPU/RAM/Disk utilization
@@ -205,7 +205,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 - **System Uptime**: Runtime tracking
 - **Power Management**: Battery status monitoring
 
-## **🛠️ Technical Features:**
+## ** Technical Features:**
 - **Modular Design**: Independent module enable/disable
 - **Fallback Systems**: Dummy/backup modules like dummy network 
 - **Detailed/Compact Toggle**: Two viewing modes for each module type
@@ -213,7 +213,7 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 - **Extensible Architecture**: Easy addition of new modules
 - **Cross-Platform Ready**: Windows-focused but adaptable
 
-## **🌈 Visual Features:**
+## ** Visual Features:**
 - **Colored Brackets/Parentheses**: Syntax highlighting
 - **Separator Lines**: Section dividers
 - **Label/Value Distinction**: Clear text differentiation
