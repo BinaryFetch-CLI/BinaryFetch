@@ -1,32 +1,9 @@
-![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/984ddde6b5d583c74f146ba0a71fb131a9e91e29/Previews/00_main.png)
-![Alt text](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/03_BinaryFetch_banner.png)
+
 # 🍁 BinaryFetch-CLI based fully customizable system information tool 
 An advanced Windows system information fetcher written in C++ — featuring self-healing configuration, modular architecture, compact & detailed modes, and extreme customization.
 
-Built for Windows. Built to last. Built to be shared.
-
-## Key features of BinaryFetch
-```
-
-1. Fully Customizable — Control modules, colors, layout, and displayed information through a simple JSON configuration.
-2. Custom ASCII Art — Replace the default artwork with your own and color individual sections using simple color codes.
-3. Compact & Detailed Modes — Get a quick system snapshot or switch to detailed hardware and system information.
-4. Comprehensive System Information — Display information about your CPU, GPU, RAM, storage, network, displays, audio,
-   OS, BIOS, power, and more.
-
-5. Modular Architecture — Enable or disable individual information modules without modifying the source code.
-6. Self-Healing Configuration** — Missing, deleted, or corrupted configuration files are automatically restoredwith safe
-   defaults.
-
-7. Real-Time System Data — Monitor CPU, GPU, RAM, disk, and network usage directly from the terminal.
-8. Windows CLI — A native C++ system information tool designed for fast, clean terminal output.
-
-```
-
-
-
-
-
+![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/984ddde6b5d583c74f146ba0a71fb131a9e91e29/Previews/00_main.png)
+![Alt text](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/03_BinaryFetch_banner.png)
 
 
 ![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/Ascii_art_tutorial.png?raw=true)
