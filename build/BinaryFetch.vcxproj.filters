@@ -46,9 +46,6 @@
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\SystemInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\TimeInfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\UserInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -83,6 +80,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\compact_disk_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\TimeInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -129,6 +129,9 @@
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\compact_disk_info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\TimeInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\CPUInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -160,9 +163,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\SystemInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\TimeInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\UserInfo.h">

@@ -96,7 +96,6 @@ set(BINARYFETCH_SOURCES
     ${BINARYFETCH_CPP}/windows/detailed/personalization_info.cpp
     ${BINARYFETCH_CPP}/windows/detailed/StorageInfo.cpp
     ${BINARYFETCH_CPP}/windows/detailed/SystemInfo.cpp
-    ${BINARYFETCH_CPP}/windows/detailed/TimeInfo.cpp
     ${BINARYFETCH_CPP}/windows/detailed/UserInfo.cpp
 
     # --------------------------------------------------------
@@ -114,6 +113,7 @@ set(BINARYFETCH_SOURCES
     ${BINARYFETCH_CPP}/windows/compact/CompactSystem.cpp
     ${BINARYFETCH_CPP}/windows/compact/CompactUser.cpp
     ${BINARYFETCH_CPP}/windows/compact/compact_disk_info.cpp
+    ${BINARYFETCH_CPP}/windows/compact/TimeInfo.cpp
 )
 
 # ============================================================
@@ -144,7 +144,7 @@ set(BINARYFETCH_HEADERS
     ${BINARYFETCH_INCLUDE}/compact/CompactSystem.h
     ${BINARYFETCH_INCLUDE}/compact/CompactUser.h
     ${BINARYFETCH_INCLUDE}/compact/compact_disk_info.h
-
+    ${BINARYFETCH_INCLUDE}/compact/TimeInfo.h
     # --------------------------------------------------------
     # Detailed
     # --------------------------------------------------------
@@ -160,7 +160,6 @@ set(BINARYFETCH_HEADERS
     ${BINARYFETCH_INCLUDE}/detailed/PerformanceInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/StorageInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/SystemInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/TimeInfo.h
     ${BINARYFETCH_INCLUDE}/detailed/UserInfo.h
 )
 

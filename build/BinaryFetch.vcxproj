@@ -391,7 +391,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\personalization_info.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\StorageInfo.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\SystemInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\TimeInfo.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\UserInfo.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactAudio.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactCPU.cpp" />
@@ -404,6 +403,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactSystem.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactUser.cpp" />
     <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\compact_disk_info.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\TimeInfo.cpp" />
     <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\binary_fetch_v1.rc" />
     <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\resources.rc" />
     <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\version_info.rc" />
@@ -421,6 +421,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactSystem.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactUser.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\compact_disk_info.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\TimeInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\CPUInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\DetailedGPUInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\DisplayInfo.h" />
@@ -432,7 +433,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\PerformanceInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\StorageInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\SystemInfo.h" />
-    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\TimeInfo.h" />
     <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\UserInfo.h" />
   </ItemGroup>
   <ItemGroup />
