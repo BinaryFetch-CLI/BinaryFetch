@@ -55,3 +55,6 @@ binary_fetch/Release/
 
 # vscode
 .history/
+
+# CMake build directory
+build/
