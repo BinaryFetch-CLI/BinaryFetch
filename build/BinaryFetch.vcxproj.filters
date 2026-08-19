@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\AsciiArt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactAudio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactCPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactGPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactNetwork.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactOS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactPerformance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactUser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\compact_disk_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CPUInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\DisplayInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\DtailedGPUInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\ExtraInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\GPUInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\Helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\MemoryInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\NetworkInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\OSInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\PerformanceInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\personalization_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\StorageInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\SystemInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\TimeInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\UserInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="H:\programming\git_and_github\BinaryFetch\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\resources.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\version_info.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{69832B5D-80B1-3A5F-AEC2-830944AA502A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
