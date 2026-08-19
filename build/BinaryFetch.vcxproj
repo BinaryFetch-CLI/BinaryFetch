@@ -65,28 +65,32 @@
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">H:/programming/git_and_github/BinaryFetch</LocalDebuggerWorkingDirectory>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">H:\programming\git_and_github\BinaryFetch\build\bin\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BinaryFetch.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BinaryFetch</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='Release|x64'">H:/programming/git_and_github/BinaryFetch</LocalDebuggerWorkingDirectory>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">H:\programming\git_and_github\BinaryFetch\build\bin\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">BinaryFetch.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">BinaryFetch</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">H:/programming/git_and_github/BinaryFetch</LocalDebuggerWorkingDirectory>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">H:\programming\git_and_github\BinaryFetch\build\bin\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">BinaryFetch.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">BinaryFetch</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">H:/programming/git_and_github/BinaryFetch</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -102,21 +106,21 @@
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <SupportJustMyCode></SupportJustMyCode>
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -124,8 +128,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>user32.lib;shell32.lib;advapi32.lib;psapi.lib;iphlpapi.lib;wbemuuid.lib;ole32.lib;oleaut32.lib;version.lib;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main\amd64\nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -143,7 +147,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -158,24 +162,23 @@
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <SupportJustMyCode></SupportJustMyCode>
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
-      <WarningLevel>Level3</WarningLevel>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -183,8 +186,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>user32.lib;shell32.lib;advapi32.lib;psapi.lib;iphlpapi.lib;wbemuuid.lib;ole32.lib;oleaut32.lib;version.lib;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main\amd64\nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -192,7 +195,6 @@
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
       <ImportLibrary>H:/programming/git_and_github/BinaryFetch/build/Release/BinaryFetch.lib</ImportLibrary>
       <LinkErrorReporting></LinkErrorReporting>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ProgramDataBaseFile>H:/programming/git_and_github/BinaryFetch/build/bin/Release/BinaryFetch.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
@@ -203,7 +205,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -218,23 +220,23 @@
       <Optimization>MinSpace</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <SupportJustMyCode></SupportJustMyCode>
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -242,8 +244,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>user32.lib;shell32.lib;advapi32.lib;psapi.lib;iphlpapi.lib;wbemuuid.lib;ole32.lib;oleaut32.lib;version.lib;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main\amd64\nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -261,7 +263,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -277,21 +279,21 @@
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <SupportJustMyCode></SupportJustMyCode>
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE;_HAS_STD_BYTE=0;BINARYFETCH_HAS_NVAPI;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -299,8 +301,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>user32.lib;shell32.lib;advapi32.lib;psapi.lib;iphlpapi.lib;wbemuuid.lib;ole32.lib;oleaut32.lib;version.lib;H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\dependencies\NVAPI\nvapi-main\amd64\nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -374,36 +376,64 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\main.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\AsciiArt.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactAudio.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactCPU.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactGPU.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactMemory.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactNetwork.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactOS.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactPerformance.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactScreen.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactSystem.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CompactUser.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\compact_disk_info.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\CPUInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\DisplayInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\DtailedGPUInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\ExtraInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\GPUInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\Helpers.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\MemoryInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\NetworkInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\OSInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\PerformanceInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\personalization_info.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\StorageInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\SystemInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\TimeInfo.cpp" />
-    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\UserInfo.cpp" />
-    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\resources.rc" />
-    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\version_info.rc" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\main.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\core\AsciiArt.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\CPUInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\DisplayInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\DtailedGPUInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\ExtraInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\GPUInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\Helpers.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\MemoryInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\NetworkInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\OSInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\PerformanceInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\personalization_info.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\StorageInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\SystemInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\TimeInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\detailed\UserInfo.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactAudio.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactCPU.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactGPU.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactMemory.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactNetwork.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactOS.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactPerformance.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactScreen.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactSystem.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\CompactUser.cpp" />
+    <ClCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\cpp\windows\compact\compact_disk_info.cpp" />
+    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\binary_fetch_v1.rc" />
+    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\resources.rc" />
+    <ResourceCompile Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\resources\version_info.rc" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core\AsciiArt.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\core\json.hpp" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactAudio.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactCPU.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactGPU.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactMemory.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactNetwork.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactOS.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactPerformance.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactScreen.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactSystem.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\CompactUser.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\compact\compact_disk_info.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\CPUInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\DetailedGPUInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\DisplayInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\ExtraInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\GPUInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\MemoryInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\NetworkInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\OSInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\PerformanceInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\resource.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\StorageInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\SystemInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\TimeInfo.h" />
+    <ClInclude Include="H:\programming\git_and_github\BinaryFetch\src\BinaryFetch\include\detailed\UserInfo.h" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
