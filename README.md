@@ -5,26 +5,25 @@ An advanced Windows system information fetcher written in C++ — featuring self
 
 Built for Windows. Built to last. Built to be shared.
 
+## Key features of BinaryFetch
+```
 
-<details>
- <summary><h2> [ Click to expand Project Previews ] </h2></summary>
+1. Fully Customizable — Control modules, colors, layout, and displayed information through a simple JSON configuration.
+2. Custom ASCII Art — Replace the default artwork with your own and color individual sections using simple color codes.
+3. Compact & Detailed Modes — Get a quick system snapshot or switch to detailed hardware and system information.
+4. Comprehensive System Information — Display information about your CPU, GPU, RAM, storage, network, displays, audio,
+   OS, BIOS, power, and more.
 
-![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/06_preview.jpg)
-![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/05_preview.jpg)
-  
-  </details>
+5. Modular Architecture — Enable or disable individual information modules without modifying the source code.
+6. Self-Healing Configuration** — Missing, deleted, or corrupted configuration files are automatically restoredwith safe
+   defaults.
+
+7. Real-Time System Data — Monitor CPU, GPU, RAM, disk, and network usage directly from the terminal.
+8. Windows CLI — A native C++ system information tool designed for fast, clean terminal output.
+
+```
 
 
-##  What Makes BinaryFetch Different?
-
-
-BinaryFetch guarantees that **the program never crashes due to missing user files**.
-
-If a user:
-
-* deletes `BinaryArt.txt`
-* deletes `BinaryFetch_Config.json`
-* runs BinaryFetch for the first time
 
 
 
@@ -33,20 +32,12 @@ If a user:
 ![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/Ascii_art_tutorial.png?raw=true)
 
 ##  User Customization (Only 2 Files)
-you can modify and customize them safely from,
-
-`C:\Users\Public\BinaryFetch\`
+you can modify and customize them safely from, `C:\Users\Public\BinaryFetch\`
 | File               | Purpose                         |
 | ------------------ | ------------------------------- |
 | `BinaryArt.txt`    | User ASCII art (fully editable, copy-paste-done !) |
 | `BinaryFetch_Config.json` | Module configuration & layout   |
 
-That’s it.
-
-No profiles.
-No databases.
-No complex formats.
-## Color Code System
 
 ### And also you can customize each character's Color of your `BinaryArt.txt`
 
@@ -64,25 +55,32 @@ Use `$n` in your `BinaryArt.txt` file where `n` is the color number:
 |      |       |           | `$15` | Reset | `\033[0m` |
 
 ### Color Code Examples
+```
+Single color per line:**     $1⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿  Output: Entire line in red
 
-**Single color per line:**
-```
-$1⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-```
-Output: Entire line in red
+Multiple colors per line:**  $2⠀⣿⣿⣿⣿⣿⣿$3⣿⣿⣿⣿⣿⣿$1⣿⣿⣿⣿⣿⣿ Output: Green → Yellow → Red
 
-**Multiple colors per line:**
-```
-$2⠀⣿⣿⣿⣿⣿⣿$3⣿⣿⣿⣿⣿⣿$1⣿⣿⣿⣿⣿⣿
-```
-Output: Green → Yellow → Red
-
-**No color (default white or the default text color of your terminal):**
-```
-⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-```
+No color (default white or the default text color of your terminal): ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 Output: Standard white text
+```
+# BinaryFetch feature lists text preview...you can toggle and customize each module 
 
+![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Previews/Timeline%201%20(2).gif?raw=true)
+
+
+
+<details>
+ <summary><h2> [ Click to expand Project Previews ] </h2></summary>
+
+![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/06_preview.jpg)
+![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/05_preview.jpg)
+  
+  </details>
+
+
+
+<details>
+ <summary><h2> [ Click here to expand Project Infos ] </h2></summary>
 
 ##  Core Features Overview
 
@@ -129,23 +127,6 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 
 
 ---
-
-##  Engineering Back-Bone
-
-* ✅ First run always succeeds
-* ✅ User customization preserved
-* ✅ No duplicated logic
-* ✅ No orchestration spaghetti
-* ✅ Clean single-call API
-* ✅ Future-proof modularity
-
-
-# BinaryFetch feature lists text preview...you can toggle and customize each module 
-
-
-
-![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Previews/Timeline%201%20(2).gif?raw=true)
-
 
 
 # **BInaryFetch Feature Overview**
@@ -508,9 +489,14 @@ BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
 5. **Separation of Concerns:** Compact vs Detailed modules for different display needs
 
 ---
+  
+  </details>
+
+
+
 
 **Q: What about the Linux version of Binary Fetch?**  
-**A:** Unfortunately, right now there's no development plan about the linux version 
+**A:** It's under development.
 
 **Q: Does Binary Fetch share user data?**  
 **A:** No. Binary Fetch does not collect or share any user data.  
