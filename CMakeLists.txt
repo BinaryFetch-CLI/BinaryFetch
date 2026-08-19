@@ -59,11 +59,22 @@ set(SOURCES
     "${BINARYFETCH_DIR}/SystemInfo.cpp"
     "${BINARYFETCH_DIR}/TimeInfo.cpp"
     "${BINARYFETCH_DIR}/UserInfo.cpp"
-
-    # Windows resources
-    "${BINARYFETCH_DIR}/resources.rc"
-    "${BINARYFETCH_DIR}/version_info.rc"
 )
+
+# ============================================================
+# Windows Resources
+# ============================================================
+
+if(WIN32)
+
+    list(APPEND SOURCES
+
+        "${BINARYFETCH_DIR}/resources.rc"
+        "${BINARYFETCH_DIR}/version_info.rc"
+
+    )
+
+endif()
 
 # ============================================================
 # BinaryFetch executable
@@ -82,6 +93,7 @@ target_include_directories(BinaryFetch PRIVATE
     "${BINARYFETCH_DIR}"
 
     "${BINARYFETCH_DIR}/nlohmann"
+
 )
 
 # ============================================================
@@ -95,6 +107,7 @@ if(WIN32)
         UNICODE
         _UNICODE
         _CONSOLE
+
     )
 
     target_link_libraries(BinaryFetch PRIVATE
@@ -104,6 +117,7 @@ if(WIN32)
         ole32
         Gdi32
         Shell32
+
     )
 
 endif()
@@ -111,31 +125,55 @@ endif()
 # ============================================================
 # NVIDIA NVAPI
 # ============================================================
+#
+# NVAPI is Windows-only.
+#
+# Repository location:
+#
+# project_binary_fetch/
+# └── binary_fetch_v1/
+#     └── dependencies/
+#         └── NVAPI/
+#             └── nvapi-main/
+#
+# ============================================================
 
-# Temporary location.
-# Change this later to a portable dependency inside the project.
-set(NVAPI_ROOT "C:/NVAPI/nvapi-main")
+if(WIN32)
 
-if(WIN32 AND EXISTS "${NVAPI_ROOT}")
-
-    target_include_directories(BinaryFetch PRIVATE
-        "${NVAPI_ROOT}"
+    set(NVAPI_ROOT
+        "${BINARYFETCH_DIR}/dependencies/NVAPI/nvapi-main"
     )
 
-    target_link_directories(BinaryFetch PRIVATE
-        "${NVAPI_ROOT}/amd64"
-    )
+    if(EXISTS "${NVAPI_ROOT}")
 
-    target_link_libraries(BinaryFetch PRIVATE
-        nvapi64
-    )
+        message(STATUS "NVAPI found: ${NVAPI_ROOT}")
 
-else()
+        target_include_directories(BinaryFetch PRIVATE
 
-    message(WARNING
-        "NVAPI was not found at ${NVAPI_ROOT}. "
-        "GPU/NVIDIA functionality may fail to link."
-    )
+            "${NVAPI_ROOT}"
+
+        )
+
+        target_link_directories(BinaryFetch PRIVATE
+
+            "${NVAPI_ROOT}/amd64"
+
+        )
+
+        target_link_libraries(BinaryFetch PRIVATE
+
+            nvapi64
+
+        )
+
+    else()
+
+        message(WARNING
+            "NVAPI was not found at: ${NVAPI_ROOT}. "
+            "NVIDIA GPU functionality may fail to link."
+        )
+
+    endif()
 
 endif()
 
@@ -145,35 +183,41 @@ endif()
 
 if(MSVC)
 
+    # --------------------------------------------------------
     # Warning level
+    # --------------------------------------------------------
+
     target_compile_options(BinaryFetch PRIVATE
 
         /W3
         /permissive-
+
     )
 
     # --------------------------------------------------------
     # Fix Windows SDK / std::byte ambiguity
     # --------------------------------------------------------
-    #
-    # Windows headers define a global "byte" type while
-    # modern MSVC provides std::byte.
-    #
-    # This disables std::byte for this target and prevents
-    # the C2872 ambiguity in older Windows/COM headers.
-    #
+
     target_compile_definitions(BinaryFetch PRIVATE
 
         _HAS_STD_BYTE=0
+
     )
 
     # --------------------------------------------------------
-    # Static runtime
+    # Static MSVC runtime
+    #
+    # Debug   -> /MTd
+    # Release -> /MT
+    #
+    # This statically links the MSVC runtime into BinaryFetch.
     # --------------------------------------------------------
 
     set_property(TARGET BinaryFetch PROPERTY
+
         MSVC_RUNTIME_LIBRARY
         "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+
     )
 
     # --------------------------------------------------------
@@ -184,11 +228,13 @@ if(MSVC)
 
         $<$<CONFIG:Release>:/O2>
         $<$<CONFIG:Release>:/GL>
+
     )
 
     target_link_options(BinaryFetch PRIVATE
 
         $<$<CONFIG:Release>:/LTCG>
+
     )
 
 endif()
@@ -201,6 +247,7 @@ set_target_properties(BinaryFetch PROPERTIES
 
     RUNTIME_OUTPUT_DIRECTORY
         "${CMAKE_BINARY_DIR}/bin"
+
 )
 
 # ============================================================
@@ -216,4 +263,11 @@ message(STATUS " C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS " System: ${CMAKE_SYSTEM_NAME}")
 message(STATUS " MSVC: ${MSVC}")
 message(STATUS " Windows: ${WIN32}")
+
+if(WIN32)
+
+    message(STATUS " NVAPI: ${NVAPI_ROOT}")
+
+endif()
+
 message(STATUS "======================================")

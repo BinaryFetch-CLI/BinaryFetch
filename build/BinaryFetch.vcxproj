@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -113,10 +113,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -125,7 +125,7 @@
     </Midl>
     <Link>
       <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:/NVAPI/nvapi-main/amd64;C:/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -143,7 +143,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -172,10 +172,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -184,7 +184,7 @@
     </Midl>
     <Link>
       <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:/NVAPI/nvapi-main/amd64;C:/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -203,7 +203,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -231,10 +231,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -243,7 +243,7 @@
     </Midl>
     <Link>
       <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:/NVAPI/nvapi-main/amd64;C:/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -261,7 +261,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -288,10 +288,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;UNICODE;_UNICODE;_CONSOLE;_HAS_STD_BYTE=0;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;C:\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\include;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\nlohmann;H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\dependencies\NVAPI\nvapi-main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -300,7 +300,7 @@
     </Midl>
     <Link>
       <AdditionalDependencies>advapi32.lib;user32.lib;ole32.lib;Gdi32.lib;Shell32.lib;nvapi64.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:/NVAPI/nvapi-main/amd64;C:/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64;H:/programming/git_and_github/BinaryFetch/project_binary_fetch/binary_fetch_v1/dependencies/NVAPI/nvapi-main/amd64/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
