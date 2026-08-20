@@ -45,7 +45,7 @@
  * LOADING WORKFLOW
  * ------------------------------------------------------------
  *
- *        main.cpp
+ *        main.cppy
  *              |
  *              v
  *        AsciiArt::loadFromFile()
@@ -56,7 +56,7 @@
  *              v
  *        Does BinaryArt.txt exist?
  *              |
-*               v
+ *              v
  *    +-----------------------+
  *    |                       |
  *   YES                      NO
