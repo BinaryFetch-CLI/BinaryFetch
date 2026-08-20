@@ -249,33 +249,6 @@ static const std::map<int, std::string> colorMap = {
     {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
 };
 
-// ---------------- Embedded Default ASCII Art ----------------
-// This is the art that used to live in Default_Ascii_Art.txt / the
-// IDR_DEFAULT_ASCII Win32 resource. It now ships inside the binary
-// itself, so no external art file needs to sit next to the exe.
-//
-// WORKFLOW (unchanged in spirit, just the source of the art is new):
-//   1. loadFromFile() checks whether the user's art file already
-//      exists at getUserArtPath() (BinaryArt.txt).
-
-//   2. If it's missing, copyDefaultArt() writes kDefaultAsciiArt
-//      (the string below, baked into this .cpp) out to that path,
-//      creating the destination folder first if needed. This is the
-//      "self-heal" step — previously it pulled from a Win32 resource
-//      or an external DefaultAsciiArt.txt shipped next to the exe;
-//      now the art itself lives in the binary, so there's nothing
-//      external to lose or forget to ship.
-
-//   3. Either way, loadArtFromPath() then reads BinaryArt.txt back
-//      off disk and parses it into artLines/artWidths as usual, so
-//      the user can freely edit BinaryArt.txt afterward and have
-//      their changes picked up normally.
-
-//   4. loadArtFromEmbedded() is a last-resort fallback: if step 2
-//      fails to write to disk (e.g. permissions), it parses
-//      kDefaultAsciiArt directly from memory instead of failing out,
-//      so the program still has art to show even without disk access.
-
 
 
 /*
