@@ -276,6 +276,12 @@ static const std::map<int, std::string> colorMap = {
 //      kDefaultAsciiArt directly from memory instead of failing out,
 //      so the program still has art to show even without disk access.
 
+
+
+/*
+This exact ascii art will be pasted on the "C:\Users\Public\BinaryFetch\BinaryArt.txt"
+BinaryFetch will load it from "C:\Users\Public\BinaryFetch\BinaryArt.txt"
+*/
 static const std::string kDefaultAsciiArt =
 R"ASCIIART($1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
 $1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
