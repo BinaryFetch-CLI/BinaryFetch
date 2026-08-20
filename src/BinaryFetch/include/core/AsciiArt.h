@@ -6,7 +6,7 @@
 
 /*
  ---------------------------------------------------------
-    AsciiArt Utilities — Helper Functions (Declarations)
+    AsciiArt Utilities ï¿½ Helper Functions (Declarations)
  ---------------------------------------------------------
 
  These helpers deal with visual correctness when printing
@@ -41,21 +41,23 @@ void sanitizeLeadingInvisible(std::string& s);
 
   Responsible for:
    - Loading ASCII art from user's AppData folder
-   - Auto-creating the file from default template if missing
+   - Auto-creating the file from the embedded default art if missing
    - Keeping track of line widths
    - Reporting how tall and wide the art is
    - Providing safe access to art lines for real-time display
 
-  This class does NOT print anything itself — LivePrinter
+  This class does NOT print anything itself ï¿½ LivePrinter
   handles actual on-screen printing.
+
+  Windows-only.
 */
 class AsciiArt {
 public:
     AsciiArt();
 
     // Load ASCII art automatically from AppData location.
-    // If file doesn't exist, copies from Default_Ascii_Art.txt
-    // Returns true on success.
+    // If file doesn't exist, writes it out from the embedded
+    // default art baked into AsciiArt.cpp. Returns true on success.
     bool loadFromFile();
 
     // Advanced: Load from custom path (overrides default behavior)
@@ -89,11 +91,15 @@ private:
     // Internal helper: Ensure directory exists
     bool ensureDirectoryExists(const std::string& path) const;
 
-    // Internal helper: Copy default art to user location
+    // Internal helper: Write the embedded default art to user location
     bool copyDefaultArt(const std::string& destPath) const;
 
     // Internal helper: Load art from a specific file path
     bool loadArtFromPath(const std::string& filepath);
+
+    // Internal helper: Load art directly from the embedded default
+    // string (fallback used when writing to disk fails)
+    bool loadArtFromEmbedded();
 };
 
 
@@ -121,7 +127,7 @@ public:
     // Each call prints the next art line (or blank padding).
     void push(const std::string& infoLine);
 
-    // Same as push("") — convenient for spacing
+    // Same as push("") ï¿½ convenient for spacing
     void pushBlank();
 
     // After finishing all info lines, print any remaining
