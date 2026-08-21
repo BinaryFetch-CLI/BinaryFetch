@@ -58,6 +58,6 @@ binary_fetch/Release/
 
 # CMake build directory
 build/
-build_linux/
+build-linux/
 
 
