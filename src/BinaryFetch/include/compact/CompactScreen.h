@@ -1,8 +1,7 @@
-﻿#pragma once
+#pragma once
 
 #include <string>
 #include <vector>
-#include <windows.h>
 using namespace std;
 struct ScreenInfo {
     string name;           // Friendly display name (e.g., "ASUS VG27AQ")

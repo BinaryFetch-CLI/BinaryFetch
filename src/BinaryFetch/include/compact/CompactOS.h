@@ -1,7 +1,5 @@
 #pragma once
 #include <iostream>
-#include <windows.h>
-#include <VersionHelpers.h>
 using namespace std;
 class CompactOS {
 public:
