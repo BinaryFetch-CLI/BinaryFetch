@@ -8,7 +8,7 @@
 
 class ConfigManager {
 public:
-    explicit ConfigManager(bool devMode = false);
+    explicit ConfigManager(bool devMode = true);
 
     bool isLoaded() const;
 
@@ -22,20 +22,24 @@ public:
 
     // Color resolution
     std::string getColor(const std::string& section, const std::string& key, const std::string& defaultColor = "white") const;
-    std::string getNestedColor(const std::string& module, const std::string& subsection, const std::string& key, const std::string& defaultColor = "white") const;
+    std::string getNestedColor(const std::string& module, const std::string& subsection, const std::string& key, const std::string& defaultColor) const;
     std::string getNestedColor(const std::string& module, const std::string& path, const std::string& defaultColor = "white") const;
     std::string getNestedColor(const std::string& path, const std::string& defaultColor = "white") const;
     std::string getResetColor() const;
 
-    // Label resolution
+    // Label and Prefix resolution
     std::string getLabel(const std::string& section, const std::string& key, const std::string& defaultLabel = "") const;
     std::string getNestedLabel(const std::string& module, const std::string& section, const std::string& key, const std::string& defaultLabel = "") const;
+    std::string getPrefix(const std::string& section, const std::string& key, const std::string& defaultPrefix = "") const;
+    std::string getNestedPrefix(const std::string& module, const std::string& section, const std::string& key, const std::string& defaultPrefix = "") const;
 
     // Raw JSON access if required
     const nlohmann::json& getJson() const;
 
 private:
     void loadPlatformConfig(bool devMode);
+    std::string resolveSectionKey(const std::string& section) const;
+    std::string resolveSubsectionKey(const std::string& module, const std::string& subsection) const;
     std::string resolveColor(const std::string& colorName, const std::string& defaultColor) const;
 
     nlohmann::json m_config;

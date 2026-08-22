@@ -1,16 +1,19 @@
 {
-  "header": {
+  "header_settings": {
     "enabled": true,
     "prefix_color": "blue",
     "title_color": "red",
     "show_line": false,
     "line_color": "bright_blue"
   },
-  "compact_time": {
+  "date_and_time": {
     "enabled": true,
     "show_emoji": true,
     "emoji_color": "bright_cyan",
-    "time_section": {
+    "prefixes": {
+      "emoji": "📅 "
+    },
+    "time": {
       "enabled": true,
       "show_label": true,
       "show_hour": true,
@@ -25,12 +28,12 @@
         "sep": "cyan"
       }
     },
-    "date_section": {
+    "date": {
       "enabled": true,
       "show_label": true,
       "show_day": true,
       "show_month_name": true,
-      "show_month_num": false,
+      "show_month_num": true,
       "show_year": true,
       "colors": {
         "bracket": "blue",
@@ -42,7 +45,7 @@
         "sep": "bright_blue"
       }
     },
-    "week_section": {
+    "week": {
       "enabled": true,
       "show_label": true,
       "show_num": true,
@@ -55,8 +58,8 @@
         "sep": "blue"
       }
     },
-    "leap_section": {
-      "enabled": false,
+    "leap_year": {
+      "enabled": true,
       "show_label": true,
       "show_val": true,
       "colors": {
@@ -66,14 +69,19 @@
       }
     }
   },
-
-  "compact_os": {
+  "operating_system": {
     "enabled": true,
     "show_name": true,
     "show_build": true,
     "show_arch": true,
     "show_uptime": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "🚀 "
+    },
+    "labels": {
+      "OS": "OS"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "OS": "red",
@@ -87,13 +95,19 @@
       "uptime_value_color": "bright_cyan"
     }
   },
-  "compact_cpu": {
+  "processor": {
     "enabled": true,
     "show_name": true,
     "show_cores": true,
     "show_threads": true,
     "show_clock": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "🧠 "
+    },
+    "labels": {
+      "CPU": "CPU"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "CPU": "red",
@@ -109,13 +123,19 @@
       "clock_color": "cyan"
     }
   },
-  "compact_gpu": {
+  "graphics_card": {
     "enabled": true,
     "show_name": true,
     "show_usage": true,
     "show_vram": true,
     "show_freq": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "🔥 "
+    },
+    "labels": {
+      "GPU": "GPU"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "GPU": "red",
@@ -129,16 +149,21 @@
       "freq_color": "cyan"
     }
   },
-
-  "compact_screen": {
+  "display_monitor": {
     "enabled": true,
     "show_header": true,
     "show_name": true,
     "show_resolution": true,
     "show_scale": true,
-    "show_upscale": false,
+    "show_upscale": true,
     "show_refresh": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "📺 "
+    },
+    "labels": {
+      "Display": "Display"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "Display": "red",
@@ -157,12 +182,18 @@
       "refresh_color": "blue"
     }
   },
-  "compact_memory": {
+  "system_memory": {
     "enabled": true,
     "show_total": true,
     "show_free": true,
     "show_percent": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "📟 "
+    },
+    "labels": {
+      "Memory": "Memory"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "Memory": "red",
@@ -175,12 +206,20 @@
       "percent_color": "bright_cyan"
     }
   },
-  "compact_audio": {
+  "audio_devices": {
     "enabled": true,
     "show_input": true,
     "show_output": true,
     "show_audio_input_emoji": true,
     "show_audio_output_emoji": true,
+    "prefixes": {
+      "input_emoji": "🎙️ ",
+      "output_emoji": "🎧 "
+    },
+    "labels": {
+      "Audio Input": "Audio Input",
+      "Audio Output": "Audio Output"
+    },
     "colors": {
       "audio_input_emoji_color": "bright_cyan",
       "audio_output_emoji_color": "bright_cyan",
@@ -195,13 +234,19 @@
       "status_color": "blue"
     }
   },
-  "compact_performance": {
+  "resource_usage": {
     "enabled": true,
     "show_cpu": true,
     "show_gpu": true,
     "show_ram": true,
     "show_disk": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "🔋 "
+    },
+    "labels": {
+      "Performance": "Performance"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "Performance": "red",
@@ -215,12 +260,18 @@
       "disk_color": "bright_cyan"
     }
   },
-  "compact_user": {
+  "user_account": {
     "enabled": true,
     "show_username": true,
     "show_domain": true,
     "show_type": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "☕ "
+    },
+    "labels": {
+      "User": "User"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "User": "red",
@@ -233,12 +284,18 @@
       "type_color": "bright_blue"
     }
   },
-  "compact_network": {
+  "network_connection": {
     "enabled": true,
     "show_name": true,
     "show_type": true,
     "show_ip": true,
     "show_emoji": true,
+    "prefixes": {
+      "emoji": "🌐 "
+    },
+    "labels": {
+      "Network": "Network"
+    },
     "colors": {
       "emoji_color": "bright_cyan",
       "Network": "red",
@@ -251,30 +308,20 @@
       "ip_color": "bright_cyan"
     }
   },
-  "dummy_compact_network": {
-    "enabled": false,
-    "show_name": true,
-    "show_type": true,
-    "show_ip": true,
-    "show_emoji": true,
-    "colors": {
-      "emoji_color": "bright_cyan",
-      "Network": "red",
-      "(": "cyan",
-      ")": "cyan",
-      "Network_:": "red",
-      "label_color": "bright_cyan",
-      "name_color": "bright_cyan",
-      "type_color": "bright_cyan",
-      "ip_color": "bright_cyan"
-    }
-  },
-  "compact_disk": {
+  "disk_storage": {
     "enabled": true,
     "show_usage": true,
     "show_capacity": true,
     "show_disk_usage_emoji": true,
     "show_disk_capacity_emoji": true,
+    "prefixes": {
+      "usage_emoji": "📂 ",
+      "capacity_emoji": "📊 "
+    },
+    "labels": {
+      "Disk Usage": "Disk Usage",
+      "Disk Cap": "Disk Cap"
+    },
     "colors": {
       "disk_usage_emoji_color": "bright_cyan",
       "disk_capacity_emoji_color": "bright_cyan",
@@ -291,7 +338,7 @@
       "capacity_color": "bright_cyan"
     }
   },
-  "detailed_memory": {
+  "memory_details": {
     "enabled": true,
     "sections": {
       "header": true,
@@ -299,6 +346,14 @@
       "free": true,
       "used_percentage": true,
       "modules": true
+    },
+    "prefixes": {
+      "header": ">>~ ",
+      "suffix": " -------------------------*",
+      "item": "~"
+    },
+    "labels": {
+      "header": "Memory Info"
     },
     "colors": {
       ">>~": "blue",
@@ -317,7 +372,7 @@
       "speed": "bright_blue"
     }
   },
-  "detailed_storage": {
+  "storage_details": {
     "enabled": true,
     "sections": {
       "storage_summary": true,
@@ -329,6 +384,13 @@
         "show_header": true,
         "line_color": "blue",
         "title_color": "red"
+      },
+      "prefixes": {
+        "header": "------------------------- ",
+        "suffix": " --------------------------"
+      },
+      "labels": {
+        "header": "STORAGE SUMMARY"
       },
       "show_storage_type": true,
       "show_drive_letter": true,
@@ -362,6 +424,13 @@
         "line_color": "blue",
         "title_color": "bright_cyan"
       },
+      "prefixes": {
+        "header": "-------------------- ",
+        "suffix": " --------------------"
+      },
+      "labels": {
+        "header": "DISK PERFORMANCE & DETAILS"
+      },
       "show_drive_letter": true,
       "drive_letter_color": "red",
       "show_read_speed": true,
@@ -385,8 +454,15 @@
     "disk_performance_predicted": {
       "header": {
         "show_header": true,
-        "line_color": "blue",
+        "line_color": "bright_cyan",
         "title_color": "bright_cyan"
+      },
+      "prefixes": {
+        "header": "---------------- ",
+        "suffix": " ------------"
+      },
+      "labels": {
+        "header": "DISK PERFORMANCE & DETAILS (Predicted)"
       },
       "show_drive_letter": true,
       "drive_letter_color": "bright_blue",
@@ -409,7 +485,7 @@
       "|": "blue"
     }
   },
-  "network_info": {
+  "network_details": {
     "enabled": true,
     "show_header": true,
     "show_name": true,
@@ -420,7 +496,13 @@
     "show_mac": true,
     "show_upload": true,
     "show_download": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "---------------------------------------------------#"
+    },
     "labels": {
+      "header": "Network Info ",
       "prefix": "Network",
       "name": "Network Name",
       "type": "Network Type",
@@ -453,40 +535,7 @@
     "download_label_color": "blue",
     "download_value_color": "blue"
   },
-  "dummy_network_info": {
-    "enabled": false,
-    "show_header": true,
-    "show_name": true,
-    "show_type": true,
-    "show_local_ip": true,
-    "show_public_ip": true,
-    "show_locale": true,
-    "show_mac": true,
-    "show_upload": true,
-    "show_download": true,
-    "#-": "bright_blue",
-    "~": "red",
-    ":": "red",
-    "separator_line": "cyan",
-    "header_text_color": "red",
-    "name_label_color": "blue",
-    "name_value_color": "blue",
-    "type_label_color": "blue",
-    "type_value_color": "bright_cyan",
-    "local_ip_label_color": "blue",
-    "local_ip_color": "cyan",
-    "public_ip_label_color": "blue",
-    "public_ip_color": "cyan",
-    "locale_label_color": "blue",
-    "locale_value_color": "bright_cyan",
-    "mac_label_color": "blue",
-    "mac_value_color": "blue",
-    "upload_label_color": "blue",
-    "upload_value_color": "bright_cyan",
-    "download_label_color": "blue",
-    "download_value_color": "blue"
-  },
-  "os_info": {
+  "operating_system_details": {
     "enabled": true,
     "show_header": true,
     "show_name": true,
@@ -496,7 +545,13 @@
     "show_uptime": true,
     "show_install_date": true,
     "show_serial": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "-----------------------------------------------#"
+    },
     "labels": {
+      "header": "Operating System ",
       "name": "Name",
       "build": "Build",
       "architecture": "Architecture",
@@ -525,7 +580,7 @@
     "serial_label_color": "blue",
     "serial_value_color": "blue"
   },
-  "cpu_info": {
+  "processor_details": {
     "enabled": true,
     "show_header": true,
     "show_brand": true,
@@ -539,7 +594,13 @@
     "show_l1_cache": true,
     "show_l2_cache": true,
     "show_l3_cache": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "-------------------------------------------------------#"
+    },
     "labels": {
+      "header": "CPU Info ",
       "brand": "Brand",
       "utilization": "Utilization",
       "speed": "Speed",
@@ -581,7 +642,7 @@
     "l3_cache_label_color": "blue",
     "l3_cache_value_color": "bright_cyan"
   },
-  "gpu_info": {
+  "graphics_details": {
     "enabled": true,
     "show_header": true,
     "show_gpu_index": true,
@@ -593,7 +654,20 @@
     "show_temperature": true,
     "show_cores": true,
     "show_primary_details": true,
+    "prefixes": {
+      "item": "~ ",
+      "item_alt": "~ ",
+      "header": "#- ",
+      "suffix": "-------------------------------------------------------#",
+      "gpu_header": "#- ",
+      "gpu_suffix": "----------------------------------------------------------#",
+      "p_header": "#- ",
+      "p_suffix": "---------------------------------------------#"
+    },
     "labels": {
+      "header": "GPU Info ",
+      "gpu_header": "GPU ",
+      "p_header": "Primary GPU Details",
       "name": "Name",
       "memory": "Memory",
       "usage": "Usage",
@@ -635,11 +709,10 @@
     "freq_value_color": "bright_blue",
     "error_color": "bright_cyan"
   },
-  "display_info": {
+  "display_details": {
     "enabled": true,
-
     "show_display_banner": true,
-    "show_display_index": false,
+    "show_display_index": true,
     "show_name": true,
     "show_applied_resolution": true,
     "show_native_resolution": true,
@@ -647,7 +720,13 @@
     "show_scaling": true,
     "show_upscale": true,
     "show_dsr": true,
+    "prefixes": {
+      "item": "|-> ",
+      "header": "#- ",
+      "suffix": "------------------------------------------------------#"
+    },
     "labels": {
+      "header": "Display ",
       "name": "Name",
       "applied_res": "Applied Resolution",
       "native_res": "Native Resolution",
@@ -658,7 +737,6 @@
     },
     "display_banner_text": "red",
     "display_banner_line": "cyan",
-
     "colors": {
       "#-": "blue",
       "|->": "bright_cyan",
@@ -666,41 +744,30 @@
       "x": "blue",
       "@": "blue",
       "%": "blue",
-
       "header_text_color": "red",
       "separator_line": "cyan",
-
       "index_color": "bright_cyan",
-
       "name_label_color": "blue",
       "name_value_color": "bright_cyan",
-
       "applied_res_label_color": "blue",
       "applied_res_value_color": "bright_cyan",
-
       "native_res_label_color": "blue",
       "native_res_value_color": "bright_cyan",
-
       "aspect_ratio_label_color": "blue",
       "aspect_ratio_value_color": "bright_cyan",
-
       "scaling_label_color": "blue",
       "scaling_value_color": "bright_cyan",
-
       "upscale_label_color": "blue",
       "upscale_value_color": "bright_cyan",
-
       "hz_color": "cyan",
-
       "dsr_label_color": "blue",
       "dsr_enabled_color": "bright_cyan",
       "dsr_disabled_color": "cyan",
       "dsr_brackets_color": "blue",
       "dsr_type_color": "bright_cyan"
     }
-
   },
-  "bios_mb_info": {
+  "bios_and_motherboard": {
     "enabled": true,
     "show_header": true,
     "show_bios_vendor": true,
@@ -708,7 +775,13 @@
     "show_bios_date": true,
     "show_mb_model": true,
     "show_mb_manufacturer": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "----------------------------------------#"
+    },
     "labels": {
+      "header": "BIOS & Motherboard Info ",
       "vendor": "Bios Vendor",
       "version": "Bios Version",
       "date": "Bios Date",
@@ -731,13 +804,19 @@
     "mfg_label_color": "blue",
     "mfg_value_color": "bright_cyan"
   },
-  "user_info": {
+  "user_details": {
     "enabled": true,
     "show_header": true,
     "show_username": true,
     "show_computer_name": true,
     "show_domain": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "------------------------------------------------------#"
+    },
     "labels": {
+      "header": "User Info ",
       "username": "Username",
       "computer_name": "Computer Name",
       "domain": "Domain"
@@ -754,7 +833,7 @@
     "domain_label_color": "blue",
     "domain_value_color": "bright_blue"
   },
-  "performance_info": {
+  "performance_monitor": {
     "enabled": true,
     "show_header": true,
     "show_uptime": true,
@@ -762,7 +841,13 @@
     "show_ram_usage": true,
     "show_disk_usage": true,
     "show_gpu_usage": true,
+    "prefixes": {
+      "item": "~ ",
+      "header": "#- ",
+      "suffix": "-----------------------------------------------#"
+    },
     "labels": {
+      "header": "Performance Info ",
       "uptime": "System Uptime",
       "cpu_usage": "CPU Usage",
       "ram_usage": "RAM Usage",
@@ -783,13 +868,27 @@
     "gpu_usage_label_color": "blue",
     "usage_value_color": "bright_cyan"
   },
-  "audio_power_info": {
+  "audio_and_power": {
     "enabled": true,
     "show_output_header": true,
     "show_input_header": true,
     "show_active_status": true,
     "show_power_info": true,
     "show_power_header": true,
+    "prefixes": {
+      "item": "~ ",
+      "audio_output_header": "#- ",
+      "audio_output_suffix": "---------------------------------------------------#",
+      "audio_input_header": "#- ",
+      "audio_input_suffix": "----------------------------------------------------#",
+      "power_header": "#- ",
+      "power_suffix": "---------------------------------------------------------#"
+    },
+    "labels": {
+      "audio_output_header": "Audio Output ",
+      "audio_input_header": "Audio Input ",
+      "power_header": "Power  "
+    },
     "#-": "bright_blue",
     "~": "red",
     "separator_line": "cyan",

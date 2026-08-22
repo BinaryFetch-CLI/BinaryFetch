@@ -519,6 +519,7 @@ if(MSVC)
 
     target_compile_options(BinaryFetch
         PRIVATE
+            /utf-8
             /W4
             /permissive-
     )
