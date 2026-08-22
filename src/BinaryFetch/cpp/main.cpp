@@ -117,14 +117,7 @@ int main(){
     
     */
 
-	//com initialization
-    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hr)) {
-        cout << "Failed to initialize COM library. Error: 0x"
-            << hex << hr << endl;
-        return 1;
-    }
-
+	
 
 
     
@@ -2375,7 +2368,7 @@ int main(){
 
 
     // End of CoUninitialize 
-    CoUninitialize(); 
+    
     // Uninitializes the COM library for the current thread, releasing 
     // resources allocated by COM and cleaning up any COM-related 
     // state. Should be called once for every successful CoInitialize() 
