@@ -24,39 +24,50 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # ============================================================
 
 set(BINARYFETCH_ROOT
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/BinaryFetch
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/BinaryFetch"
 )
 
 set(BINARYFETCH_CPP
-    ${BINARYFETCH_ROOT}/cpp
+    "${BINARYFETCH_ROOT}/cpp"
 )
 
 set(BINARYFETCH_INCLUDE
-    ${BINARYFETCH_ROOT}/include
+    "${BINARYFETCH_ROOT}/include"
 )
 
 set(BINARYFETCH_DEPENDENCIES
-    ${BINARYFETCH_ROOT}/dependencies
-)
-
-# ------------------------------------------------------------
-# NVAPI Root Directory
-#
-# Contains:
-#
-#   nvapi.h
-#   nvapi_interface.h
-#   nvapi_lite_*.h
-#   amd64/nvapi64.lib
-#
-# ------------------------------------------------------------
-
-set(BINARYFETCH_NVAPI
-    ${BINARYFETCH_DEPENDENCIES}/NVAPI/nvapi-main
+    "${BINARYFETCH_ROOT}/dependencies"
 )
 
 set(BINARYFETCH_RESOURCES
-    ${BINARYFETCH_ROOT}/resources
+    "${BINARYFETCH_ROOT}/resources"
+)
+
+# ============================================================
+# NVIDIA Dependencies
+# ============================================================
+
+# ------------------------------------------------------------
+# Windows NVAPI
+# ------------------------------------------------------------
+
+set(BINARYFETCH_NVAPI
+    "${BINARYFETCH_DEPENDENCIES}/NVAPI/nvapi-main"
+)
+
+# ------------------------------------------------------------
+# Linux NVML
+#
+# Bundled header:
+#
+# dependencies/NVML/usr/include/nvml.h
+#
+# NVML itself is NOT linked at build time.
+# CompactGPU.cpp loads libnvidia-ml.so.1 dynamically.
+# ------------------------------------------------------------
+
+set(BINARYFETCH_NVML_INCLUDE
+    "${BINARYFETCH_DEPENDENCIES}/NVML/usr/include"
 )
 
 # ============================================================
@@ -83,15 +94,6 @@ endif()
 
 # ============================================================
 # Common Header Files
-#
-# These headers are shared by the platform implementations.
-#
-# Example:
-#
-#   Windows/CPUInfo.cpp ─────┐
-#                            ├──> include/detailed/CPUInfo.h
-#   Linux/CPUInfo.cpp ───────┘
-#
 # ============================================================
 
 set(BINARYFETCH_HEADERS
@@ -100,43 +102,43 @@ set(BINARYFETCH_HEADERS
     # Core
     # --------------------------------------------------------
 
-    ${BINARYFETCH_INCLUDE}/core/AsciiArt.h
-    ${BINARYFETCH_INCLUDE}/core/json.hpp
-    ${BINARYFETCH_INCLUDE}/core/resource.h
+    "${BINARYFETCH_INCLUDE}/core/AsciiArt.h"
+    "${BINARYFETCH_INCLUDE}/core/json.hpp"
+    "${BINARYFETCH_INCLUDE}/core/resource.h"
 
     # --------------------------------------------------------
     # Compact
     # --------------------------------------------------------
 
-    ${BINARYFETCH_INCLUDE}/compact/CompactAudio.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactCPU.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactGPU.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactMemory.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactNetwork.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactOS.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactPerformance.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactScreen.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactSystem.h
-    ${BINARYFETCH_INCLUDE}/compact/CompactUser.h
-    ${BINARYFETCH_INCLUDE}/compact/compact_disk_info.h
-    ${BINARYFETCH_INCLUDE}/compact/TimeInfo.h
+    "${BINARYFETCH_INCLUDE}/compact/CompactAudio.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactCPU.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactGPU.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactMemory.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactNetwork.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactOS.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactPerformance.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactScreen.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactSystem.h"
+    "${BINARYFETCH_INCLUDE}/compact/CompactUser.h"
+    "${BINARYFETCH_INCLUDE}/compact/compact_disk_info.h"
+    "${BINARYFETCH_INCLUDE}/compact/TimeInfo.h"
 
     # --------------------------------------------------------
     # Detailed
     # --------------------------------------------------------
 
-    ${BINARYFETCH_INCLUDE}/detailed/CPUInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/DetailedGPUInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/DisplayInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/ExtraInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/GPUInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/MemoryInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/NetworkInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/OSInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/PerformanceInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/StorageInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/SystemInfo.h
-    ${BINARYFETCH_INCLUDE}/detailed/UserInfo.h
+    "${BINARYFETCH_INCLUDE}/detailed/CPUInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/DetailedGPUInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/DisplayInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/ExtraInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/GPUInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/MemoryInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/NetworkInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/OSInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/PerformanceInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/StorageInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/SystemInfo.h"
+    "${BINARYFETCH_INCLUDE}/detailed/UserInfo.h"
 )
 
 # ============================================================
@@ -157,49 +159,49 @@ if(WIN32)
         # Main
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/main.cpp
+        "${BINARYFETCH_CPP}/main.cpp"
 
         # ----------------------------------------------------
         # Core
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp
+        "${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp"
 
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/windows/detailed/CPUInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/DisplayInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/DtailedGPUInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/ExtraInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/GPUInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/Helpers.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/MemoryInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/NetworkInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/OSInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/PerformanceInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/personalization_info.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/StorageInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/SystemInfo.cpp
-        ${BINARYFETCH_CPP}/windows/detailed/UserInfo.cpp
+        "${BINARYFETCH_CPP}/windows/detailed/CPUInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/DisplayInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/DtailedGPUInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/ExtraInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/GPUInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/Helpers.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/MemoryInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/NetworkInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/OSInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/PerformanceInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/personalization_info.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/StorageInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/SystemInfo.cpp"
+        "${BINARYFETCH_CPP}/windows/detailed/UserInfo.cpp"
 
         # ----------------------------------------------------
         # Compact Information
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/windows/compact/CompactAudio.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactCPU.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactGPU.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactMemory.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactNetwork.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactOS.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactPerformance.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactScreen.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactSystem.cpp
-        ${BINARYFETCH_CPP}/windows/compact/CompactUser.cpp
-        ${BINARYFETCH_CPP}/windows/compact/compact_disk_info.cpp
-        ${BINARYFETCH_CPP}/windows/compact/TimeInfo.cpp
+        "${BINARYFETCH_CPP}/windows/compact/CompactAudio.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactCPU.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactGPU.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactMemory.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactNetwork.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactOS.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactPerformance.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactScreen.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactSystem.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/CompactUser.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/compact_disk_info.cpp"
+        "${BINARYFETCH_CPP}/windows/compact/TimeInfo.cpp"
     )
 
     # --------------------------------------------------------
@@ -208,9 +210,9 @@ if(WIN32)
 
     set(BINARYFETCH_RESOURCE_FILES
 
-        ${BINARYFETCH_RESOURCES}/binary_fetch_v1.rc
-        ${BINARYFETCH_RESOURCES}/resources.rc
-        ${BINARYFETCH_RESOURCES}/version_info.rc
+        "${BINARYFETCH_RESOURCES}/binary_fetch_v1.rc"
+        "${BINARYFETCH_RESOURCES}/resources.rc"
+        "${BINARYFETCH_RESOURCES}/version_info.rc"
     )
 
     enable_language(RC)
@@ -222,70 +224,69 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
 
     # ========================================================
-    # LINUX DEVELOPMENT BUILD
+    # LINUX BUILD
     # ========================================================
 
     message(STATUS "Configuring BinaryFetch for Linux")
 
     message(STATUS
-        "Linux development entry point: Linux_test_main.cpp"
+        "Linux entry point: Linux_test_main.cpp"
     )
 
     set(BINARYFETCH_SOURCES
 
         # ----------------------------------------------------
-        # Temporary Linux Test Entry Point
-        #
-        # This is intentionally NOT main.cpp.
-        #
-        # It allows Linux implementations to be tested
-        # independently before merging the final Linux logic
-        # into the production main.cpp.
+        # Linux Test Entry Point
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/Linux_test_main.cpp
+        "${BINARYFETCH_CPP}/Linux_test_main.cpp"
 
         # ----------------------------------------------------
         # Core
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp
+        "${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp"
 
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/Linux/detailed/CPUInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/DisplayInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/DtailedGPUInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/ExtraInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/GPUInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/Helpers.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/MemoryInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/NetworkInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/OSInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/PerformanceInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/StorageInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/SystemInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/UserInfo.cpp
-        ${BINARYFETCH_CPP}/Linux/detailed/personalization_info.cpp
+        "${BINARYFETCH_CPP}/Linux/detailed/CPUInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/DisplayInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/DtailedGPUInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/ExtraInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/GPUInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/Helpers.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/MemoryInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/NetworkInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/OSInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/PerformanceInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/StorageInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/SystemInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/UserInfo.cpp"
+        "${BINARYFETCH_CPP}/Linux/detailed/personalization_info.cpp"
 
         # ----------------------------------------------------
         # Compact Information
         # ----------------------------------------------------
 
-        ${BINARYFETCH_CPP}/Linux/compact/CompactAudio.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactCPU.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactGPU.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactMemory.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactNetwork.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactOS.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactPerformance.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactScreen.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactSystem.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/CompactUser.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/compact_disk_info.cpp
-        ${BINARYFETCH_CPP}/Linux/compact/TimeInfo.cpp
+        "${BINARYFETCH_CPP}/Linux/compact/CompactAudio.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactCPU.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactMemory.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactNetwork.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactOS.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactPerformance.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactScreen.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactSystem.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/CompactUser.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/compact_disk_info.cpp"
+        "${BINARYFETCH_CPP}/Linux/compact/TimeInfo.cpp"
+
+        # ----------------------------------------------------
+        # Linux GPU
+        # ----------------------------------------------------
+
+        "${BINARYFETCH_CPP}/Linux/compact/CompactGPU.cpp"
     )
 
 endif()
@@ -311,8 +312,7 @@ elseif(UNIX AND NOT APPLE)
 
         message(FATAL_ERROR
             "Linux_test_main.cpp was not found:\n"
-            "  ${BINARYFETCH_CPP}/Linux_test_main.cpp\n\n"
-            "This file is currently the temporary Linux development entry point."
+            "  ${BINARYFETCH_CPP}/Linux_test_main.cpp"
         )
 
     endif()
@@ -336,105 +336,66 @@ target_include_directories(BinaryFetch
 
     PRIVATE
 
-        # ----------------------------------------------------
-        # Project headers
-        # ----------------------------------------------------
-
-        ${BINARYFETCH_INCLUDE}
-
-        ${BINARYFETCH_INCLUDE}/core
-        ${BINARYFETCH_INCLUDE}/compact
-        ${BINARYFETCH_INCLUDE}/detailed
-
-        # ----------------------------------------------------
-        # General dependencies
-        # ----------------------------------------------------
-
-        ${BINARYFETCH_DEPENDENCIES}
+        "${BINARYFETCH_INCLUDE}"
+        "${BINARYFETCH_INCLUDE}/core"
+        "${BINARYFETCH_INCLUDE}/compact"
+        "${BINARYFETCH_INCLUDE}/detailed"
+        "${BINARYFETCH_DEPENDENCIES}"
 )
 
 # ============================================================
-# Windows Configuration
+# WINDOWS CONFIGURATION
 # ============================================================
 
 if(WIN32)
 
-    # --------------------------------------------------------
-    # NVAPI Header Include Directory
-    #
-    # nvapi.h is located directly inside:
-    #
-    # dependencies/NVAPI/nvapi-main/
-    #
-    # This directory MUST be added to the compiler's
-    # include search path so:
-    #
-    #     #include <nvapi.h>
-    #
-    # can be resolved.
-    # --------------------------------------------------------
+    # ========================================================
+    # NVAPI Headers
+    # ========================================================
 
     if(EXISTS "${BINARYFETCH_NVAPI}/nvapi.h")
 
-        message(STATUS
-            "NVAPI headers found:"
-        )
-
-        message(STATUS
-            "  ${BINARYFETCH_NVAPI}"
-        )
+        message(STATUS "NVAPI headers found:")
+        message(STATUS "  ${BINARYFETCH_NVAPI}")
 
         target_include_directories(BinaryFetch
-
             PRIVATE
-
-                ${BINARYFETCH_NVAPI}
+                "${BINARYFETCH_NVAPI}"
         )
 
     else()
 
         message(FATAL_ERROR
             "NVAPI header was not found:\n"
-            "  ${BINARYFETCH_NVAPI}/nvapi.h\n\n"
-            "Expected NVAPI structure:\n"
-            "  dependencies/NVAPI/nvapi-main/nvapi.h"
+            "  ${BINARYFETCH_NVAPI}/nvapi.h"
         )
 
     endif()
 
-    # --------------------------------------------------------
+    # ========================================================
     # Windows Definitions
-    # --------------------------------------------------------
+    # ========================================================
 
     target_compile_definitions(BinaryFetch
-
         PRIVATE
 
             NOMINMAX
             WIN32_LEAN_AND_MEAN
             _CRT_SECURE_NO_WARNINGS
+
             UNICODE
             _UNICODE
 
-            # ------------------------------------------------
-            # Fix MSVC / Windows SDK std::byte ambiguity
-            # ------------------------------------------------
-
             _HAS_STD_BYTE=0
-
-            # ------------------------------------------------
-            # Tell the source code that NVAPI is available
-            # ------------------------------------------------
 
             BINARYFETCH_HAS_NVAPI
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # Windows Libraries
-    # --------------------------------------------------------
+    # ========================================================
 
     target_link_libraries(BinaryFetch
-
         PRIVATE
 
             user32
@@ -449,35 +410,20 @@ if(WIN32)
     )
 
     # ========================================================
-    # NVAPI
+    # NVAPI Library
     # ========================================================
 
     set(NVAPI_LIBRARY
-        ${BINARYFETCH_NVAPI}/amd64/nvapi64.lib
+        "${BINARYFETCH_NVAPI}/amd64/nvapi64.lib"
     )
-
-    # --------------------------------------------------------
-    # Verify NVAPI library
-    # --------------------------------------------------------
 
     if(EXISTS "${NVAPI_LIBRARY}")
 
-        message(STATUS
-            "NVAPI library found:"
-        )
-
-        message(STATUS
-            "  ${NVAPI_LIBRARY}"
-        )
-
-        # ----------------------------------------------------
-        # Link NVAPI
-        # ----------------------------------------------------
+        message(STATUS "NVAPI library found:")
+        message(STATUS "  ${NVAPI_LIBRARY}")
 
         target_link_libraries(BinaryFetch
-
             PRIVATE
-
                 "${NVAPI_LIBRARY}"
         )
 
@@ -485,9 +431,7 @@ if(WIN32)
 
         message(FATAL_ERROR
             "NVAPI library was not found:\n"
-            "  ${NVAPI_LIBRARY}\n\n"
-            "Expected NVAPI structure:\n"
-            "  dependencies/NVAPI/nvapi-main/amd64/nvapi64.lib"
+            "  ${NVAPI_LIBRARY}"
         )
 
     endif()
@@ -495,30 +439,73 @@ if(WIN32)
 endif()
 
 # ============================================================
-# Linux Configuration
+# LINUX CONFIGURATION
 # ============================================================
 
 if(UNIX AND NOT APPLE)
 
-    message(STATUS
-        "Linux-specific dependencies enabled"
-    )
+    message(STATUS "Linux-specific dependencies enabled")
 
-    # --------------------------------------------------------
-    # Linux libraries
-    #
-    # Add platform libraries here only when the Linux
-    # implementations actually require them.
-    # --------------------------------------------------------
+    # ========================================================
+    # Threads
+    # ========================================================
 
     find_package(Threads REQUIRED)
 
+    # ========================================================
+    # Dynamic Loader
+    #
+    # Required by:
+    #
+    #   dlopen()
+    #   dlsym()
+    #   dlclose()
+    #
+    # CompactGPU.cpp dynamically loads:
+    #
+    #   libnvidia-ml.so.1
+    #
+    # ========================================================
+
     target_link_libraries(BinaryFetch
-
         PRIVATE
-
             Threads::Threads
+            ${CMAKE_DL_LIBS}
     )
+
+    # ========================================================
+    # NVML Headers
+    # ========================================================
+
+    if(EXISTS "${BINARYFETCH_NVML_INCLUDE}/nvml.h")
+
+        message(STATUS "NVML headers found:")
+        message(STATUS "  ${BINARYFETCH_NVML_INCLUDE}/nvml.h")
+
+        target_include_directories(BinaryFetch
+            PRIVATE
+                "${BINARYFETCH_NVML_INCLUDE}"
+        )
+
+        target_compile_definitions(BinaryFetch
+            PRIVATE
+                BINARYFETCH_HAS_NVML
+        )
+
+        message(STATUS "NVML support: ENABLED")
+        message(STATUS "NVML mode:    Runtime dynamic loading")
+
+    else()
+
+        message(WARNING
+            "NVML headers were not found:\n"
+            "  ${BINARYFETCH_NVML_INCLUDE}/nvml.h\n\n"
+            "Building without compile-time NVML support."
+        )
+
+        message(STATUS "NVML support: DISABLED")
+
+    endif()
 
 endif()
 
@@ -529,9 +516,7 @@ endif()
 if(MSVC)
 
     target_compile_options(BinaryFetch
-
         PRIVATE
-
             /W4
             /permissive-
     )
@@ -539,9 +524,7 @@ if(MSVC)
 else()
 
     target_compile_options(BinaryFetch
-
         PRIVATE
-
             -Wall
             -Wextra
             -Wpedantic
@@ -557,14 +540,14 @@ set_target_properties(BinaryFetch
 
     PROPERTIES
 
-    RUNTIME_OUTPUT_DIRECTORY
-        ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY
+            "${CMAKE_BINARY_DIR}/bin"
 
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG
-        ${CMAKE_BINARY_DIR}/bin/Debug
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG
+            "${CMAKE_BINARY_DIR}/bin/Debug"
 
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE
-        ${CMAKE_BINARY_DIR}/bin/Release
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE
+            "${CMAKE_BINARY_DIR}/bin/Release"
 )
 
 # ============================================================
@@ -574,13 +557,10 @@ set_target_properties(BinaryFetch
 if(MSVC)
 
     set_property(
-
         TARGET BinaryFetch
-
         PROPERTY
-
-        VS_DEBUGGER_WORKING_DIRECTORY
-        "${CMAKE_CURRENT_SOURCE_DIR}"
+            VS_DEBUGGER_WORKING_DIRECTORY
+            "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 
 endif()
@@ -590,74 +570,33 @@ endif()
 # ============================================================
 
 message(STATUS "")
-
 message(STATUS "======================================")
 message(STATUS " BinaryFetch")
 message(STATUS "======================================")
 
-message(STATUS
-    " Source Root:   ${BINARYFETCH_ROOT}"
-)
-
-message(STATUS
-    " C++ Directory: ${BINARYFETCH_CPP}"
-)
-
-message(STATUS
-    " Include Dir:   ${BINARYFETCH_INCLUDE}"
-)
-
-message(STATUS
-    " Dependencies:  ${BINARYFETCH_DEPENDENCIES}"
-)
-
-message(STATUS
-    " Platform:      ${BINARYFETCH_PLATFORM}"
-)
-
-message(STATUS
-    " C++ Standard:  C++17"
-)
-
-message(STATUS
-    " Compiler:      ${CMAKE_CXX_COMPILER_ID}"
-)
-
-message(STATUS
-    " Version:       ${PROJECT_VERSION}"
-)
+message(STATUS " Source Root:   ${BINARYFETCH_ROOT}")
+message(STATUS " C++ Directory: ${BINARYFETCH_CPP}")
+message(STATUS " Include Dir:   ${BINARYFETCH_INCLUDE}")
+message(STATUS " Dependencies:  ${BINARYFETCH_DEPENDENCIES}")
+message(STATUS " Platform:      ${BINARYFETCH_PLATFORM}")
+message(STATUS " C++ Standard:  C++17")
+message(STATUS " Compiler:      ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS " Version:       ${PROJECT_VERSION}")
 
 if(WIN32)
 
-    message(STATUS
-        " Entry Point:   main.cpp"
-    )
-
-    message(STATUS
-        " NVAPI:         Enabled"
-    )
-
-    message(STATUS
-        " NVAPI Headers: ${BINARYFETCH_NVAPI}"
-    )
-
-    message(STATUS
-        " NVAPI Library: ${NVAPI_LIBRARY}"
-    )
-
-    message(STATUS
-        " Resources:     Windows RC enabled"
-    )
+    message(STATUS " Entry Point:   main.cpp")
+    message(STATUS " NVAPI:         Enabled")
+    message(STATUS " NVAPI Headers: ${BINARYFETCH_NVAPI}")
+    message(STATUS " NVAPI Library: ${NVAPI_LIBRARY}")
+    message(STATUS " Resources:     Windows RC enabled")
 
 elseif(UNIX AND NOT APPLE)
 
-    message(STATUS
-        " Entry Point:   Linux_test_main.cpp"
-    )
-
-    message(STATUS
-        " Mode:           Linux development/testing"
-    )
+    message(STATUS " Entry Point:   Linux_test_main.cpp")
+    message(STATUS " NVML Header:   ${BINARYFETCH_NVML_INCLUDE}/nvml.h")
+    message(STATUS " NVML Loading:  Runtime / dlopen")
+    message(STATUS " Mode:          Linux development/testing")
 
 endif()
 
