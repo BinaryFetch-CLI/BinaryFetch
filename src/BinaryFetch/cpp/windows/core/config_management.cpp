@@ -25,49 +25,84 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
     std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
     std::string configPath;
 
-    std::vector<std::string> candidatePaths = {
-        "src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-        "../src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-        "../../src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-        "../../../src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-        "resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json"
-    };
+    if (devMode) {
+        // DEV MODE: load directly from the project folder for fast iteration.
+        // Run from the project root (e.g. via the VS debugger's working directory).
+        configPath = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json";
 
-    std::string foundDevPath;
-    for (const auto& p : candidatePaths) {
-        std::ifstream testFile(p);
-        if (testFile.good()) {
-            foundDevPath = p;
-            break;
+        std::ifstream devCheck(configPath);
+        if (!devCheck.good()) {
+            std::cerr << "Warning: Could not find development configuration JSON file at: "
+                       << configPath << std::endl;
+            m_loaded = false;
+            return;
         }
-    }
-
-    // Always keep userConfigPath synced if dev source config is available
-    if (!foundDevPath.empty()) {
-        _mkdir(configDir.c_str());
-        std::ifstream src(foundDevPath, std::ios::binary);
-        std::ofstream dst(userConfigPath, std::ios::binary);
-        if (src.is_open() && dst.is_open()) {
-            dst << src.rdbuf();
-        }
-    }
-
-    if (devMode && !foundDevPath.empty()) {
-        configPath = foundDevPath;
     }
     else {
+        // PRODUCTION MODE: use the constant public folder, self-healing from
+        // a resource embedded in the EXE itself. No filesystem guessing —
+        // this works no matter where the exe is installed or launched from.
         configPath = userConfigPath;
+
+        // 1. Create the directory if it doesn't exist
+        if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            _mkdir(configDir.c_str());
+        }
+
+        // 2. Self-healing: if the user config is missing, extract the default
+        //    from the EXE's embedded RCDATA resource (IDR_DEFAULT_CONFIG = 101).
+        std::ifstream checkConfig(userConfigPath);
+        bool userConfigExists = checkConfig.good();
+        checkConfig.close();
+
+        if (!userConfigExists) {
+            HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(101), RT_RCDATA);
+            if (hRes) {
+                HGLOBAL hData = LoadResource(NULL, hRes);
+                DWORD size = SizeofResource(NULL, hRes);
+                const char* data = static_cast<const char*>(LockResource(hData));
+
+                std::ofstream userConfig(userConfigPath, std::ios::binary);
+                if (userConfig.is_open()) {
+                    userConfig.write(data, size);
+                    userConfig.close();
+                }
+                else {
+                    std::cerr << "Warning: Cannot write default configuration to " << userConfigPath << std::endl;
+                }
+            }
+            else {
+                std::cerr << "Warning: Internal resource IDR_DEFAULT_CONFIG not found." << std::endl;
+            }
+        }
     }
 
     std::ifstream configFile(configPath);
-    if (configFile.is_open()) {
-        try {
-            configFile >> m_config;
+    if (!configFile.is_open()) {
+        std::cerr << "Warning: Cannot open configuration file: " << configPath << std::endl;
+        m_loaded = false;
+        return;
+    }
+
+    try {
+        configFile >> m_config;
+        // Treat an empty JSON object {} as "not configured" — same effect as a missing file.
+        // This means clearing the config file to {} or empty will show only ASCII art,
+        // consistent with the behaviour of DEV_MODE when the source JSON is blank.
+        if (m_config.is_object() && m_config.empty()) {
+            std::cerr << "Warning: Configuration file is empty ({}). Treating as unconfigured." << std::endl;
+            m_loaded = false;
+        } else {
             m_loaded = true;
         }
-        catch (...) {
-            m_loaded = false;
-        }
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Warning: Failed to parse configuration JSON (" << e.what() << ")." << std::endl;
+        m_loaded = false;
+    }
+    catch (...) {
+        std::cerr << "Warning: Failed to parse configuration JSON." << std::endl;
+        m_loaded = false;
     }
 }
 
@@ -171,8 +206,12 @@ std::string ConfigManager::resolveColor(const std::string& colorName, const std:
 }
 
 bool ConfigManager::isEnabled(const std::string& rawSection) const {
+    // If config failed to load (missing file, empty {}, parse error) → show nothing.
+    // Only the ASCII art renders in this state, which is the expected fail-safe.
+    if (!m_loaded) return false;
     std::string section = resolveSectionKey(rawSection);
-    if (!m_loaded || !m_config.contains(section)) return false;
+    // Section missing from a *partial* config → default ON (backward-compatible with older configs).
+    if (!m_config.contains(section)) return true;
     return m_config[section].value("enabled", true);
 }
 
@@ -385,7 +424,7 @@ std::string ConfigManager::getNestedColor(const std::string& path, const std::st
 }
 
 std::string ConfigManager::getResetColor() const {
-    return "\033[0m";
+    return resolveColor("reset", "reset");
 }
 
 std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {

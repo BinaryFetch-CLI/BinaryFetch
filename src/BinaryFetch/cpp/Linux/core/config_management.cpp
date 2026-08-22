@@ -148,7 +148,7 @@ std::string ConfigManager::resolveColor(const std::string& colorName, const std:
 
 bool ConfigManager::isEnabled(const std::string& rawSection) const {
     std::string section = resolveSectionKey(rawSection);
-    if (!m_loaded || !m_config.contains(section)) return false;
+    if (!m_loaded || !m_config.contains(section)) return true;
     return m_config[section].value("enabled", true);
 }
 

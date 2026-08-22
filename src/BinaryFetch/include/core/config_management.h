@@ -8,7 +8,7 @@
 
 class ConfigManager {
 public:
-    explicit ConfigManager(bool devMode = true);
+    explicit ConfigManager(bool devMode = false);
 
     bool isLoaded() const;
 
