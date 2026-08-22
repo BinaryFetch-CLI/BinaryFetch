@@ -1,4 +1,4 @@
-﻿
+
 
 
 
@@ -21,6 +21,7 @@
 
 // ASCII Art functionality
 #include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+#include "core/config_management.h"
 
 
 // ------------------ Full System Info Modules ------------------
@@ -134,155 +135,9 @@ int main(){
         // Program continues even if art fails to load
     }
 
-    // ========== AUTO CONFIG FILE SETUP ==========
-    // true = dev mode (loads local file), false = production mode (extracts from EXE)
-    bool LOAD_DEFAULT_CONFIG = false; // must be false for production releases
-
-    string configDir = "C:\\Users\\Public\\BinaryFetch";
-    string userConfigPath = configDir + "\\BinaryFetch_Config.json";
-    string configPath;
-
-    if (LOAD_DEFAULT_CONFIG) {
-        // DEV MODE: Load directly from project folder for fast iteration 🧪
-        configPath = "resources\\Default_BinaryFetch_Config.json";
-    }
-    else {
-        // PRODUCTION MODE: Use constant public folder 🛰️
-        configPath = userConfigPath;
-
-        // 1. Create directory if it doesn't exist
-        if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
-            _mkdir(configDir.c_str());
-        }
-
-        // 2. Self-Healing: Check if user config exists, if not, extract from EXE memory
-        ifstream checkConfig(userConfigPath);
-        bool userConfigExists = checkConfig.good();
-        checkConfig.close();
-
-        if (!userConfigExists) {
-            // IDR_DEFAULT_CONFIG is 101 in your resource.h
-            HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(101), RT_RCDATA);
-            if (hRes) {
-                HGLOBAL hData = LoadResource(NULL, hRes);
-                DWORD size = SizeofResource(NULL, hRes);
-                const char* data = static_cast<const char*>(LockResource(hData));
-
-                ofstream userConfig(userConfigPath, ios::binary);
-                if (userConfig.is_open()) {
-                    userConfig.write(data, size);
-                    userConfig.close();
-                }
-            }
-            else {
-                cout << "Warning: Internal resource IDR_DEFAULT_CONFIG not found." << endl;
-            }
-        }
-    } 
-
-    // ========== CONFIG LOADING ==========
-    json config;
-    bool config_loaded = false; // must be false by default
-
-    ifstream config_file(configPath);
-    if (config_file.is_open()) {
-        try {
-            config = json::parse(config_file);
-            config_loaded = true; // if the json is successfully loaded
-        }
-        catch (const exception& e) {
-            cout << "Warning: Failed to parse config file. Using hardcoded defaults." << endl;
-
-            // provide warning msg if the json parsing fails
-        }
-        config_file.close(); // close the file after reading 
-    }
-    else {
-        cout << "Warning: Could not open config file: " << configPath << endl;
-    }
-
-	// Color map (for ANSI escape codes) 
-    // for beginners, we're simply assign colors like how we 
-    // assin vaules in variables 
-    map<string, string> colors = {
-        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-    };
-
-    // Helper functions 
-    // here, we've assigned the default color as white 
-    auto getColor = [&](const string& section, const string& key, const string& defaultColor = "white") -> string 
-     {
-        if (!config_loaded || !config.contains(section)) return colors[defaultColor];
-
-        // First...try to get the color from the nested "colors" object
-        if (config[section].contains("colors") && config[section]["colors"].contains(key)) 
-        {
-            string colorName = config[section]["colors"][key].get<string>();
-            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-        }
-        // next...try to get the color directly from the section
-        if (config[section].contains(key)) {
-            string colorName = config[section][key].get<string>();
-            return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-        }
-
-        return colors[defaultColor];
-     };
-
-    // check for each section, is it enabled or not (Aka Core-Module)
-    // Example of core-module: CPU,GPU,OS,Netwrok....bla bla bla
-    auto isEnabled = [&](const string& section) -> bool {
-        if (!config_loaded || !config.contains(section)) return true;
-        return config[section].value("enabled", true);
-        };
-    // check for each subsection inside a section,
-    // is it enabled or not (Aka sub-module)
-	// example of sub-module: CPU base speed, CPU cores, CPU threads...bla bla bla
-    auto isSubEnabled = [&](const string& section, const string& key) -> bool {
-        if (!config_loaded || !config.contains(section)) return true;
-        return config[section].value(key, true);
-        };
-    // checks whether a specific section inside a module is enabled or not
-     // example:
-     // module  -> "network"
-     // section -> "ipv4"
-     //
-     // logic:
-     // - if config is not loaded, allow it (default ON)
-     // - if the module does not exist in config, allow it
-     // - if the module has no "sections" block, allow all sections
-     // - otherwise, read the value from: config[module]["sections"][section]
-     // - if the section key is missing, default to true...
-    auto isSectionEnabled = [&](const string& module, const string& section) -> bool {
-        if (!config_loaded || !config.contains(module)) return true;
-        if (!config[module].contains("sections")) return true;
-        return config[module]["sections"].value(section, true);
-        };
-     
-   // checks whether a deeply nested key inside a module + section is enabled
-   // example:
-     // module  -> "network"
-     // section -> "ipv4"
-     // key     -> "public_ip"
-     //
-   // logic:
-     // - if config is not loaded, allow it (default ON)
-     // - if the module does not exist, allow it
-     // - if the section does not exist inside the module, allow it
-     // - otherwise, read the value from: config[module][section][key]
-     // - if the key is missing, default to true
-    auto isNestedEnabled = [&](const string& module, const string& section, const string& key) -> bool {
-        if (!config_loaded || !config.contains(module)) return true;
-        if (!config[module].contains(section)) return true;
-        return config[module][section].value(key, true);
-        };
-
-    string r = colors["reset"];
+    // ========== CONFIG MANAGEMENT ==========
+    ConfigManager config(false);
+    string r = config.getResetColor();
 
 	// Anyway....this is how we're allowed to print emojis in C++ console
     // :cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
@@ -337,13 +192,13 @@ int main(){
         
 
         // BinaryFetch Header
-        if (isEnabled("header")) {
+        if (config.isEnabled("header")) {
             ostringstream ss;
-            ss << getColor("header", "prefix_color", "bright_red") << "~>> " << r
-                << getColor("header", "title_color", "green") << "BinaryFetch" << r
-                << getColor("header", "line_color", "red") << r;
+            ss << config.getColor("header", "prefix_color", "bright_red") << "~>> " << r
+                << config.getColor("header", "title_color", "green") << "BinaryFetch" << r
+                << config.getColor("header", "line_color", "red") << r;
 
-            if (isSubEnabled("header", "show_line")) ss << getColor("header", "line_color", "white") << "_____________________________________________________" << r << " ";
+            if (config.isSubEnabled("header", "show_line")) ss << config.getColor("header", "line_color", "white") << "_____________________________________________________" << r << " ";
 
             lp.push(ss.str());
         }
@@ -351,231 +206,220 @@ int main(){
 
 
         // Compact Time
-        if (isEnabled("compact_time"))
+        if (config.isEnabled("compact_time"))
         {
             TimeInfo time;
             ostringstream ss;
 
-            if (isSubEnabled("compact_time", "show_emoji")) ss << getColor("compact_time", "emoji_color", "white") << u8"📅" << r << " ";
-
-            // Helper to get colors from nested time structure
-            auto getTimeColor = [&](const string& subsection, const string& key, const string& defaultColor = "white") -> string {
-                if (!config_loaded || !config.contains("compact_time")) return colors[defaultColor];
-                if (!config["compact_time"].contains(subsection)) return colors[defaultColor];
-                if (!config["compact_time"][subsection].contains("colors")) return colors[defaultColor];
-                if (!config["compact_time"][subsection]["colors"].contains(key)) return colors[defaultColor];
-
-                string colorName = config["compact_time"][subsection]["colors"][key].get<string>();
-                return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-                };
+            if (config.isSubEnabled("compact_time", "show_emoji")) ss << config.getColor("compact_time", "emoji_color", "white") << u8"📅" << r << " ";
 
             // ---------- TIME SECTION ----------
-            if (isNestedEnabled("compact_time", "time_section", "enabled")) {
-                ss << getTimeColor("time_section", "bracket", "white") << "(" << r;
+            if (config.isNestedEnabled("compact_time", "time_section", "enabled")) {
+                ss << config.getNestedColor("compact_time", "time_section", "bracket", "white") << "(" << r;
 
-                if (isNestedEnabled("compact_time", "time_section", "show_label")) {
-                    ss << getTimeColor("time_section", "label", "white") << "Time: " << r;
+                if (config.isNestedEnabled("compact_time", "time_section", "show_label")) {
+                    ss << config.getNestedColor("compact_time", "time_section", "label", "white") << "Time: " << r;
                 }
 
                 bool wrote = false;
 
-                if (isNestedEnabled("compact_time", "time_section", "show_hour")) {
-                    ss << getTimeColor("time_section", "hour", "white")
+                if (config.isNestedEnabled("compact_time", "time_section", "show_hour")) {
+                    ss << config.getNestedColor("compact_time", "time_section", "hour", "white")
                         << setw(2) << setfill('0') << time.getHour() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "time_section", "show_minute")) {
-                    if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
-                    ss << getTimeColor("time_section", "minute", "white")
+                if (config.isNestedEnabled("compact_time", "time_section", "show_minute")) {
+                    if (wrote) ss << config.getNestedColor("compact_time", "time_section", "sep", "white") << ":" << r;
+                    ss << config.getNestedColor("compact_time", "time_section", "minute", "white")
                         << setw(2) << setfill('0') << time.getMinute() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "time_section", "show_second")) {
-                    if (wrote) ss << getTimeColor("time_section", "sep", "white") << ":" << r;
-                    ss << getTimeColor("time_section", "second", "white")
+                if (config.isNestedEnabled("compact_time", "time_section", "show_second")) {
+                    if (wrote) ss << config.getNestedColor("compact_time", "time_section", "sep", "white") << ":" << r;
+                    ss << config.getNestedColor("compact_time", "time_section", "second", "white")
                         << setw(2) << setfill('0') << time.getSecond() << r;
                 }
 
-                ss << getTimeColor("time_section", "bracket", "white") << ") " << r;
+                ss << config.getNestedColor("compact_time", "time_section", "bracket", "white") << ") " << r;
             }
 
             // ---------- DATE SECTION ----------
-            if (isNestedEnabled("compact_time", "date_section", "enabled"))
+            if (config.isNestedEnabled("compact_time", "date_section", "enabled"))
             {
-                ss << getTimeColor("date_section", "bracket", "white") << "(" << r;
+                ss << config.getNestedColor("compact_time", "date_section", "bracket", "white") << "(" << r;
 
-                if (isNestedEnabled("compact_time", "date_section", "show_label")) {
-                    ss << getTimeColor("date_section", "label", "white") << "Date: " << r;
+                if (config.isNestedEnabled("compact_time", "date_section", "show_label")) {
+                    ss << config.getNestedColor("compact_time", "date_section", "label", "white") << "Date: " << r;
                 }
 
                 bool wrote = false;
 
-                if (isNestedEnabled("compact_time", "date_section", "show_day")) {
-                    ss << getTimeColor("date_section", "day", "white")
+                if (config.isNestedEnabled("compact_time", "date_section", "show_day")) {
+                    ss << config.getNestedColor("compact_time", "date_section", "day", "white")
                         << setw(2) << setfill('0') << time.getDay() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "date_section", "show_month_name")) {
-                    if (wrote) ss << getTimeColor("date_section", "sep", "white") << " : " << r;
-                    ss << getTimeColor("date_section", "month_name", "white")
+                if (config.isNestedEnabled("compact_time", "date_section", "show_month_name")) {
+                    if (wrote) ss << config.getNestedColor("compact_time", "date_section", "sep", "white") << " : " << r;
+                    ss << config.getNestedColor("compact_time", "date_section", "month_name", "white")
                         << time.getMonthName() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "date_section", "show_month_num")) {
+                if (config.isNestedEnabled("compact_time", "date_section", "show_month_num")) {
                     if (wrote) ss << " ";
-                    ss << getTimeColor("date_section", "month_num", "white")
+                    ss << config.getNestedColor("compact_time", "date_section", "month_num", "white")
                         << setw(2) << setfill('0') << time.getMonthNumber() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "date_section", "show_year")) {
-                    if (wrote) ss << getTimeColor("date_section", "sep", "white") << " : " << r;
-                    ss << getTimeColor("date_section", "year", "white")
+                if (config.isNestedEnabled("compact_time", "date_section", "show_year")) {
+                    if (wrote) ss << config.getNestedColor("compact_time", "date_section", "sep", "white") << " : " << r;
+                    ss << config.getNestedColor("compact_time", "date_section", "year", "white")
                         << time.getYearNumber() << r;
                 }
 
-                ss << getTimeColor("date_section", "bracket", "white") << ") " << r;
+                ss << config.getNestedColor("compact_time", "date_section", "bracket", "white") << ") " << r;
             }
 
             // ---------- WEEK SECTION ----------
-            if (isNestedEnabled("compact_time", "week_section", "enabled")) {
-                ss << getTimeColor("week_section", "bracket", "white") << "(" << r;
+            if (config.isNestedEnabled("compact_time", "week_section", "enabled")) {
+                ss << config.getNestedColor("compact_time", "week_section", "bracket", "white") << "(" << r;
 
-                if (isNestedEnabled("compact_time", "week_section", "show_label")) {
-                    ss << getTimeColor("week_section", "label", "white") << "Week: " << r;
+                if (config.isNestedEnabled("compact_time", "week_section", "show_label")) {
+                    ss << config.getNestedColor("compact_time", "week_section", "label", "white") << "Week: " << r;
                 }
 
                 bool wrote = false;
 
-                if (isNestedEnabled("compact_time", "week_section", "show_num")) {
-                    ss << getTimeColor("week_section", "num", "white")
+                if (config.isNestedEnabled("compact_time", "week_section", "show_num")) {
+                    ss << config.getNestedColor("compact_time", "week_section", "num", "white")
                         << time.getWeekNumber() << r;
                     wrote = true;
                 }
 
-                if (isNestedEnabled("compact_time", "week_section", "show_day_name")) {
-                    if (wrote) ss << getTimeColor("week_section", "sep", "white") << " - " << r;
-                    ss << getTimeColor("week_section", "day_name", "white")
+                if (config.isNestedEnabled("compact_time", "week_section", "show_day_name")) {
+                    if (wrote) ss << config.getNestedColor("compact_time", "week_section", "sep", "white") << " - " << r;
+                    ss << config.getNestedColor("compact_time", "week_section", "day_name", "white")
                         << time.getDayName() << r;
                 }
 
-                ss << getTimeColor("week_section", "bracket", "white") << ") " << r;
+                ss << config.getNestedColor("compact_time", "week_section", "bracket", "white") << ") " << r;
             }
 
             // ---------- LEAP YEAR SECTION ----------
-            if (isNestedEnabled("compact_time", "leap_section", "enabled")) {
-                ss << getTimeColor("leap_section", "bracket", "white") << "(" << r;
+            if (config.isNestedEnabled("compact_time", "leap_section", "enabled")) {
+                ss << config.getNestedColor("compact_time", "leap_section", "bracket", "white") << "(" << r;
 
-                if (isNestedEnabled("compact_time", "leap_section", "show_label")) {
-                    ss << getTimeColor("leap_section", "label", "white") << "Leap Year: " << r;
+                if (config.isNestedEnabled("compact_time", "leap_section", "show_label")) {
+                    ss << config.getNestedColor("compact_time", "leap_section", "label", "white") << "Leap Year: " << r;
                 }
 
-                if (isNestedEnabled("compact_time", "leap_section", "show_val")) {
-                    ss << getTimeColor("leap_section", "val", "white")
+                if (config.isNestedEnabled("compact_time", "leap_section", "show_val")) {
+                    ss << config.getNestedColor("compact_time", "leap_section", "val", "white")
                         << time.getLeapYear() << r;
                 }
 
-                ss << getTimeColor("leap_section", "bracket", "white") << ")" << r;
+                ss << config.getNestedColor("compact_time", "leap_section", "bracket", "white") << ")" << r;
             }
 
             lp.push(ss.str());
         }
 
         // Compact OS
-        if (isEnabled("compact_os")) {
+        if (config.isEnabled("compact_os")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_os", "show_emoji")) ss << getColor("compact_os", "emoji_color", "white") << u8"🚀 " << r ;
+            if (config.isSubEnabled("compact_os", "show_emoji")) ss << config.getColor("compact_os", "emoji_color", "white") << u8"🚀 " << r ;
 
-            ss << getColor("compact_os", "OS", "white") << "OS" << r
-                << getColor("compact_os", "OS_:", "white") << ": " << r;
+            ss << config.getColor("compact_os", "OS", "white") << "OS" << r
+                << config.getColor("compact_os", "OS_:", "white") << ": " << r;
 
             
-            if (isSubEnabled("compact_os", "show_name")) ss << getColor("compact_os", "name_color", "white") << c_os.getOSName() << r << " ";
-            if (isSubEnabled("compact_os", "show_build")) ss << getColor("compact_os", "build_color", "white") << c_os.getOSBuild() << r;
+            if (config.isSubEnabled("compact_os", "show_name")) ss << config.getColor("compact_os", "name_color", "white") << c_os.getOSName() << r << " ";
+            if (config.isSubEnabled("compact_os", "show_build")) ss << config.getColor("compact_os", "build_color", "white") << c_os.getOSBuild() << r;
 
-            if (isSubEnabled("compact_os", "show_arch")) {
-                ss << getColor("compact_os", "(", "white") << " (" << r
-                    << getColor("compact_os", "arch_color", "white") << c_os.getArchitecture() << r
-                    << getColor("compact_os", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_os", "show_arch")) {
+                ss << config.getColor("compact_os", "(", "white") << " (" << r
+                    << config.getColor("compact_os", "arch_color", "white") << c_os.getArchitecture() << r
+                    << config.getColor("compact_os", ")", "white") << ")" << r;
             }
 
-            if (isSubEnabled("compact_os", "show_uptime")) {
-                ss << getColor("compact_os", "(", "white") << " (" << r
-                    << getColor("compact_os", "uptime_label_color", "white") << "uptime: " << r
-                    << getColor("compact_os", "uptime_value_color", "white") << c_os.getUptime() << r
-                    << getColor("compact_os", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_os", "show_uptime")) {
+                ss << config.getColor("compact_os", "(", "white") << " (" << r
+                    << config.getColor("compact_os", "uptime_label_color", "white") << "uptime: " << r
+                    << config.getColor("compact_os", "uptime_value_color", "white") << c_os.getUptime() << r
+                    << config.getColor("compact_os", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
 
         // Compact CPU
-        if (isEnabled("compact_cpu")) {
+        if (config.isEnabled("compact_cpu")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_cpu", "show_emoji")) ss << getColor("compact_cpu", "emoji_color", "white") << u8"🧠 " << r;
+            if (config.isSubEnabled("compact_cpu", "show_emoji")) ss << config.getColor("compact_cpu", "emoji_color", "white") << u8"🧠 " << r;
 
-            ss << getColor("compact_cpu", "CPU", "white") << "CPU" << r
-                << getColor("compact_cpu", "CPU_:", "white") << ": " << r;
+            ss << config.getColor("compact_cpu", "CPU", "white") << "CPU" << r
+                << config.getColor("compact_cpu", "CPU_:", "white") << ": " << r;
 
-            if (isSubEnabled("compact_cpu", "show_name")) ss << getColor("compact_cpu", "name_color", "white") << c_cpu.getCPUName() << r;
+            if (config.isSubEnabled("compact_cpu", "show_name")) ss << config.getColor("compact_cpu", "name_color", "white") << c_cpu.getCPUName() << r;
 
-            if (isSubEnabled("compact_cpu", "show_cores") || isSubEnabled("compact_cpu", "show_threads")) {
-                ss << getColor("compact_cpu", "(", "white") << " (" << r;
-                if (isSubEnabled("compact_cpu", "show_cores")) ss << getColor("compact_cpu", "core_color", "white") << c_cpu.getCPUCores() << r << getColor("compact_cpu", "text_color", "white") << "C" << r;
-                if (isSubEnabled("compact_cpu", "show_cores") && isSubEnabled("compact_cpu", "show_threads")) ss << getColor("compact_cpu", "separator_color", "white") << "/" << r;
-                if (isSubEnabled("compact_cpu", "show_threads")) ss << getColor("compact_cpu", "thread_color", "white") << c_cpu.getCPUThreads() << r << getColor("compact_cpu", "text_color", "white") << "T" << r;
-                ss << getColor("compact_cpu", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_cpu", "show_cores") || config.isSubEnabled("compact_cpu", "show_threads")) {
+                ss << config.getColor("compact_cpu", "(", "white") << " (" << r;
+                if (config.isSubEnabled("compact_cpu", "show_cores")) ss << config.getColor("compact_cpu", "core_color", "white") << c_cpu.getCPUCores() << r << config.getColor("compact_cpu", "text_color", "white") << "C" << r;
+                if (config.isSubEnabled("compact_cpu", "show_cores") && config.isSubEnabled("compact_cpu", "show_threads")) ss << config.getColor("compact_cpu", "separator_color", "white") << "/" << r;
+                if (config.isSubEnabled("compact_cpu", "show_threads")) ss << config.getColor("compact_cpu", "thread_color", "white") << c_cpu.getCPUThreads() << r << config.getColor("compact_cpu", "text_color", "white") << "T" << r;
+                ss << config.getColor("compact_cpu", ")", "white") << ")" << r;
             }
              
-            if (isSubEnabled("compact_cpu", "show_clock")) {
+            if (config.isSubEnabled("compact_cpu", "show_clock")) {
                 ss << fixed << setprecision(2)
-                    << getColor("compact_cpu", "at_symbol_color", "white") << " @" << r
-                    << getColor("compact_cpu", "clock_color", "white") << " " << c_cpu.getClockSpeed() << " GHz" << r;
+                    << config.getColor("compact_cpu", "at_symbol_color", "white") << " @" << r
+                    << config.getColor("compact_cpu", "clock_color", "white") << " " << c_cpu.getClockSpeed() << " GHz" << r;
             }
             lp.push(ss.str());
         }
 
 
         // Compact GPU
-        if (isEnabled("compact_gpu")) {
+        if (config.isEnabled("compact_gpu")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_gpu", "show_emoji")) ss << getColor("compact_gpu", "emoji_color", "white") << u8"🔥" << r << " ";
+            if (config.isSubEnabled("compact_gpu", "show_emoji")) ss << config.getColor("compact_gpu", "emoji_color", "white") << u8"🔥" << r << " ";
 
-            ss << getColor("compact_gpu", "GPU", "white") << "GPU" << r
-                << getColor("compact_gpu", "GPU_:", "white") << ": " << r;
+            ss << config.getColor("compact_gpu", "GPU", "white") << "GPU" << r
+                << config.getColor("compact_gpu", "GPU_:", "white") << ": " << r;
 
-            if (isSubEnabled("compact_gpu", "show_name")) ss << getColor("compact_gpu", "name_color", "white") << c_gpu.getGPUName() << r;
+            if (config.isSubEnabled("compact_gpu", "show_name")) ss << config.getColor("compact_gpu", "name_color", "white") << c_gpu.getGPUName() << r;
 
-            if (isSubEnabled("compact_gpu", "show_usage")) {
-                ss << getColor("compact_gpu", "(", "white") << " (" << r
-                    << getColor("compact_gpu", "usage_color", "white") << c_gpu.getGPUUsagePercent() << "%" << r
-                    << getColor("compact_gpu", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_gpu", "show_usage")) {
+                ss << config.getColor("compact_gpu", "(", "white") << " (" << r
+                    << config.getColor("compact_gpu", "usage_color", "white") << c_gpu.getGPUUsagePercent() << "%" << r
+                    << config.getColor("compact_gpu", ")", "white") << ")" << r;
             }
 
-            if (isSubEnabled("compact_gpu", "show_vram")) {
-                ss << getColor("compact_gpu", "(", "white") << " (" << r
-                    << getColor("compact_gpu", "vram_color", "white") << c_gpu.getVRAMGB() << " GB" << r
-                    << getColor("compact_gpu", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_gpu", "show_vram")) {
+                ss << config.getColor("compact_gpu", "(", "white") << " (" << r
+                    << config.getColor("compact_gpu", "vram_color", "white") << c_gpu.getVRAMGB() << " GB" << r
+                    << config.getColor("compact_gpu", ")", "white") << ")" << r;
             }
 
-            if (isSubEnabled("compact_gpu", "show_freq")) {
-                ss << getColor("compact_gpu", "(", "white") << " (" << r
-                    << getColor("compact_gpu", "at_symbol_color", "white") << "@" << r
-                    << getColor("compact_gpu", "freq_color", "white") << c_gpu.getGPUFrequency() << r
-                    << getColor("compact_gpu", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_gpu", "show_freq")) {
+                ss << config.getColor("compact_gpu", "(", "white") << " (" << r
+                    << config.getColor("compact_gpu", "at_symbol_color", "white") << "@" << r
+                    << config.getColor("compact_gpu", "freq_color", "white") << c_gpu.getGPUFrequency() << r
+                    << config.getColor("compact_gpu", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
 
 
         // Compact Screen
-        if (isEnabled("compact_screen")) {
+        if (config.isEnabled("compact_screen")) {
             CompactScreen screenDetector;
             auto screens = screenDetector.getScreens();
             ostringstream ss;
@@ -586,9 +430,9 @@ int main(){
             if (screens.empty()) {
                 // No displays detected - show error message
                 ostringstream ss;
-                ss << getColor("compact_screen", "Display", "white") << "Display" << r
-                    << getColor("compact_screen", "Display_:", "blue") << ": " << r
-                    << getColor("compact_screen", "name_color", "white") << "No displays detected" << r;
+                ss << config.getColor("compact_screen", "Display", "white") << "Display" << r
+                    << config.getColor("compact_screen", "Display_:", "blue") << ": " << r
+                    << config.getColor("compact_screen", "name_color", "white") << "No displays detected" << r;
                 lp.push(ss.str());
             }
             else {
@@ -597,55 +441,55 @@ int main(){
                     const auto& screen = screens[i];
                     ostringstream ss;
 
-                    if (isSubEnabled("compact_screen", "show_emoji")) ss << getColor("compact_screen", "emoji_color", "white") << u8"📺" << r << " ";
+                    if (config.isSubEnabled("compact_screen", "show_emoji")) ss << config.getColor("compact_screen", "emoji_color", "white") << u8"📺" << r << " ";
 
                     // Header: [Display N] ->
-                    ss << getColor("compact_screen", "Display", "white")
+                    ss << config.getColor("compact_screen", "Display", "white")
                         << "Display " << (i + 1) << "" << r
-                        << getColor("compact_screen", "Display_:", "white") << ": " << r;
+                        << config.getColor("compact_screen", "Display_:", "white") << ": " << r;
 
                     // Display name
-                    if (isSubEnabled("compact_screen", "show_name")) {
-                        ss << getColor("compact_screen", "name_color", "white")
+                    if (config.isSubEnabled("compact_screen", "show_name")) {
+                        ss << config.getColor("compact_screen", "name_color", "white")
                             << screen.name << r << " ";
                     }
 
                     // Resolution: (3840 x 2160)
-                    if (isSubEnabled("compact_screen", "show_resolution")) {
-                        ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "resolution_color", "White")
+                    if (config.isSubEnabled("compact_screen", "show_resolution")) {
+                        ss << config.getColor("compact_screen", "(", "white") << "(" << r
+                            << config.getColor("compact_screen", "resolution_color", "White")
                             << screen.native_width << r
-                            << getColor("compact_screen", "x", "white") << " x " << r
-                            << getColor("compact_screen", "resolution_color", "white")
+                            << config.getColor("compact_screen", "x", "white") << " x " << r
+                            << config.getColor("compact_screen", "resolution_color", "white")
                             << screen.native_height << r
-                            << getColor("compact_screen", ")", "white") << ") " << r;
+                            << config.getColor("compact_screen", ")", "white") << ") " << r;
                     }
 
                     // Scale: (scale: 175%)
-                    if (isSubEnabled("compact_screen", "show_scale")) {
-                        ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "scale_label", "white") << "Scale: " << r
-                            << getColor("compact_screen", "scale_value", "white")
+                    if (config.isSubEnabled("compact_screen", "show_scale")) {
+                        ss << config.getColor("compact_screen", "(", "white") << "(" << r
+                            << config.getColor("compact_screen", "scale_label", "white") << "Scale: " << r
+                            << config.getColor("compact_screen", "scale_value", "white")
                             << screen.scale_percent << "%" << r
-                            << getColor("compact_screen", ")", "white") << ") " << r;
+                            << config.getColor("compact_screen", ")", "white") << ") " << r;
                     }
 
                     // Upscale: (upscale: 4x)
-                    if (isSubEnabled("compact_screen", "show_upscale")) {
-                        ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "upscale_label", "white") << "upscale: " << r
-                            << getColor("compact_screen", "upscale_value", "white")
+                    if (config.isSubEnabled("compact_screen", "show_upscale")) {
+                        ss << config.getColor("compact_screen", "(", "white") << "(" << r
+                            << config.getColor("compact_screen", "upscale_label", "white") << "upscale: " << r
+                            << config.getColor("compact_screen", "upscale_value", "white")
                             << screen.upscale << r
-                            << getColor("compact_screen", ")", "white") << ") " << r;
+                            << config.getColor("compact_screen", ")", "white") << ") " << r;
                     }
 
                     // Refresh rate: 
-                    if (isSubEnabled("compact_screen", "show_refresh")) {
-                        ss << getColor("compact_screen", "(", "white") << "(" << r
-                            << getColor("compact_screen", "@", "white") << "@" << r
-                            << getColor("compact_screen", "refresh_color", "white")
+                    if (config.isSubEnabled("compact_screen", "show_refresh")) {
+                        ss << config.getColor("compact_screen", "(", "white") << "(" << r
+                            << config.getColor("compact_screen", "@", "white") << "@" << r
+                            << config.getColor("compact_screen", "refresh_color", "white")
                             << screen.refresh_rate << "Hz" << r
-                            << getColor("compact_screen", ")", "white") << ")" << r;
+                            << config.getColor("compact_screen", ")", "white") << ")" << r;
                     }
 
                     lp.push(ss.str());
@@ -678,79 +522,79 @@ int main(){
 
 
         // Compact Memory
-        if (isEnabled("compact_memory")) {
+        if (config.isEnabled("compact_memory")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_memory", "show_emoji")) ss << getColor("compact_memory", "emoji_color", "white") << u8"📟" << r << " ";
+            if (config.isSubEnabled("compact_memory", "show_emoji")) ss << config.getColor("compact_memory", "emoji_color", "white") << u8"📟" << r << " ";
 
-            ss << getColor("compact_memory", "Memory", "white") << "Memory" << r
-                << getColor("compact_memory", "Memory_:", "white") << ": " << r;
+            ss << config.getColor("compact_memory", "Memory", "white") << "Memory" << r
+                << config.getColor("compact_memory", "Memory_:", "white") << ": " << r;
 
-            if (isSubEnabled("compact_memory", "show_total")) {
-                ss << getColor("compact_memory", "(", "white") << "(" << r
-                    << getColor("compact_memory", "label_color", "white") << "total: " << r
-                    << getColor("compact_memory", "total_color", "white") << c_memory.get_total_memory() << " GB" << r
-                    << getColor("compact_memory", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_memory", "show_total")) {
+                ss << config.getColor("compact_memory", "(", "white") << "(" << r
+                    << config.getColor("compact_memory", "label_color", "white") << "total: " << r
+                    << config.getColor("compact_memory", "total_color", "white") << c_memory.get_total_memory() << " GB" << r
+                    << config.getColor("compact_memory", ")", "white") << ")" << r;
             }
-            if (isSubEnabled("compact_memory", "show_free")) {
-                ss << " " << getColor("compact_memory", "(", "white") << "(" << r
-                    << getColor("compact_memory", "label_color", "white") << "free: " << r
-                    << getColor("compact_memory", "free_color", "white") << c_memory.get_free_memory() << " GB" << r
-                    << getColor("compact_memory", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_memory", "show_free")) {
+                ss << " " << config.getColor("compact_memory", "(", "white") << "(" << r
+                    << config.getColor("compact_memory", "label_color", "white") << "free: " << r
+                    << config.getColor("compact_memory", "free_color", "white") << c_memory.get_free_memory() << " GB" << r
+                    << config.getColor("compact_memory", ")", "white") << ")" << r;
             }
-            if (isSubEnabled("compact_memory", "show_percent")) {
-                ss << " " << getColor("compact_memory", "(", "white") << "(" << r
-                    << getColor("compact_memory", "percent_color", "white") << c_memory.get_used_memory_percent() << "%" << r
-                    << getColor("compact_memory", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_memory", "show_percent")) {
+                ss << " " << config.getColor("compact_memory", "(", "white") << "(" << r
+                    << config.getColor("compact_memory", "percent_color", "white") << c_memory.get_used_memory_percent() << "%" << r
+                    << config.getColor("compact_memory", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
 
         // Compact Audio
-        if (isEnabled("compact_audio")) {
-            if (isSubEnabled("compact_audio", "show_input")) {
+        if (config.isEnabled("compact_audio")) {
+            if (config.isSubEnabled("compact_audio", "show_input")) {
                 ostringstream ss1;
 
-                if (isSubEnabled("compact_audio", "show_audio_input_emoji")) ss1 << getColor("compact_audio", "audio_output_emoji_color", "white") << u8"🎙️" << r << " ";
+                if (config.isSubEnabled("compact_audio", "show_audio_input_emoji")) ss1 << config.getColor("compact_audio", "audio_output_emoji_color", "white") << u8"🎙️" << r << " ";
 
-                ss1 << getColor("compact_audio", "Audio Input", "white") << "Audio Input" << r
-                    << getColor("compact_audio", "Audio_Input_:", "white") << ": " << r
-                    << getColor("compact_audio", "device_color", "white") << c_audio.active_audio_input() << r << " "
-                    << getColor("compact_audio", "(", "white") << "[" << r
-                    << getColor("compact_audio", "status_color", "white") << c_audio.active_audio_input_status() << r
-                    << getColor("compact_audio", ")", "white") << "]" << r;
+                ss1 << config.getColor("compact_audio", "Audio Input", "white") << "Audio Input" << r
+                    << config.getColor("compact_audio", "Audio_Input_:", "white") << ": " << r
+                    << config.getColor("compact_audio", "device_color", "white") << c_audio.active_audio_input() << r << " "
+                    << config.getColor("compact_audio", "(", "white") << "[" << r
+                    << config.getColor("compact_audio", "status_color", "white") << c_audio.active_audio_input_status() << r
+                    << config.getColor("compact_audio", ")", "white") << "]" << r;
                 lp.push(ss1.str());
             }
-            if (isSubEnabled("compact_audio", "show_output")) {
+            if (config.isSubEnabled("compact_audio", "show_output")) {
                 ostringstream ss2;
 
-                if (isSubEnabled("compact_audio", "show_audio_output_emoji")) ss2 << getColor("compact_audio", "audio_input_emoji_color", "white") << u8"🎧" << r << " ";
+                if (config.isSubEnabled("compact_audio", "show_audio_output_emoji")) ss2 << config.getColor("compact_audio", "audio_input_emoji_color", "white") << u8"🎧" << r << " ";
 
-                ss2 << getColor("compact_audio", "Audio Output", "white") << "Audio Output" << r
-                    << getColor("compact_audio", "Audio_Output_:", "white") << ": " << r
-                    << getColor("compact_audio", "device_color", "white") << c_audio.active_audio_output() << r << " "
-                    << getColor("compact_audio", "(", "white") << "[" << r
-                    << getColor("compact_audio", "status_color", "white") << c_audio.active_audio_output_status() << r
-                    << getColor("compact_audio", ")", "white") << "]" << r;
+                ss2 << config.getColor("compact_audio", "Audio Output", "white") << "Audio Output" << r
+                    << config.getColor("compact_audio", "Audio_Output_:", "white") << ": " << r
+                    << config.getColor("compact_audio", "device_color", "white") << c_audio.active_audio_output() << r << " "
+                    << config.getColor("compact_audio", "(", "white") << "[" << r
+                    << config.getColor("compact_audio", "status_color", "white") << c_audio.active_audio_output_status() << r
+                    << config.getColor("compact_audio", ")", "white") << "]" << r;
                 lp.push(ss2.str());
             }
         }
 
         // Compact Performance
-        if (isEnabled("compact_performance")) {
+        if (config.isEnabled("compact_performance")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_performancec", "show_emoji")) ss << getColor("compact_performance", "emoji_color", "white") << u8"🔋" << r << " ";
+            if (config.isSubEnabled("compact_performancec", "show_emoji")) ss << config.getColor("compact_performance", "emoji_color", "white") << u8"🔋" << r << " ";
 
-            ss << getColor("compact_performance", "Performance", "white") << "Performance" << r
-                << getColor("compact_performance", "Performance_:", "white") << ": " << r;
+            ss << config.getColor("compact_performance", "Performance", "white") << "Performance" << r
+                << config.getColor("compact_performance", "Performance_:", "white") << ": " << r;
 
             auto addP = [&](const string& subKey, const string& label, const string& colorKey, auto val) {
-                if (isSubEnabled("compact_performance", subKey)) {
-                    ss << getColor("compact_performance", "(", "white") << "(" << r
-                        << getColor("compact_performance", "label_color", "white") << label << ": " << r
-                        << getColor("compact_performance", colorKey, "white") << val << "%" << r
-                        << getColor("compact_performance", ")", "white") << ") " << r;
+                if (config.isSubEnabled("compact_performance", subKey)) {
+                    ss << config.getColor("compact_performance", "(", "white") << "(" << r
+                        << config.getColor("compact_performance", "label_color", "white") << label << ": " << r
+                        << config.getColor("compact_performance", colorKey, "white") << val << "%" << r
+                        << config.getColor("compact_performance", ")", "white") << ") " << r;
                 }
                 };
             addP("show_cpu", "CPU", "cpu_color", c_perf.getCPUUsage());
@@ -761,26 +605,26 @@ int main(){
         }
 
         // Compact User
-        if (isEnabled("compact_user")) {
+        if (config.isEnabled("compact_user")) {
             ostringstream ss;
 
-            if (isSubEnabled("compact_user", "show_emoji")) ss << getColor("compact_user", "emoji_color", "white") << u8"☕" << r << " ";
+            if (config.isSubEnabled("compact_user", "show_emoji")) ss << config.getColor("compact_user", "emoji_color", "white") << u8"☕" << r << " ";
 
-            ss << getColor("compact_user", "User", "white") << "User" << r
-                << getColor("compact_user", "User_:", "white") << ": " << r;
+            ss << config.getColor("compact_user", "User", "white") << "User" << r
+                << config.getColor("compact_user", "User_:", "white") << ": " << r;
 
-            if (isSubEnabled("compact_user", "show_username")) ss << getColor("compact_user", "username_color", "white") << "@" << c_user.getUsername() << r;
-            if (isSubEnabled("compact_user", "show_domain")) {
-                ss << " " << getColor("compact_user", "(", "white") << "(" << r
-                    << getColor("compact_user", "label_color", "white") << "Domain: " << r
-                    << getColor("compact_user", "domain_color", "white") << c_user.getDomain() << r
-                    << getColor("compact_user", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_user", "show_username")) ss << config.getColor("compact_user", "username_color", "white") << "@" << c_user.getUsername() << r;
+            if (config.isSubEnabled("compact_user", "show_domain")) {
+                ss << " " << config.getColor("compact_user", "(", "white") << "(" << r
+                    << config.getColor("compact_user", "label_color", "white") << "Domain: " << r
+                    << config.getColor("compact_user", "domain_color", "white") << c_user.getDomain() << r
+                    << config.getColor("compact_user", ")", "white") << ")" << r;
             }
-            if (isSubEnabled("compact_user", "show_type")) {
-                ss << " " << getColor("compact_user", "(", "white") << "(" << r
-                    << getColor("compact_user", "label_color", "white") << "Type: " << r
-                    << getColor("compact_user", "type_color", "white") << c_user.isAdmin() << r
-                    << getColor("compact_user", ")", "white") << ")" << r;
+            if (config.isSubEnabled("compact_user", "show_type")) {
+                ss << " " << config.getColor("compact_user", "(", "white") << "(" << r
+                    << config.getColor("compact_user", "label_color", "white") << "Type: " << r
+                    << config.getColor("compact_user", "type_color", "white") << c_user.isAdmin() << r
+                    << config.getColor("compact_user", ")", "white") << ")" << r;
             }
             lp.push(ss.str());
         }
@@ -788,31 +632,31 @@ int main(){
 
 
             // Compact Network (real)
-            if (isEnabled("compact_network")) {
+            if (config.isEnabled("compact_network")) {
                 ostringstream ss;
 
-                if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
+                if (config.isSubEnabled("compact_network", "show_emoji")) ss << config.getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
 
-                ss << getColor("compact_network", "Network", "white") << "Network" << r
-                    << getColor("compact_network", "Network_:", "white") << ": " << r;
+                ss << config.getColor("compact_network", "Network", "white") << "Network" << r
+                    << config.getColor("compact_network", "Network_:", "white") << ": " << r;
 
-                if (isSubEnabled("compact_network", "show_name")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "Name: " << r
-                        << getColor("compact_network", "name_color", "white") << c_net.get_network_name() << r
-                        << getColor("compact_network", ")", "white") << ") " << r;
+                if (config.isSubEnabled("compact_network", "show_name")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "Name: " << r
+                        << config.getColor("compact_network", "name_color", "white") << c_net.get_network_name() << r
+                        << config.getColor("compact_network", ")", "white") << ") " << r;
                 }
-                if (isSubEnabled("compact_network", "show_type")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "Type: " << r
-                        << getColor("compact_network", "type_color", "white") << c_net.get_network_type() << r
-                        << getColor("compact_network", ")", "white") << ") " << r;
+                if (config.isSubEnabled("compact_network", "show_type")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "Type: " << r
+                        << config.getColor("compact_network", "type_color", "white") << c_net.get_network_type() << r
+                        << config.getColor("compact_network", ")", "white") << ") " << r;
                 }
-                if (isSubEnabled("compact_network", "show_ip")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "ip: " << r
-                        << getColor("compact_network", "ip_color", "white") << c_net.get_network_ip() << r
-                        << getColor("compact_network", ")", "white") << ")" << r;
+                if (config.isSubEnabled("compact_network", "show_ip")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "ip: " << r
+                        << config.getColor("compact_network", "ip_color", "white") << c_net.get_network_ip() << r
+                        << config.getColor("compact_network", ")", "white") << ")" << r;
                 }
                 lp.push(ss.str());
             }
@@ -822,31 +666,31 @@ int main(){
 
 
             // Compact Network (dummy)
-            if (isEnabled("dummy_compact_network")) {
+            if (config.isEnabled("dummy_compact_network")) {
                 ostringstream ss;
 
-                if (isSubEnabled("compact_network", "show_emoji")) ss << getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
+                if (config.isSubEnabled("compact_network", "show_emoji")) ss << config.getColor("compact_network", "emoji_color", "white") << u8"🌐" << r << " ";
 
-                ss << getColor("compact_network", "Network", "white") << "Network" << r
-                    << getColor("compact_network", "Network_:", "white") << ": " << r;
+                ss << config.getColor("compact_network", "Network", "white") << "Network" << r
+                    << config.getColor("compact_network", "Network_:", "white") << ": " << r;
 
-                if (isSubEnabled("compact_network", "show_name")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "Name: " << r
-                        << getColor("compact_network", "name_color", "white") << "InterCentury" << r
-                        << getColor("compact_network", ")", "white") << ") " << r;
+                if (config.isSubEnabled("compact_network", "show_name")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "Name: " << r
+                        << config.getColor("compact_network", "name_color", "white") << "InterCentury" << r
+                        << config.getColor("compact_network", ")", "white") << ") " << r;
                 }
-                if (isSubEnabled("compact_network", "show_type")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "Type: " << r
-                        << getColor("compact_network", "type_color", "white") << c_net.get_network_type() << r
-                        << getColor("compact_network", ")", "white") << ") " << r;
+                if (config.isSubEnabled("compact_network", "show_type")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "Type: " << r
+                        << config.getColor("compact_network", "type_color", "white") << c_net.get_network_type() << r
+                        << config.getColor("compact_network", ")", "white") << ") " << r;
                 }
-                if (isSubEnabled("compact_network", "show_ip")) {
-                    ss << getColor("compact_network", "(", "white") << "(" << r
-                        << getColor("compact_network", "label_color", "white") << "ip: " << r
-                        << getColor("compact_network", "ip_color", "white") << "203.0.113.45" << r
-                        << getColor("compact_network", ")", "white") << ")" << r;
+                if (config.isSubEnabled("compact_network", "show_ip")) {
+                    ss << config.getColor("compact_network", "(", "white") << "(" << r
+                        << config.getColor("compact_network", "label_color", "white") << "ip: " << r
+                        << config.getColor("compact_network", "ip_color", "white") << "203.0.113.45" << r
+                        << config.getColor("compact_network", ")", "white") << ")" << r;
                 }
                 lp.push(ss.str());
             }
@@ -856,33 +700,33 @@ int main(){
         
 
         // Compact Disk
-        if (isEnabled("compact_disk")) {
-            if (isSubEnabled("compact_disk", "show_usage")) {
+        if (config.isEnabled("compact_disk")) {
+            if (config.isSubEnabled("compact_disk", "show_usage")) {
                 auto disks = disk.getAllDiskUsage();
                 ostringstream ss;
 
-                if (isSubEnabled("compact_disk", "show_disk_usage_emoji")) ss << getColor("compact_disk", "disk_usage_emoji_color", "white") << u8"📂" << r << " ";
+                if (config.isSubEnabled("compact_disk", "show_disk_usage_emoji")) ss << config.getColor("compact_disk", "disk_usage_emoji_color", "white") << u8"📂" << r << " ";
 
-                ss << getColor("compact_disk", "Disk Usage", "white") << "Disk Usage" << r << getColor("compact_disk", "Disk_Usage_:", "white") << ": " << r;
+                ss << config.getColor("compact_disk", "Disk Usage", "white") << "Disk Usage" << r << config.getColor("compact_disk", "Disk_Usage_:", "white") << ": " << r;
                 for (const auto& d : disks) {
-                    ss << getColor("compact_disk", "(", "white") << "(" << r << getColor("compact_disk", "letter_color", "white") << d.first[0] << ":" << r
-                        << " " << getColor("compact_disk", "percent_color", "white") << fixed << setprecision(1) << d.second << "%" << r
-                        << getColor("compact_disk", ")", "white") << ") " << r;
+                    ss << config.getColor("compact_disk", "(", "white") << "(" << r << config.getColor("compact_disk", "letter_color", "white") << d.first[0] << ":" << r
+                        << " " << config.getColor("compact_disk", "percent_color", "white") << fixed << setprecision(1) << d.second << "%" << r
+                        << config.getColor("compact_disk", ")", "white") << ") " << r;
                 }
                 lp.push(ss.str());
             }
 
-            if (isSubEnabled("compact_disk", "show_capacity")) {
+            if (config.isSubEnabled("compact_disk", "show_capacity")) {
                 auto caps = disk.getDiskCapacity();
                 ostringstream sc;
 
-                if (isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"📊" << r << " ";
+                if (config.isSubEnabled("compact_disk", "show_disk_capacity_emoji")) sc << config.getColor("compact_disk", "disk_capacity_emoji_color", "white") << u8"📊" << r << " ";
 
-                sc << getColor("compact_disk", "Disk Cap", "white") << "Disk Cap" << r << getColor("compact_disk", "Disk_Cap_:", "white") << ": " << r;
+                sc << config.getColor("compact_disk", "Disk Cap", "white") << "Disk Cap" << r << config.getColor("compact_disk", "Disk_Cap_:", "white") << ": " << r;
                 for (const auto& c : caps) {
-                    sc << getColor("compact_disk", "(", "white") << "(" << r << getColor("compact_disk", "letter_color", "white") << c.first[0] << r
-                        << getColor("compact_disk", "separator_color", "white") << "-" << r << getColor("compact_disk", "capacity_color", "white") << c.second << "GB" << r
-                        << getColor("compact_disk", ")", "white") << ")" << r;
+                    sc << config.getColor("compact_disk", "(", "white") << "(" << r << config.getColor("compact_disk", "letter_color", "white") << c.first[0] << r
+                        << config.getColor("compact_disk", "separator_color", "white") << "-" << r << config.getColor("compact_disk", "capacity_color", "white") << c.second << "GB" << r
+                        << config.getColor("compact_disk", ")", "white") << ")" << r;
                 }
                 lp.push(sc.str());
             }
@@ -891,54 +735,54 @@ int main(){
         //-----------------------------start of detailed modules----------------------//
 
         // ----------------- DETAILED MEMORY SECTION ----------------- //
-        if (isEnabled("detailed_memory")) {
+        if (config.isEnabled("detailed_memory")) {
             lp.push(""); // blank line
 
             // ---------- HEADER ----------
-            if (isSectionEnabled("detailed_memory", "header")) {
+            if (config.isSectionEnabled("detailed_memory", "header")) {
                 ostringstream ss;
-                ss << getColor("detailed_memory", ">>~", "white") << ">>~ " << r
-                    << getColor("detailed_memory", "header_title", "white") << "Memory Info" << r
-                    << getColor("detailed_memory", "-------------------------*", "white") << " -------------------------*" << r;
+                ss << config.getColor("detailed_memory", ">>~", "white") << ">>~ " << r
+                    << config.getColor("detailed_memory", "header_title", "white") << "Memory Info" << r
+                    << config.getColor("detailed_memory", "-------------------------*", "white") << " -------------------------*" << r;
                 lp.push(ss.str());
             }
 
             // ---------- SUMMARY (TOTAL, FREE, USED) ----------
-            if (isSectionEnabled("detailed_memory", "total") ||
-                isSectionEnabled("detailed_memory", "free") ||
-                isSectionEnabled("detailed_memory", "used_percentage")) {
+            if (config.isSectionEnabled("detailed_memory", "total") ||
+                config.isSectionEnabled("detailed_memory", "free") ||
+                config.isSectionEnabled("detailed_memory", "used_percentage")) {
                 ostringstream ss;
 
                 // ---------- TOTAL ----------
-                if (isSectionEnabled("detailed_memory", "total")) {
-                    ss << getColor("detailed_memory", "~", "white") << "~" << r
-                        << getColor("detailed_memory", "brackets", "white") << " (" << r
-                        << getColor("detailed_memory", "label", "white") << "Total: " << r
-                        << getColor("detailed_memory", "total_value", "white") << ram.getTotal() << " GB" << r
-                        << getColor("detailed_memory", "brackets", "white") << ") " << r;
+                if (config.isSectionEnabled("detailed_memory", "total")) {
+                    ss << config.getColor("detailed_memory", "~", "white") << "~" << r
+                        << config.getColor("detailed_memory", "brackets", "white") << " (" << r
+                        << config.getColor("detailed_memory", "label", "white") << "Total: " << r
+                        << config.getColor("detailed_memory", "total_value", "white") << ram.getTotal() << " GB" << r
+                        << config.getColor("detailed_memory", "brackets", "white") << ") " << r;
                 }
 
                 // ---------- FREE ----------
-                if (isSectionEnabled("detailed_memory", "free")) {
-                    ss << getColor("detailed_memory", "brackets", "white") << "(" << r
-                        << getColor("detailed_memory", "label", "white") << "Free: " << r
-                        << getColor("detailed_memory", "free_value", "white") << ram.getFree() << " GB" << r
-                        << getColor("detailed_memory", "brackets", "white") << ") " << r;
+                if (config.isSectionEnabled("detailed_memory", "free")) {
+                    ss << config.getColor("detailed_memory", "brackets", "white") << "(" << r
+                        << config.getColor("detailed_memory", "label", "white") << "Free: " << r
+                        << config.getColor("detailed_memory", "free_value", "white") << ram.getFree() << " GB" << r
+                        << config.getColor("detailed_memory", "brackets", "white") << ") " << r;
                 }
 
                 // ---------- USED PERCENTAGE ----------
-                if (isSectionEnabled("detailed_memory", "used_percentage")) {
-                    ss << getColor("detailed_memory", "brackets", "white") << "(" << r
-                        << getColor("detailed_memory", "label", "white") << "Used: " << r
-                        << getColor("detailed_memory", "used_value", "white") << ram.getUsedPercentage() << "%" << r
-                        << getColor("detailed_memory", "brackets", "white") << ")" << r;
+                if (config.isSectionEnabled("detailed_memory", "used_percentage")) {
+                    ss << config.getColor("detailed_memory", "brackets", "white") << "(" << r
+                        << config.getColor("detailed_memory", "label", "white") << "Used: " << r
+                        << config.getColor("detailed_memory", "used_value", "white") << ram.getUsedPercentage() << "%" << r
+                        << config.getColor("detailed_memory", "brackets", "white") << ")" << r;
                 }
 
                 lp.push(ss.str());
             }
 
             // ---------- MODULES ----------
-            if (isSectionEnabled("detailed_memory", "modules")) {
+            if (config.isSectionEnabled("detailed_memory", "modules")) {
                 const auto& modules = ram.getModules();
                 for (size_t i = 0; i < modules.size(); ++i) {
                     // --- Zero-pad capacity ---
@@ -951,20 +795,20 @@ int main(){
 
                     ostringstream ss;
                     // Structural Marker and Label
-                    ss << getColor("detailed_memory", "~", "white") << "~ " << r
-                        << getColor("detailed_memory", "module_label", "white") << "Memory " << i << r
-                        << getColor("detailed_memory", " : ", "white") << ": " << r;
+                    ss << config.getColor("detailed_memory", "~", "white") << "~ " << r
+                        << config.getColor("detailed_memory", "module_label", "white") << "Memory " << i << r
+                        << config.getColor("detailed_memory", " : ", "white") << ": " << r;
 
                     // Used Percentage in parentheses
-                    ss << getColor("detailed_memory", "brackets", "white") << "(" << r
-                        << getColor("detailed_memory", "label", "white") << "Used: " << r
-                        << getColor("detailed_memory", "used_value", "white") << ram.getUsedPercentage() << "%" << r
-                        << getColor("detailed_memory", "brackets", "white") << ") " << r;
+                    ss << config.getColor("detailed_memory", "brackets", "white") << "(" << r
+                        << config.getColor("detailed_memory", "label", "white") << "Used: " << r
+                        << config.getColor("detailed_memory", "used_value", "white") << ram.getUsedPercentage() << "%" << r
+                        << config.getColor("detailed_memory", "brackets", "white") << ") " << r;
 
                     // Capacity, Type, and Speed
-                    ss << getColor("detailed_memory", "capacity", "white") << capOut.str() << r << " "
-                        << getColor("detailed_memory", "type", "white") << modules[i].type << r << " "
-                        << getColor("detailed_memory", "speed", "white") << modules[i].speed << r;
+                    ss << config.getColor("detailed_memory", "capacity", "white") << capOut.str() << r << " "
+                        << config.getColor("detailed_memory", "type", "white") << modules[i].type << r << " "
+                        << config.getColor("detailed_memory", "speed", "white") << modules[i].speed << r;
 
                     lp.push(ss.str());
                 }
@@ -973,55 +817,8 @@ int main(){
 
 
         // ----------------- DETAILED STORAGE SECTION (FIXED) ----------------- //
-        if (isEnabled("detailed_storage")) {
+        if (config.isEnabled("detailed_storage")) {
             lp.push("");
-
-            // Helper function to get nested color values - Defaulted to white
-            auto getNestedColor = [&](const string& path, const string& defaultColor = "white") -> string {
-                if (!config_loaded || !config.contains("detailed_storage")) return colors[defaultColor];
-
-                vector<string> keys;
-                stringstream ss(path);
-                string key;
-                while (getline(ss, key, '.')) {
-                    keys.push_back(key);
-                }
-
-                json current = config["detailed_storage"];
-                for (const auto& k : keys) {
-                    if (!current.contains(k)) return colors[defaultColor];
-                    current = current[k];
-                }
-
-                if (current.is_string()) {
-                    string colorName = current.get<string>();
-                    return colors.count(colorName) ? colors[colorName] : colors[defaultColor];
-                }
-                return colors[defaultColor];
-                };
-
-            // Helper to check nested boolean values
-            auto getNestedBool = [&](const string& path, bool defaultValue = true) -> bool {
-                if (!config_loaded || !config.contains("detailed_storage")) return defaultValue;
-
-                vector<string> keys;
-                stringstream ss(path);
-                string key;
-                while (getline(ss, key, '.')) {
-                    keys.push_back(key);
-                }
-
-                json current = config["detailed_storage"];
-                for (const auto& k : keys) {
-                    if (!current.contains(k)) return defaultValue;
-                    current = current[k];
-                }
-
-                if (current.is_boolean()) {
-                    return current.get<bool>();
-                }
-                return defaultValue;
-                };
 
             auto fmt_storage = [](const string& s) -> string {
                 ostringstream oss;
@@ -1049,14 +846,14 @@ int main(){
             vector<storage_data> all_disks_captured;
 
             // STORAGE SUMMARY SECTION
-            if (getNestedBool("sections.storage_summary", true)) {
+            if (config.getNestedBool("detailed_storage", "sections.storage_summary", true)) {
 
                 // Header
-                if (getNestedBool("storage_summary.header.show_header", true)) {
+                if (config.getNestedBool("detailed_storage", "storage_summary.header.show_header", true)) {
                     ostringstream ss;
-                    ss << getNestedColor("storage_summary.header.line_color", "white") << "------------------------- " << r
-                        << getNestedColor("storage_summary.header.title_color", "white") << "STORAGE SUMMARY" << r
-                        << getNestedColor("storage_summary.header.line_color", "white") << " --------------------------" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.header.line_color", "white") << "------------------------- " << r
+                        << config.getNestedColor("detailed_storage", "storage_summary.header.title_color", "white") << "STORAGE SUMMARY" << r
+                        << config.getNestedColor("detailed_storage", "storage_summary.header.line_color", "white") << " --------------------------" << r;
                     lp.push(ss.str());
                 }
 
@@ -1067,104 +864,90 @@ int main(){
                     ostringstream ss;
 
                     // Storage type
-                    if (getNestedBool("storage_summary.show_storage_type", true)) {
-                        ss << getNestedColor("storage_summary.storage_type_color", "white") << d.storage_type << r << " ";
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_storage_type", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.storage_type_color", "white") << d.storage_type << r << " ";
                     }
 
                     // Drive letter
-                    if (getNestedBool("storage_summary.show_drive_letter", true)) {
-                        ss << getNestedColor("storage_summary.drive_letter_color", "white") << d.drive_letter << r;
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_drive_letter", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.drive_letter_color", "white") << d.drive_letter << r;
                     }
 
                     // Opening bracket
-                    ss << getNestedColor("storage_summary.[", "white") << " [" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.[", "white") << " [" << r;
 
                     // (Used) label
-                    if (getNestedBool("storage_summary.show_used_label", true)) {
-                        ss << getNestedColor("storage_summary.(", "white") << " (" << r
-                            << getNestedColor("storage_summary.used_label_color", "white") << "Used" << r
-                            << getNestedColor("storage_summary.)", "white") << ") " << r;
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_used_label", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.(", "white") << " (" << r
+                            << config.getNestedColor("detailed_storage", "storage_summary.used_label_color", "white") << "Used" << r
+                            << config.getNestedColor("detailed_storage", "storage_summary.)", "white") << ") " << r;
                     }
 
                     // Used space
-                    if (getNestedBool("storage_summary.show_used_space", true)) {
-                        ss << getNestedColor("storage_summary.used_space_color", "white") << fmt_storage(d.used_space) << r;
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_used_space", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.used_space_color", "white") << fmt_storage(d.used_space) << r;
                     }
 
-                    ss << getNestedColor("storage_summary.used_GIB", "white") << " GiB " << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.used_GIB", "white") << " GiB " << r;
 
                     // Separator
-                    ss << getNestedColor("storage_summary./", "white") << "/" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary./", "white") << "/" << r;
 
                     // Total space
-                    if (getNestedBool("storage_summary.show_total_space", true)) {
-                        ss << getNestedColor("storage_summary.total_space_color", "white") << fmt_storage(d.total_space) << r;
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_total_space", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.total_space_color", "white") << fmt_storage(d.total_space) << r;
                     }
 
-                    ss << getNestedColor("storage_summary.total_GIB", "white") << " GiB  " << r;
-
-                   
-                    /*
-                    
-                    
-                     // Percentage
-                    if (getNestedBool("storage_summary.show_used_percentage", true)) {
-                        ss << getNestedColor("storage_summary.used_percentage_color", "white") << d.used_percentage << r;
-                    }
-                    */
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.total_GIB", "white") << " GiB  " << r;
 
                     // Percentage
-                    if (getNestedBool("storage_summary.show_used_percentage", true)) {
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_used_percentage", true)) {
                         auto fmt_percentage = [](int percentage) -> string {
                             ostringstream oss;
-
-                            // Use a FIXED width for all percentages (4 chars: " 99%" or "100%")
-                            // This ensures proper alignment
                             oss << right << setw(4) << percentage << "%";
                             return oss.str();
                             };
 
-                        ss << getNestedColor("storage_summary.used_percentage_color", "white")
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.used_percentage_color", "white")
                             << fmt_percentage(d.used_percentage) << r;
                     }
 
-
                     // Separator
-                    ss << getNestedColor("storage_summary.-", "white") << " - " << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.-", "white") << " - " << r;
 
                     // File system
-                    if (getNestedBool("storage_summary.show_file_system", true)) {
-                        ss << getNestedColor("storage_summary.file_system_color", "white") << d.file_system << r << " ";
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_file_system", true)) {
+                        ss << config.getNestedColor("detailed_storage", "storage_summary.file_system_color", "white") << d.file_system << r << " ";
                     }
 
                     // External/Internal status
-                    if (getNestedBool("storage_summary.show_external_status", true)) {
+                    if (config.getNestedBool("detailed_storage", "storage_summary.show_external_status", true)) {
                         if (d.is_external) {
-                            ss << getNestedColor("storage_summary.external_text_color", "white") << "Ext" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.external_text_color", "white") << "Ext" << r;
                         }
                         else {
-                            ss << getNestedColor("storage_summary.internal_text_color", "white") << "Int" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.internal_text_color", "white") << "Int" << r;
                         }
                     }
 
                     // Closing bracket
-                    ss << getNestedColor("storage_summary.]", "white") << " ]" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.]", "white") << " ]" << r;
 
                     lp.push(ss.str());
                     });
             }
 
             // DISK PERFORMANCE SECTION
-            if (!all_disks_captured.empty() && getNestedBool("sections.disk_performance", true)) {
+            if (!all_disks_captured.empty() && config.getNestedBool("detailed_storage", "sections.disk_performance", true)) {
 
                 lp.push("");
 
                 // Header
-                if (getNestedBool("disk_performance.header.show_header", true)) {
+                if (config.getNestedBool("detailed_storage", "disk_performance.header.show_header", true)) {
                     ostringstream ss;
-                    ss << getNestedColor("disk_performance.header.line_color", "white") << "-------------------- " << r
-                        << getNestedColor("disk_performance.header.title_color", "white") << "DISK PERFORMANCE & DETAILS" << r
-                        << getNestedColor("disk_performance.header.line_color", "white") << " --------------------" << r;
+                    ss << config.getNestedColor("detailed_storage", "disk_performance.header.line_color", "white") << "-------------------- " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance.header.title_color", "white") << "DISK PERFORMANCE & DETAILS" << r
+                        << config.getNestedColor("detailed_storage", "disk_performance.header.line_color", "white") << " --------------------" << r;
                     lp.push(ss.str());
                 }
 
@@ -1172,62 +955,62 @@ int main(){
                     ostringstream ss;
 
                     // Drive letter
-                    if (getNestedBool("disk_performance.show_drive_letter", true)) {
-                        ss << getNestedColor("disk_performance.drive_letter_color", "white") << d.drive_letter << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance.show_drive_letter", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance.drive_letter_color", "white") << d.drive_letter << r;
                     }
 
-                    ss << getNestedColor("storage_summary.[", "white") << " [" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.[", "white") << " [" << r << " ";
 
                     // Read speed
-                    if (getNestedBool("disk_performance.show_read_speed", true)) {
-                        ss << getNestedColor("disk_performance.read_label_color", "white") << "Read:" << r << " "
-                            << getNestedColor("disk_performance.read_speed_color", "white") << fmt_speed(d.read_speed) << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance.show_read_speed", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance.read_label_color", "white") << "Read:" << r << " "
+                            << config.getNestedColor("detailed_storage", "disk_performance.read_speed_color", "white") << fmt_speed(d.read_speed) << r;
                     }
 
-                    ss << getNestedColor("disk_performance.speed_unit_color", "white") << " MB/s " << r
-                        << getNestedColor("disk_performance.|", "white") << "|" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "disk_performance.speed_unit_color", "white") << " MB/s " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance.|", "white") << "|" << r << " ";
 
                     // Write speed
-                    if (getNestedBool("disk_performance.show_write_speed", true)) {
-                        ss << getNestedColor("disk_performance.write_label_color", "white") << "Write:" << r << " "
-                            << getNestedColor("disk_performance.write_speed_color", "white") << fmt_speed(d.write_speed) << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance.show_write_speed", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance.write_label_color", "white") << "Write:" << r << " "
+                            << config.getNestedColor("detailed_storage", "disk_performance.write_speed_color", "white") << fmt_speed(d.write_speed) << r;
                     }
 
-                    ss << getNestedColor("disk_performance.speed_unit_color", "white") << " MB/s " << r
-                        << getNestedColor("disk_performance.|", "white") << "|" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "speed_unit_color", "white") << " MB/s " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance.|", "white") << "|" << r << " ";
 
                     // Serial number
-                    if (getNestedBool("disk_performance.show_serial_number", true)) {
-                        ss << getNestedColor("disk_performance.serial_number_color", "white") << d.serial_number << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance.show_serial_number", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance.serial_number_color", "white") << d.serial_number << r;
                     }
 
                     // External/Internal status
-                    if (getNestedBool("disk_performance.show_external_status", true)) {
+                    if (config.getNestedBool("detailed_storage", "disk_performance.show_external_status", true)) {
                         if (d.is_external) {
-                            ss << getNestedColor("storage_summary.external_text_color", "white") << " Ext" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.external_text_color", "white") << " Ext" << r;
                         }
                         else {
-                            ss << getNestedColor("storage_summary.internal_text_color", "white") << " Int" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.internal_text_color", "white") << " Int" << r;
                         }
                     }
 
-                    ss << getNestedColor("storage_summary.]", "white") << " ]" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.]", "white") << " ]" << r;
 
                     lp.push(ss.str());
                 }
             }
 
             // DISK PERFORMANCE PREDICTED
-            if (!all_disks_captured.empty() && getNestedBool("sections.disk_performance_predicted", true)) {
+            if (!all_disks_captured.empty() && config.getNestedBool("detailed_storage", "sections.disk_performance_predicted", true)) {
 
                 lp.push("");
 
                 // Header
-                if (getNestedBool("disk_performance_predicted.header.show_header", true)) {
+                if (config.getNestedBool("detailed_storage", "disk_performance_predicted.header.show_header", true)) {
                     ostringstream ss;
-                    ss << getNestedColor("disk_performance_predicted.header.line_color", "white") << "---------------- " << r
-                        << getNestedColor("disk_performance_predicted.header.title_color", "white") << "DISK PERFORMANCE & DETAILS (Predicted)" << r
-                        << getNestedColor("disk_performance_predicted.header.line_color", "white") << " ------------" << r;
+                    ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.header.line_color", "white") << "---------------- " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance_predicted.header.title_color", "white") << "DISK PERFORMANCE & DETAILS (Predicted)" << r
+                        << config.getNestedColor("detailed_storage", "disk_performance_predicted.header.line_color", "white") << " ------------" << r;
                     lp.push(ss.str());
                 }
 
@@ -1235,1121 +1018,530 @@ int main(){
                     ostringstream ss;
 
                     // Drive letter
-                    if (getNestedBool("disk_performance_predicted.show_drive_letter", true)) {
-                        ss << getNestedColor("disk_performance_predicted.drive_letter_color", "white") << d.drive_letter << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance_predicted.show_drive_letter", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.drive_letter_color", "white") << d.drive_letter << r;
                     }
 
-                    ss << getNestedColor("storage_summary.[", "white") << " [" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.[", "white") << " [" << r << " ";
 
                     // Read speed
-                    if (getNestedBool("disk_performance_predicted.show_read_speed", true)) {
-                        ss << getNestedColor("disk_performance_predicted.read_label_color", "white") << "Read: " << r
-                            << getNestedColor("disk_performance_predicted.read_speed_color", "white") << fmt_speed(d.predicted_read_speed) << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance_predicted.show_read_speed", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.read_label_color", "white") << "Read: " << r
+                            << config.getNestedColor("detailed_storage", "disk_performance_predicted.read_speed_color", "white") << fmt_speed(d.predicted_read_speed) << r;
                     }
 
-                    ss << getNestedColor("disk_performance_predicted.speed_unit_color", "white") << " MB/s " << r
-                        << getNestedColor("disk_performance_predicted.|", "white") << "|" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.speed_unit_color", "white") << " MB/s " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance_predicted.|", "white") << "|" << r << " ";
 
                     // Write speed
-                    if (getNestedBool("disk_performance_predicted.show_write_speed", true)) {
-                        ss << getNestedColor("disk_performance_predicted.write_label_color", "white") << "Write: " << r
-                            << getNestedColor("disk_performance_predicted.write_speed_color", "white") << fmt_speed(d.predicted_write_speed) << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance_predicted.show_write_speed", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.write_label_color", "white") << "Write: " << r
+                            << config.getNestedColor("detailed_storage", "disk_performance_predicted.write_speed_color", "white") << fmt_speed(d.predicted_write_speed) << r;
                     }
 
-                    ss << getNestedColor("disk_performance_predicted.speed_unit_color", "white") << " MB/s " << r
-                        << getNestedColor("disk_performance_predicted.|", "white") << "|" << r << " ";
+                    ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.speed_unit_color", "white") << " MB/s " << r
+                        << config.getNestedColor("detailed_storage", "disk_performance_predicted.|", "white") << "|" << r << " ";
 
                     // Serial number
-                    if (getNestedBool("disk_performance_predicted.show_serial_number", true)) {
-                        ss << getNestedColor("disk_performance_predicted.serial_number_color", "white") << d.serial_number << r;
+                    if (config.getNestedBool("detailed_storage", "disk_performance_predicted.show_serial_number", true)) {
+                        ss << config.getNestedColor("detailed_storage", "disk_performance_predicted.serial_number_color", "white") << d.serial_number << r;
                     }
 
                     // External/Internal status
-                    if (getNestedBool("disk_performance_predicted.show_external_status", true)) {
+                    if (config.getNestedBool("detailed_storage", "disk_performance_predicted.show_external_status", true)) {
                         if (d.is_external) {
-                            ss << getNestedColor("storage_summary.external_text_color", "white") << " Ext" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.external_text_color", "white") << " Ext" << r;
                         }
                         else {
-                            ss << getNestedColor("storage_summary.internal_text_color", "white") << " Int" << r;
+                            ss << config.getNestedColor("detailed_storage", "storage_summary.internal_text_color", "white") << " Int" << r;
                         }
                     }
 
-                    ss << getNestedColor("storage_summary.]", "white") << " ]" << r;
+                    ss << config.getNestedColor("detailed_storage", "storage_summary.]", "white") << " ]" << r;
 
                     lp.push(ss.str());
                 }
             }
 
-            // No drives detected
-            if (all_disks_captured.empty()) {
-                lp.push("No drives detected.");
-            }
-        }
-        // ----------------- END DETAILED STORAGE ----------------- //
-
-
-
-            // Network Info (Compact + Extra) (real)
-            if (isEnabled("network_info")) 
-            {
-
-                lp.push("");//blank line....don't use cout !!! it might break the allignment
-
-                // Header
-                if (isSubEnabled("network_info", "show_header")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "#-", "white") << "#- " << r
-                        << getColor("network_info", "header_text_color", "white") << "Network Info " << r
-                        << getColor("network_info", "separator_line", "white")
-                        << "---------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-
-                // Network Name
-                if (isSubEnabled("network_info", "show_name")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "name_label_color", "white") // Fixed level color
-                        << "Network Name              " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "name_value_color", "white")
-                        << net.get_network_name() << r;
-                    lp.push(ss.str());
-                }
-
-                // Network Type
-                if (isSubEnabled("network_info", "show_type")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "type_label_color", "white") // Fixed level color
-                        << "Network Type              " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "type_value_color", "white")
-                        << c_net.get_network_type() << r;
-                    lp.push(ss.str());
-                }
-
-                // local IP 
-                if (isSubEnabled("network_info", "show_local_ip")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "local_ip_label_color", "white") // Fixed level color
-                        << "Local IP                  " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "local_ip_color", "white")
-                        << net.get_local_ip() << r;
-                    lp.push(ss.str());
-                }
-
-                // public ip
-                if (isSubEnabled("network_info", "show_public_ip")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "public_ip_label_color", "white") // Fixed level color
-                        << "Public IP:                " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "public_ip_color", "white")
-                        << net.get_public_ip() << r;
-                    lp.push(ss.str());
-                }
-
-                // Locale
-                if (isSubEnabled("network_info", "show_locale")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "locale_label_color", "white") // Fixed level color
-                        << "Locale                    " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "locale_value_color", "white")
-                        << net.get_locale() << r;
-                    lp.push(ss.str());
-                }
-
-                // MAC Address
-                if (isSubEnabled("network_info", "show_mac")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "mac_label_color", "white") // Fixed level color
-                        << "Mac address               " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "mac_value_color", "white")
-                        << net.get_mac_address() << r;
-                    lp.push(ss.str());
-                }
-
-                // Upload Speed
-                if (isSubEnabled("network_info", "show_upload")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "upload_label_color", "white") // Fixed level color
-                        << "avg upload speed          " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "upload_value_color", "white")
-                        << net.get_network_upload_speed() << r;
-                    lp.push(ss.str());
-                }
-
-                // Download Speed
-                if (isSubEnabled("network_info", "show_download")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "download_label_color", "white") // Fixed level color
-                        << "avg download speed        " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "download_value_color", "white")
-                        << net.get_network_download_speed() << r;
-                    lp.push(ss.str());
-                }
-            }
-
-       
-        
-            // Network Info (Compact + Extra) (dummy)
-            if (isEnabled("dummy_network_info")) {
-
-                lp.push("");//blank line....don't use cout !!! it might break the allignment
-
-                // Header
-                if (isSubEnabled("network_info", "show_header")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "#-", "white") << "#- " << r
-                        << getColor("network_info", "header_text_color", "white") << "Network Info " << r
-                        << getColor("network_info", "separator_line", "white")
-                        << "---------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-
-                // Network Name
-                if (isSubEnabled("network_info", "show_name")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "name_label_color", "white") // Fixed level color
-                        << "Network Name              " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "name_value_color", "white")
-                        << "InterCentury" << r;
-                    lp.push(ss.str());
-                }
-
-                // Network Type
-                if (isSubEnabled("network_info", "show_type")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "type_label_color", "white") // Fixed level color
-                        << "Network Type              " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "type_value_color", "white")
-                        << c_net.get_network_type() << r;
-                    lp.push(ss.str());
-                }
-
-                // local IP 
-                if (isSubEnabled("network_info", "show_local_ip")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "local_ip_label_color", "white") // Fixed level color
-                        << "Local IP                  " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "local_ip_color", "white")
-                        << "192.168.1.42" << r;
-                    lp.push(ss.str());
-                }
-
-                // public ip
-                if (isSubEnabled("network_info", "show_public_ip")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "public_ip_label_color", "white") // Fixed level color
-                        << "Public IP:                " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "public_ip_color", "white")
-                        << "203.0.113.45" << r;
-                    lp.push(ss.str());
-                }
-
-                // Locale
-                if (isSubEnabled("network_info", "show_locale")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "locale_label_color", "white") // Fixed level color
-                        << "Locale                    " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "locale_value_color", "white")
-                        << net.get_locale() << r;
-                    lp.push(ss.str());
-                }
-
-                // MAC Address
-                if (isSubEnabled("network_info", "show_mac")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "mac_label_color", "white") // Fixed level color
-                        << "Mac address               " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "mac_value_color", "white")
-                        << "AA:BB:CC:DD:EE:FF" << r;
-                    lp.push(ss.str());
-                }
-
-                // Upload Speed
-                if (isSubEnabled("network_info", "show_upload")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "upload_label_color", "white") // Fixed level color
-                        << "avg upload speed          " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "upload_value_color", "white")
-                        << net.get_network_upload_speed() << r;
-                    lp.push(ss.str());
-                }
-
-                // Download Speed
-                if (isSubEnabled("network_info", "show_download")) {
-                    ostringstream ss;
-                    ss << getColor("network_info", "~", "white") << "~ " << r
-                        << getColor("network_info", "download_label_color", "white") // Fixed level color
-                        << "avg download speed        " << r
-                        << getColor("network_info", ":", "white") << ": " << r
-                        << getColor("network_info", "download_value_color", "white")
-                        << net.get_network_download_speed() << r;
-                    lp.push(ss.str());
-                }
-            }
-
-
-        
-
- 
-        // end of the detailed network section////////////////////////////////////////////////
-
-        // OS Info (JSON Driven)
-        if (isEnabled("os_info")) {
-            lp.push("");
-
-            // Header
-            if (isSubEnabled("os_info", "show_header")) {
-                ostringstream ss;
-                ss << getColor("os_info", "#-", "white") << "#- " << r
-                    << getColor("os_info", "header_text_color", "white") << "Operating System " << r
-                    << getColor("os_info", "separator_line", "white")
-                    << "-----------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            // Name
-            if (isSubEnabled("os_info", "show_name")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "name_label_color", "white") << "Name                      " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "name_value_color", "white") << os.GetOSName() << r;
-                lp.push(ss.str());
-            }
-
-            // Build
-            if (isSubEnabled("os_info", "show_build")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "build_label_color", "white") << "Build                     " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "build_value_color", "white") << os.GetOSVersion() << r;
-                lp.push(ss.str());
-            }
-
-            // Architecture
-            if (isSubEnabled("os_info", "show_architecture")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "arch_label_color", "white") << "Architecture              " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "arch_value_color", "white") << os.GetOSArchitecture() << r;
-                lp.push(ss.str());
-            }
-
-            // Kernel
-            if (isSubEnabled("os_info", "show_kernel")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "kernel_label_color", "white") << "Kernel                    " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "kernel_value_color", "white") << os.get_os_kernel_info() << r;
-                lp.push(ss.str());
-            }
-
-            // Uptime
-            if (isSubEnabled("os_info", "show_uptime")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "uptime_label_color", "white") << "Uptime                    " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "uptime_value_color", "white") << os.get_os_uptime() << r;
-                lp.push(ss.str());
-            }
-
-            // Install Date
-            if (isSubEnabled("os_info", "show_install_date")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "install_date_label_color", "white") << "Install Date              " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "install_date_value_color", "white")
-                    << os.get_os_install_date() << r;
-                lp.push(ss.str());
-            }
-
-            // Serial
-            if (isSubEnabled("os_info", "show_serial")) {
-                ostringstream ss;
-                ss << getColor("os_info", "~", "white") << "~ " << r
-                    << getColor("os_info", "serial_label_color", "white") << "Serial                    " << r
-                    << getColor("os_info", ":", "white") << ": " << r
-                    << getColor("os_info", "serial_value_color", "white")
-                    << os.get_os_serial_number() << r;
-                lp.push(ss.str());
-            }
-        }
-
-        //end of the OS info section////////////////////////////////////////////////
-
-
-        // CPU Info (JSON Driven)
-        if (isEnabled("cpu_info")) {
-            lp.push("");
-
-            // Header
-            if (isSubEnabled("cpu_info", "show_header")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "#-", "white") << "#- " << r
-                    << getColor("cpu_info", "header_text_color", "white") << "CPU Info " << r
-                    << getColor("cpu_info", "separator_line", "white")
-                    << "-------------------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            // Brand
-            if (isSubEnabled("cpu_info", "show_brand")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "brand_label_color", "white") << "Brand                     " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "brand_value_color", "white") << cpu.get_cpu_info() << r;
-                lp.push(ss.str());
-            }
-
-            // Utilization
-            if (isSubEnabled("cpu_info", "show_utilization")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "utilization_label_color", "white") << "Utilization               " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "utilization_value_color", "white") << cpu.get_cpu_utilization() << r
-                    << getColor("cpu_info", "%", "white") << "%" << r;
-                lp.push(ss.str());
-            }
-
-            // Speed
-            if (isSubEnabled("cpu_info", "show_speed")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "speed_label_color", "white") << "Speed                     " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "speed_value_color", "white") << cpu.get_cpu_speed() << r;
-                lp.push(ss.str());
-            }
-
-            // Base Speed
-            if (isSubEnabled("cpu_info", "show_base_speed")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "base_speed_label_color", "white") << "Base Speed                " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "base_speed_value_color", "white") << cpu.get_cpu_base_speed() << r;
-                lp.push(ss.str());
-            }
-
-            // Cores
-            if (isSubEnabled("cpu_info", "show_cores")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "cores_label_color", "white") << "Cores                     " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "cores_value_color", "white") << cpu.get_cpu_cores() << r;
-                lp.push(ss.str());
-            }
-
-            // Logical Processors
-            if (isSubEnabled("cpu_info", "show_logical_processors")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "logical_processors_label_color", "white") << "Logical Processors        " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "logical_processors_value_color", "white") << cpu.get_cpu_logical_processors() << r;
-                lp.push(ss.str());
-            }
-
-            // Sockets
-            if (isSubEnabled("cpu_info", "show_sockets")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "sockets_label_color", "white") << "Sockets                   " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "sockets_value_color", "white") << cpu.get_cpu_sockets() << r;
-                lp.push(ss.str());
-            }
-
-            // Virtualization
-            if (isSubEnabled("cpu_info", "show_virtualization")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "virtualization_label_color", "white") << "Virtualization            " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "virtualization_value_color", "white") << cpu.get_cpu_virtualization() << r;
-                lp.push(ss.str());
-            }
-
-            // L1 Cache
-            if (isSubEnabled("cpu_info", "show_l1_cache")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "l1_cache_label_color", "white") << "L1 Cache                  " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "l1_cache_value_color", "white") << cpu.get_cpu_l1_cache() << r;
-                lp.push(ss.str());
-            }
-
-            // L2 Cache
-            if (isSubEnabled("cpu_info", "show_l2_cache")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "l2_cache_label_color", "white") << "L2 Cache                  " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "l2_cache_value_color", "white") << cpu.get_cpu_l2_cache() << r;
-                lp.push(ss.str());
-            }
-
-            // L3 Cache
-            if (isSubEnabled("cpu_info", "show_l3_cache")) {
-                ostringstream ss;
-                ss << getColor("cpu_info", "~", "white") << "~ " << r
-                    << getColor("cpu_info", "l3_cache_label_color", "white") << "L3 Cache                  " << r
-                    << getColor("cpu_info", ":", "white") << ": " << r
-                    << getColor("cpu_info", "l3_cache_value_color", "white") << cpu.get_cpu_l3_cache() << r;
-                lp.push(ss.str());
-            }
-        }
-
-        //end of the CPU info section////////////////////////////////////////////////
- 
-
-        // GPU Info (JSON Driven)
-        if (isEnabled("gpu_info")) {
-            lp.push("");
-            auto all_gpu_info = obj_gpu.get_all_gpu_info();
-
-            if (all_gpu_info.empty()) {
-                if (isSubEnabled("gpu_info", "show_header")) {
-                    ostringstream ss;
-                    ss << getColor("gpu_info", "#-", "white") << "#- " << r
-                        << getColor("gpu_info", "header_text_color", "white") << "GPU Info " << r
-                        << getColor("gpu_info", "separator_line", "white")
-                        << "--------------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-                lp.push(getColor("gpu_info", "error_color", "white") + "No GPU detected." + r);
-            }
-            else {
-                // Main Header
-                if (isSubEnabled("gpu_info", "show_header")) {
-                    ostringstream ss;
-                    ss << getColor("gpu_info", "#-", "white") << "#- " << r
-                        << getColor("gpu_info", "header_text_color", "white") << "GPU Info " << r
-                        << getColor("gpu_info", "separator_line", "white")
-                        << "-------------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-
-                for (size_t i = 0; i < all_gpu_info.size(); ++i) {
-                    auto& g = all_gpu_info[i];
-
-                    // GPU index line
-                    if (isSubEnabled("gpu_info", "show_gpu_index")) {
-                        ostringstream label;
-                        if (i == 0) {
-                            label << getColor("gpu_info", "gpu_index_label_color", "white") << "GPU " << (i + 1) << r;
-                        }
-                        else {
-                            label << getColor("gpu_info", "#-", "white") << "#- " << r
-                                << getColor("gpu_info", "gpu_index_label_color", "white") << "GPU " << (i + 1) << r
-                                << getColor("gpu_info", "separator_line", "white")
-                                << " ----------------------------------------------------------#" << r;
-                        }
-
-                        string lbl = label.str();
-                        if (lbl.length() < 27) lbl += string(27 - lbl.length(), ' ');
-                        lp.push(lbl);
+                    // No drives detected
+                    if (all_disks_captured.empty()) {
+                        lp.push("No drives detected.");
                     }
+                }
+                // ----------------- END DETAILED STORAGE ----------------- //
 
-                    if (isSubEnabled("gpu_info", "show_name")) {
+                // Network Info (Compact + Extra) (real)
+                if (config.isEnabled("network_info"))
+                {
+                    lp.push("");//blank line....don't use cout !!! it might break the allignment
+
+                    // Header
+                    if (config.isSubEnabled("network_info", "show_header")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "name_label_color", "white") << "Name                   " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "name_value_color", "white") << g.gpu_name << r;
+                        ss << config.getColor("network_info", "#-", "white") << "#- " << r
+                            << config.getColor("network_info", "header_text_color", "white") << "Network Info " << r
+                            << config.getColor("network_info", "separator_line", "white")
+                            << "---------------------------------------------------#" << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_memory")) {
+                    // Network Name
+                    if (config.isSubEnabled("network_info", "show_name")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "memory_label_color", "white") << "Memory                 " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "memory_value_color", "white") << g.gpu_memory << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "name_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "name", "Network Name") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "name_value_color", "white")
+                            << net.get_network_name() << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_usage")) {
+                    // Network Type
+                    if (config.isSubEnabled("network_info", "show_type")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "usage_label_color", "white") << "Usage                  " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "usage_value_color", "white") << g.gpu_usage << r
-                            << getColor("gpu_info", "%", "white") << "%" << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "type_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "type", "Network Type") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "type_value_color", "white")
+                            << c_net.get_network_type() << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_vendor")) {
+                    // local IP 
+                    if (config.isSubEnabled("network_info", "show_local_ip")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "vendor_label_color", "white") << "Vendor                 " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "vendor_value_color", "white") << g.gpu_vendor << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "local_ip_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "local_ip", "Local IP") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "local_ip_color", "white")
+                            << net.get_local_ip() << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_driver")) {
+                    // public ip
+                    if (config.isSubEnabled("network_info", "show_public_ip")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "driver_label_color", "white") << "Driver Version         " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "driver_value_color", "white") << g.gpu_driver_version << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "public_ip_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "public_ip", "Public IP:") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "public_ip_color", "white")
+                            << net.get_public_ip() << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_temperature")) {
+                    // Locale
+                    if (config.isSubEnabled("network_info", "show_locale")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "temp_label_color", "white") << "Temperature            " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "temp_value_color", "white") << g.gpu_temperature << r
-                            << getColor("gpu_info", "unit_color", "white") << " C" << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "locale_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "locale", "Locale") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "locale_value_color", "white")
+                            << net.get_locale() << r;
                         lp.push(ss.str());
                     }
 
-                    if (isSubEnabled("gpu_info", "show_cores")) {
+                    // MAC Address
+                    if (config.isSubEnabled("network_info", "show_mac")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "#->", "white") << "#-> " << r
-                            << getColor("gpu_info", "cores_label_color", "white") << "Core Count             " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "cores_value_color", "white") << g.gpu_core_count << r;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "mac_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "mac", "Mac address") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "mac_value_color", "white")
+                            << net.get_mac_address() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Upload Speed
+                    if (config.isSubEnabled("network_info", "show_upload")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "upload_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "upload", "avg upload speed") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "upload_value_color", "white")
+                            << net.get_network_upload_speed() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Download Speed
+                    if (config.isSubEnabled("network_info", "show_download")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "download_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "download", "avg download speed") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "download_value_color", "white")
+                            << net.get_network_download_speed() << r;
                         lp.push(ss.str());
                     }
                 }
 
-                // Primary GPU Details
-                auto primary = detailed_gpu_info.primary_gpu_info();
-                if (isSubEnabled("gpu_info", "show_primary_details")) {
+                // Network Info (Compact + Extra) (dummy)
+                if (config.isEnabled("dummy_network_info")) {
+
+                    lp.push("");//blank line....don't use cout !!! it might break the allignment
+
+                    // Header
+                    if (config.isSubEnabled("network_info", "show_header")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "#-", "white") << "#- " << r
+                            << config.getColor("network_info", "header_text_color", "white") << "Network Info " << r
+                            << config.getColor("network_info", "separator_line", "white")
+                            << "---------------------------------------------------#" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Network Name
+                    if (config.isSubEnabled("network_info", "show_name")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "name_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "name", "Network Name") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "name_value_color", "white")
+                            << "InterCentury" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Network Type
+                    if (config.isSubEnabled("network_info", "show_type")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "type_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "type", "Network Type") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "type_value_color", "white")
+                            << c_net.get_network_type() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // local IP 
+                    if (config.isSubEnabled("network_info", "show_local_ip")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "local_ip_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "local_ip", "Local IP") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "local_ip_color", "white")
+                            << "192.168.1.42" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // public ip
+                    if (config.isSubEnabled("network_info", "show_public_ip")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "public_ip_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "public_ip", "Public IP:") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "public_ip_color", "white")
+                            << "203.0.113.45" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Locale
+                    if (config.isSubEnabled("network_info", "show_locale")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "locale_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "locale", "Locale") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "locale_value_color", "white")
+                            << net.get_locale() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // MAC Address
+                    if (config.isSubEnabled("network_info", "show_mac")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "mac_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "mac", "Mac address") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "mac_value_color", "white")
+                            << "AA:BB:CC:DD:EE:FF" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Upload Speed
+                    if (config.isSubEnabled("network_info", "show_upload")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "upload_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "upload", "avg upload speed") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "upload_value_color", "white")
+                            << net.get_network_upload_speed() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Download Speed
+                    if (config.isSubEnabled("network_info", "show_download")) {
+                        ostringstream ss;
+                        ss << config.getColor("network_info", "~", "white") << "~ " << r
+                            << config.getColor("network_info", "download_label_color", "white")
+                            << left << setw(26) << config.getLabel("network_info", "download", "avg download speed") << r
+                            << config.getColor("network_info", ":", "white") << ": " << r
+                            << config.getColor("network_info", "download_value_color", "white")
+                            << net.get_network_download_speed() << r;
+                        lp.push(ss.str());
+                    }
+                }
+
+                // OS Info (JSON Driven)
+                if (config.isEnabled("os_info")) {
                     lp.push("");
-                    ostringstream ss;
-                    ss << getColor("gpu_info", "#-", "white") << "#- " << r
-                        << getColor("gpu_info", "primary_header_color", "white") << "Primary GPU Details" << r
-                        << getColor("gpu_info", "separator_line", "white")
-                        << "---------------------------------------------#" << r;
-                    lp.push(ss.str());
 
-                    // Primary Name
-                    {
+                    // Header
+                    if (config.isSubEnabled("os_info", "show_header")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "p_name_label_color", "white") << "Name                   " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "name_value_color", "white") << primary.name << r;
+                        ss << config.getColor("os_info", "#-", "white") << "#- " << r
+                            << config.getColor("os_info", "header_text_color", "white") << "Operating System " << r
+                            << config.getColor("os_info", "separator_line", "white")
+                            << "-----------------------------------------------#" << r;
                         lp.push(ss.str());
                     }
-                    // Primary VRAM
-                    {
+
+                    // Name
+                    if (config.isSubEnabled("os_info", "show_name")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "|->", "white") << "|-> " << r
-                            << getColor("gpu_info", "p_vram_label_color", "white") << "VRAM                   " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "memory_value_color", "white") << primary.vram_gb << r
-                            << getColor("gpu_info", "unit_color", "white") << " GiB" << r;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "name_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "name", "Name") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "name_value_color", "white") << os.GetOSName() << r;
                         lp.push(ss.str());
                     }
-                    // Primary Frequency
-                    {
+
+                    // Build
+                    if (config.isSubEnabled("os_info", "show_build")) {
                         ostringstream ss;
-                        ss << getColor("gpu_info", "#->", "white") << "#-> " << r
-                            << getColor("gpu_info", "p_freq_label_color", "white") << "Frequency              " << r
-                            << getColor("gpu_info", ":", "white") << ": " << r
-                            << getColor("gpu_info", "freq_value_color", "white") << primary.frequency_ghz << r
-                            << getColor("gpu_info", "unit_color", "white") << " GHz" << r;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "build_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "build", "Build") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "build_value_color", "white") << os.GetOSVersion() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Architecture
+                    if (config.isSubEnabled("os_info", "show_architecture")) {
+                        ostringstream ss;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "arch_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "architecture", "Architecture") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "arch_value_color", "white") << os.GetOSArchitecture() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Kernel
+                    if (config.isSubEnabled("os_info", "show_kernel")) {
+                        ostringstream ss;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "kernel_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "kernel", "Kernel") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "kernel_value_color", "white") << os.get_os_kernel_info() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Uptime
+                    if (config.isSubEnabled("os_info", "show_uptime")) {
+                        ostringstream ss;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "uptime_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "uptime", "Uptime") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "uptime_value_color", "white") << os.get_os_uptime() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Install Date
+                    if (config.isSubEnabled("os_info", "show_install_date")) {
+                        ostringstream ss;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "install_date_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "install_date", "Install Date") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "install_date_value_color", "white")
+                            << os.get_os_install_date() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Serial
+                    if (config.isSubEnabled("os_info", "show_serial")) {
+                        ostringstream ss;
+                        ss << config.getColor("os_info", "~", "white") << "~ " << r
+                            << config.getColor("os_info", "serial_label_color", "white")
+                            << left << setw(26) << config.getLabel("os_info", "serial", "Serial") << r
+                            << config.getColor("os_info", ":", "white") << ": " << r
+                            << config.getColor("os_info", "serial_value_color", "white")
+                            << os.get_os_serial_number() << r;
                         lp.push(ss.str());
                     }
                 }
-            }
-        }
-		// end of the GPU info section////////////////////////////////////////////////
-         
-        // ================= DISPLAY INFO (FULLY JSON DRIVEN) =================
-        if (isEnabled("display_info")) {
-            lp.push("");
 
-            const auto& screens = di.getScreens();
+                // CPU Info (JSON Driven)
+                if (config.isEnabled("cpu_info")) {
+                    lp.push("");
 
-            for (size_t i = 0; i < screens.size(); ++i) {
-                const auto& s = screens[i];
+                    // Header
+                    if (config.isSubEnabled("cpu_info", "show_header")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "#-", "white") << "#- " << r
+                            << config.getColor("cpu_info", "header_text_color", "white") << "CPU Info " << r
+                            << config.getColor("cpu_info", "separator_line", "white")
+                            << "-------------------------------------------------------#" << r;
+                        lp.push(ss.str());
+                    }
 
-                // ---------- Display Banner ----------
-                if (isSubEnabled("display_info", "show_display_banner")) {
-                    ostringstream ss;
-                    ss << getColor("display_info", "#-", "blue") << "#- " << r
-                        << getColor("display_info", "display_banner_text", "cyan")
-                        << "Display " << (i + 1) << " " << r
-                        << getColor("display_info", "display_banner_line", "red")
-                        << "------------------------------------------------------#" << r;
-                    lp.push(ss.str());
+                    // Brand
+                    if (config.isSubEnabled("cpu_info", "show_brand")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "brand_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "brand", "Brand") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "brand_value_color", "white") << cpu.get_cpu_info() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Utilization
+                    if (config.isSubEnabled("cpu_info", "show_utilization")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "utilization_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "utilization", "Utilization") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "utilization_value_color", "white") << cpu.get_cpu_utilization() << r
+                            << config.getColor("cpu_info", "%", "white") << "%" << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Speed
+                    if (config.isSubEnabled("cpu_info", "show_speed")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "speed_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "speed", "Speed") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "speed_value_color", "white") << cpu.get_cpu_speed() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Base Speed
+                    if (config.isSubEnabled("cpu_info", "show_base_speed")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "base_speed_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "base_speed", "Base Speed") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "base_speed_value_color", "white") << cpu.get_cpu_base_speed() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Cores
+                    if (config.isSubEnabled("cpu_info", "show_cores")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "cores_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "cores", "Cores") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "cores_value_color", "white") << cpu.get_cpu_cores() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Logical Processors
+                    if (config.isSubEnabled("cpu_info", "show_logical_processors")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "logical_processors_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "logical_processors", "Logical Processors") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "logical_processors_value_color", "white") << cpu.get_cpu_logical_processors() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Sockets
+                    if (config.isSubEnabled("cpu_info", "show_sockets")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "sockets_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "sockets", "Sockets") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "sockets_value_color", "white") << cpu.get_cpu_sockets() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // Virtualization
+                    if (config.isSubEnabled("cpu_info", "show_virtualization")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "virtualization_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "virtualization", "Virtualization") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "virtualization_value_color", "white") << cpu.get_cpu_virtualization() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // L1 Cache
+                    if (config.isSubEnabled("cpu_info", "show_l1_cache")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "l1_cache_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "l1_cache", "L1 Cache") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "l1_cache_value_color", "white") << cpu.get_cpu_l1_cache() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // L2 Cache
+                    if (config.isSubEnabled("cpu_info", "show_l2_cache")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "l2_cache_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "l2_cache", "L2 Cache") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "l2_cache_value_color", "white") << cpu.get_cpu_l2_cache() << r;
+                        lp.push(ss.str());
+                    }
+
+                    // L3 Cache
+                    if (config.isSubEnabled("cpu_info", "show_l3_cache")) {
+                        ostringstream ss;
+                        ss << config.getColor("cpu_info", "~", "white") << "~ " << r
+                            << config.getColor("cpu_info", "l3_cache_label_color", "white")
+                            << left << setw(26) << config.getLabel("cpu_info", "l3_cache", "L3 Cache") << r
+                            << config.getColor("cpu_info", ":", "white") << ": " << r
+                            << config.getColor("cpu_info", "l3_cache_value_color", "white") << cpu.get_cpu_l3_cache() << r;
+                        lp.push(ss.str());
+                    }
                 }
 
-                // ---------- Name ----------
-                if (isSubEnabled("display_info", "show_name")) {
-                    lp.push(
-                        getColor("display_info", "|->", "cyan") + "|-> " + r +
-                        getColor("display_info", "name_label_color", "blue") + "Name                   " + r +
-                        getColor("display_info", ":", "blue") + ": " + r +
-                        getColor("display_info", "name_value_color", "cyan") + s.name + r
-                    );
-                }
+                // GPU Info (JSON Driven)
+                if (config.isEnabled("gpu_info")) {
+                    lp.push("");
+                    auto all_gpu_info = obj_gpu.get_all_gpu_info();
 
-                // ---------- Applied Resolution ----------
-                if (isSubEnabled("display_info", "show_applied_resolution")) {
-                    ostringstream ss;
-                    ss << getColor("display_info", "|->", "cyan") << "|-> " << r
-                        << getColor("display_info", "applied_res_label_color", "blue")
-                        << "Applied Resolution     " << r
-                        << getColor("display_info", ":", "blue") << ": " << r
-                        << getColor("display_info", "applied_res_value_color", "cyan")
-                        << s.current_width
-                        << getColor("display_info", "x", "blue") << "x"
-                        << s.current_height
-                        << getColor("display_info", "@", "blue") << " @"
-                        << s.refresh_rate
-                        << getColor("display_info", "hz_color", "red") << "Hz" << r;
-                    lp.push(ss.str());
-                }
-
-                // ---------- Native Resolution ----------
-                if (isSubEnabled("display_info", "show_native_resolution")) {
-                    lp.push(
-                        getColor("display_info", "|->", "cyan") + "|-> " + r +
-                        getColor("display_info", "native_res_label_color", "blue")
-                        + "Native Resolution      " + r +
-                        getColor("display_info", ":", "blue") + ": " + r +
-                        getColor("display_info", "native_res_value_color", "cyan")
-                        + s.native_resolution + r
-                    );
-                }
-
-                // ---------- Aspect Ratio ----------
-                if (isSubEnabled("display_info", "show_aspect_ratio")) {
-                    lp.push(
-                        getColor("display_info", "|->", "cyan") + "|-> " + r +
-                        getColor("display_info", "aspect_ratio_label_color", "blue")
-                        + "Aspect Ratio           " + r +
-                        getColor("display_info", ":", "blue") + ": " + r +
-                        getColor("display_info", "aspect_ratio_value_color", "cyan")
-                        + s.aspect_ratio + r
-                    );
-                }
-
-                // ---------- Scaling ----------
-                if (isSubEnabled("display_info", "show_scaling")) {
-                    ostringstream ss;
-                    ss << getColor("display_info", "|->", "cyan") << "|-> " << r
-                        << getColor("display_info", "scaling_label_color", "blue")
-                        << "Scaling                " << r
-                        << getColor("display_info", ":", "blue") << ": " << r
-                        << getColor("display_info", "scaling_value_color", "cyan")
-                        << s.scale_percent
-                        << getColor("display_info", "%", "blue") << "%" << r;
-                    lp.push(ss.str());
-                }
-
-                // ---------- Upscale ----------
-                if (isSubEnabled("display_info", "show_upscale")) {
-                    lp.push(
-                        getColor("display_info", "|->", "cyan") + "|-> " + r +
-                        getColor("display_info", "upscale_label_color", "blue")
-                        + "Upscale                " + r +
-                        getColor("display_info", ":", "blue") + ": " + r +
-                        getColor("display_info", "upscale_value_color", "cyan")
-                        + s.upscale + r
-                    );
-                }
-
-                // ---------- DSR / VSR ----------
-                if (isSubEnabled("display_info", "show_dsr")) {
-                    ostringstream ss;
-                    ss << getColor("display_info", "|->", "cyan") << "|-> " << r
-                        << getColor("display_info", "dsr_label_color", "blue")
-                        << "DSR / VSR              " << r
-                        << getColor("display_info", ":", "blue") << ": " << r
-                        << getColor(
-                            "display_info",
-                            s.dsr_enabled ? "dsr_enabled_color" : "dsr_disabled_color",
-                            s.dsr_enabled ? "green" : "red"
-                        )
-                        << (s.dsr_enabled ? "Enabled" : "Disabled") << r
-                        << getColor("display_info", "dsr_brackets_color", "blue")
-                        << " (" << r
-                        << getColor("display_info", "dsr_type_color", "cyan")
-                        << s.dsr_type
-                        << getColor("display_info", "dsr_brackets_color", "blue")
-                        << ")" << r;
-                    lp.push(ss.str());
-                }
-
-                lp.push("");
-            }
-        }
-
-
-
-        //END of gpu section/////////////////////////////////////////////////////////////////
-
-        // BIOS & Motherboard Info (JSON Driven)
-        if (isEnabled("bios_mb_info")) {
-            lp.push("");
-
-            // Header
-            if (isSubEnabled("bios_mb_info", "show_header")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "#-", "white") << "#- " << r
-                    << getColor("bios_mb_info", "header_text_color", "white") << "BIOS & Motherboard Info " << r
-                    << getColor("bios_mb_info", "separator_line", "white")
-                    << "----------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            // Bios Vendor
-            if (isSubEnabled("bios_mb_info", "show_bios_vendor")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "vendor_label_color", "white") << "Bios Vendor              " << r
-                    << getColor("bios_mb_info", ":", "white") << ": " << r
-                    << getColor("bios_mb_info", "vendor_value_color", "white") << sys.get_bios_vendor() << r;
-                lp.push(ss.str());
-            }
-
-            // Bios Version
-            if (isSubEnabled("bios_mb_info", "show_bios_version")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "version_label_color", "white") << "Bios Version             " << r
-                    << getColor("bios_mb_info", ":", "white") << ": " << r
-                    << getColor("bios_mb_info", "version_value_color", "white") << sys.get_bios_version() << r;
-                lp.push(ss.str());
-            }
-
-            // Bios Date
-            if (isSubEnabled("bios_mb_info", "show_bios_date")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "date_label_color", "white") << "Bios Date                " << r
-                    << getColor("bios_mb_info", ":", "white") << ": " << r
-                    << getColor("bios_mb_info", "date_value_color", "white") << sys.get_bios_date() << r;
-                lp.push(ss.str());
-            }
-
-            // Motherboard Model
-            if (isSubEnabled("bios_mb_info", "show_mb_model")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "model_label_color", "white") << "Motherboard Model        " << r
-                    << getColor("bios_mb_info", ":", "white") << ": " << r
-                    << getColor("bios_mb_info", "model_value_color", "white") << sys.get_motherboard_model() << r;
-                lp.push(ss.str());
-            }
-
-            // Motherboard Manufacturer
-            if (isSubEnabled("bios_mb_info", "show_mb_manufacturer")) {
-                ostringstream ss;
-                ss << getColor("bios_mb_info", "~", "white") << "~ " << r
-                    << getColor("bios_mb_info", "mfg_label_color", "white") << "Motherboard Manufacturer " << r
-                    << getColor("bios_mb_info", ":", "white") << ": " << r
-                    << getColor("bios_mb_info", "mfg_value_color", "white") << sys.get_motherboard_manufacturer() << r;
-                lp.push(ss.str());
-            }
-        }
-
-		//end of the BIOS & Motherboard info section///////////////////////////////
-
-        // User Info (JSON Driven)
-        if (isEnabled("user_info")) {
-            lp.push("");
-
-            // Header
-            if (isSubEnabled("user_info", "show_header")) {
-                ostringstream ss;
-                ss << getColor("user_info", "#-", "white") << "#- " << r
-                    << getColor("user_info", "header_text_color", "white") << "User Info " << r
-                    << getColor("user_info", "separator_line", "white")
-                    << "------------------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            // Username
-            if (isSubEnabled("user_info", "show_username")) {
-                ostringstream ss;
-                ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "username_label_color", "white") << "Username                 " << r
-                    << getColor("user_info", ":", "white") << ": " << r
-                    << getColor("user_info", "username_value_color", "white") << user.get_username() << r;
-                lp.push(ss.str());
-            }
-
-            // Computer Name
-            if (isSubEnabled("user_info", "show_computer_name")) {
-                ostringstream ss;
-                ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "computer_name_label_color", "white") << "Computer Name            " << r
-                    << getColor("user_info", ":", "white") << ": " << r
-                    << getColor("user_info", "computer_name_value_color", "white") << user.get_computer_name() << r;
-                lp.push(ss.str());
-            }
-
-            // Domain
-            if (isSubEnabled("user_info", "show_domain")) {
-                ostringstream ss;
-                ss << getColor("user_info", "~", "white") << "~ " << r
-                    << getColor("user_info", "domain_label_color", "white") << "Domain                   " << r
-                    << getColor("user_info", ":", "white") << ": " << r
-                    << getColor("user_info", "domain_value_color", "white") << user.get_domain_name() << r;
-                lp.push(ss.str());
-            }
-        }
-
-		// end of the User info section////////////////////////////////////////////////
-
-        // Performance Info (JSON Driven)
-        if (isEnabled("performance_info")) {
-            lp.push("");
-
-            // Header
-            if (isSubEnabled("performance_info", "show_header")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "#-", "white") << "#- " << r
-                    << getColor("performance_info", "header_text_color", "white") << "Performance Info " << r
-                    << getColor("performance_info", "separator_line", "white")
-                    << "-----------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            // System Uptime
-            if (isSubEnabled("performance_info", "show_uptime")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "~", "white") << "~ " << r
-                    << getColor("performance_info", "uptime_label_color", "white") << "System Uptime            " << r
-                    << getColor("performance_info", ":", "white") << ": " << r
-                    << getColor("performance_info", "uptime_value_color", "white") << perf.get_system_uptime() << r;
-                lp.push(ss.str());
-            }
-
-            // CPU Usage
-            if (isSubEnabled("performance_info", "show_cpu_usage")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "~", "white") << "~ " << r
-                    << getColor("performance_info", "cpu_usage_label_color", "white") << "CPU Usage                " << r
-                    << getColor("performance_info", ":", "white") << ": " << r
-                    << getColor("performance_info", "usage_value_color", "white") << perf.get_cpu_usage_percent() << r
-                    << getColor("performance_info", "%", "white") << "%" << r;
-                lp.push(ss.str());
-            }
-
-            // RAM Usage
-            if (isSubEnabled("performance_info", "show_ram_usage")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "~", "white") << "~ " << r
-                    << getColor("performance_info", "ram_usage_label_color", "white") << "RAM Usage                " << r
-                    << getColor("performance_info", ":", "white") << ": " << r
-                    << getColor("performance_info", "usage_value_color", "white") << perf.get_ram_usage_percent() << r
-                    << getColor("performance_info", "%", "white") << "%" << r;
-                lp.push(ss.str());
-            }
-
-            // Disk Usage
-            if (isSubEnabled("performance_info", "show_disk_usage")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "~", "white") << "~ " << r
-                    << getColor("performance_info", "disk_usage_label_color", "white") << "Disk Usage               " << r
-                    << getColor("performance_info", ":", "white") << ": " << r
-                    << getColor("performance_info", "usage_value_color", "white") << perf.get_disk_usage_percent() << r
-                    << getColor("performance_info", "%", "white") << "%" << r;
-                lp.push(ss.str());
-            }
-
-            // GPU Usage
-            if (isSubEnabled("performance_info", "show_gpu_usage")) {
-                ostringstream ss;
-                ss << getColor("performance_info", "~", "white") << "~ " << r
-                    << getColor("performance_info", "gpu_usage_label_color", "white") << "GPU Usage                " << r
-                    << getColor("performance_info", ":", "white") << ": " << r
-                    << getColor("performance_info", "usage_value_color", "white") << perf.get_gpu_usage_percent() << r
-                    << getColor("performance_info", "%", "white") << "%" << r;
-                lp.push(ss.str());
-            }
-        }
-
-		// end of the Performance info section////////////////////////////////////////
-
- 
-        // Audio & Power Info (JSON Driven)
-        if (isEnabled("audio_power_info")) {
-            lp.push("");
-            ExtraInfo audio;
-
-            // --- Output devices ---
-            vector<AudioDevice> outputDevices = audio.get_output_devices();
-
-            if (isSubEnabled("audio_power_info", "show_output_header")) {
-                ostringstream ss;
-                ss << getColor("audio_power_info", "#-", "white") << "#- " << r
-                    << getColor("audio_power_info", "header_text_color", "white") << "Audio Output " << r
-                    << getColor("audio_power_info", "separator_line", "white")
-                    << "---------------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            int audio_output_device_count = 0;
-            for (const auto& device : outputDevices) {
-                audio_output_device_count++;
-                ostringstream oss;
-                oss << getColor("audio_power_info", "~", "white") << "~ " << r
-                    << getColor("audio_power_info", "index_color", "white") << audio_output_device_count << r << " "
-                    << getColor("audio_power_info", "device_name_color", "white") << device.name << r;
-
-                if (device.isActive && isSubEnabled("audio_power_info", "show_active_status")) {
-                    oss << " " << getColor("audio_power_info", "active_label_color", "white") << "(active)" << r;
-                }
-                lp.push(oss.str());
-            }
-
-            // --- Input devices ---
-            vector<AudioDevice> inputDevices = audio.get_input_devices();
-
-            if (isSubEnabled("audio_power_info", "show_input_header")) {
-                ostringstream ss;
-                ss << getColor("audio_power_info", "#-", "white") << "#- " << r
-                    << getColor("audio_power_info", "header_text_color", "white") << "Audio Input " << r
-                    << getColor("audio_power_info", "separator_line", "white")
-                    << "----------------------------------------------------#" << r;
-                lp.push(ss.str());
-            }
-
-            int audio_input_device_count = 0;
-            for (const auto& device : inputDevices) {
-                audio_input_device_count++;
-                ostringstream oss;
-                oss << getColor("audio_power_info", "~", "white") << "~ " << r
-                    << getColor("audio_power_info", "index_color", "white") << audio_input_device_count << r << " "
-                    << getColor("audio_power_info", "device_name_color", "white") << device.name << r;
-
-                if (device.isActive && isSubEnabled("audio_power_info", "show_active_status")) {
-                    oss << " " << getColor("audio_power_info", "active_label_color", "white") << "(active)" << r;
-                }
-                lp.push(oss.str());
-            }
-
-            // --- Power Status ---
-            if (isSubEnabled("audio_power_info", "show_power_info")) {
-                lp.push("");
-                PowerStatus power = audio.get_power_status();
-
-                if (isSubEnabled("audio_power_info", "show_power_header")) {
-                    ostringstream ss;
-                    ss << getColor("audio_power_info", "#-", "white") << "#- " << r
-                        << getColor("audio_power_info", "header_text_color", "white") << "Power  " << r
-                        << getColor("audio_power_info", "separator_line", "white")
-                        << "---------------------------------------------------------#" << r;
-                    lp.push(ss.str());
-                }
-
-                ostringstream ossPower;
-                if (!power.hasBattery) {
-                    ossPower << getColor("audio_power_info", "bracket_color", "white") << "[" << r
-                        << getColor("audio_power_info", "wired_text_color", "white") << "Wired connection" << r
-                        << getColor("audio_power_info", "bracket_color", "white") << "]" << r;
-                }
-                else {
-                    ossPower << getColor("audio_power_info", "~", "white") << "~ " << r
-                        << getColor("audio_power_info", "battery_label_color", "white") << "Battery powered " << r
-                        << getColor("audio_power_info", "bracket_color", "white") << "(" << r
-                        << getColor("audio_power_info", "battery_percent_color", "white") << power.batteryPercent << r
-                        << getColor("audio_power_info", "unit_color", "white") << "%)" << r;
-
-                    if (power.isCharging) {
-                        ossPower << " " << getColor("audio_power_info", "charging_status_color", "white") << "(Charging)" << r;
+                    if (all_gpu_info.empty()) {
+                        if (config.isSubEnabled("gpu_info", "show_header")) {
+                            ostringstream ss;
+                            ss << config.getColor("gpu_info", "#-", "white") << "#- " << r
+                                << config.getColor("gpu_info", "header_text_color", "white") << "GPU Info " << r
+                                << config.getColor("gpu_info", "separator_line", "white")
+                                << "--------------------------------------------------------#" << r;
+                            lp.push(ss.str());
+                        }
+                        lp.push(config.getColor("gpu_info", "error_color", "white") + "No GPU detected." + r);
                     }
                     else {
-                        ossPower << " " << getColor("audio_power_info", "not_charging_status_color", "white") << "(Not Charging)" << r;
-                    }
-                }
-                lp.push(ossPower.str());
-            }
-        }
-
-
-        /*
-        
-        
-        
-        
-        
-	lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-    lp.push(""); // blank line
-        
-        
-        
-        
-        */
 
 
 

@@ -420,6 +420,17 @@
     "show_mac": true,
     "show_upload": true,
     "show_download": true,
+    "labels": {
+      "prefix": "Network",
+      "name": "Network Name",
+      "type": "Network Type",
+      "local_ip": "Local IP",
+      "public_ip": "Public IP:",
+      "locale": "Locale",
+      "mac": "Mac address",
+      "upload": "avg upload speed",
+      "download": "avg download speed"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
@@ -485,6 +496,15 @@
     "show_uptime": true,
     "show_install_date": true,
     "show_serial": true,
+    "labels": {
+      "name": "Name",
+      "build": "Build",
+      "architecture": "Architecture",
+      "kernel": "Kernel",
+      "uptime": "Uptime",
+      "install_date": "Install Date",
+      "serial": "Serial"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
@@ -519,6 +539,19 @@
     "show_l1_cache": true,
     "show_l2_cache": true,
     "show_l3_cache": true,
+    "labels": {
+      "brand": "Brand",
+      "utilization": "Utilization",
+      "speed": "Speed",
+      "base_speed": "Base Speed",
+      "cores": "Cores",
+      "logical_processors": "Logical Processors",
+      "sockets": "Sockets",
+      "virtualization": "Virtualization",
+      "l1_cache": "L1 Cache",
+      "l2_cache": "L2 Cache",
+      "l3_cache": "L3 Cache"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
@@ -560,6 +593,18 @@
     "show_temperature": true,
     "show_cores": true,
     "show_primary_details": true,
+    "labels": {
+      "name": "Name",
+      "memory": "Memory",
+      "usage": "Usage",
+      "vendor": "Vendor",
+      "driver": "Driver Version",
+      "temperature": "Temperature",
+      "cores": "Core Count",
+      "p_name": "Name",
+      "p_vram": "VRAM",
+      "p_freq": "Frequency"
+    },
     "#-": "bright_blue",
     "|->": "bright_cyan",
     "#->": "bright_cyan",
@@ -602,6 +647,15 @@
     "show_scaling": true,
     "show_upscale": true,
     "show_dsr": true,
+    "labels": {
+      "name": "Name",
+      "applied_res": "Applied Resolution",
+      "native_res": "Native Resolution",
+      "aspect_ratio": "Aspect Ratio",
+      "scaling": "Scaling",
+      "upscale": "Upscale",
+      "dsr": "DSR / VSR"
+    },
     "display_banner_text": "red",
     "display_banner_line": "cyan",
 
@@ -654,6 +708,13 @@
     "show_bios_date": true,
     "show_mb_model": true,
     "show_mb_manufacturer": true,
+    "labels": {
+      "vendor": "Bios Vendor",
+      "version": "Bios Version",
+      "date": "Bios Date",
+      "model": "Motherboard Model",
+      "mfg": "Motherboard Manufacturer"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
@@ -676,6 +737,11 @@
     "show_username": true,
     "show_computer_name": true,
     "show_domain": true,
+    "labels": {
+      "username": "Username",
+      "computer_name": "Computer Name",
+      "domain": "Domain"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
@@ -696,6 +762,13 @@
     "show_ram_usage": true,
     "show_disk_usage": true,
     "show_gpu_usage": true,
+    "labels": {
+      "uptime": "System Uptime",
+      "cpu_usage": "CPU Usage",
+      "ram_usage": "RAM Usage",
+      "disk_usage": "Disk Usage",
+      "gpu_usage": "GPU Usage"
+    },
     "#-": "bright_blue",
     "~": "red",
     ":": "red",
