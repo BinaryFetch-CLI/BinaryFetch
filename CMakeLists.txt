@@ -105,6 +105,7 @@ set(BINARYFETCH_HEADERS
     "${BINARYFETCH_INCLUDE}/core/AsciiArt.h"
     "${BINARYFETCH_INCLUDE}/core/json.hpp"
     "${BINARYFETCH_INCLUDE}/core/resource.h"
+    "${BINARYFETCH_INCLUDE}/core/config_management.h"
 
     # --------------------------------------------------------
     # Compact
@@ -166,7 +167,7 @@ if(WIN32)
         # ----------------------------------------------------
 
         "${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp"
-
+        "${BINARYFETCH_CPP}/windows/config_management.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
@@ -246,6 +247,7 @@ elseif(UNIX AND NOT APPLE)
         # ----------------------------------------------------
 
         "${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp"
+        "${BINARYFETCH_CPP}/Linux/config_management.cpp"
 
         # ----------------------------------------------------
         # Detailed Information
