@@ -167,7 +167,7 @@ if(WIN32)
         # ----------------------------------------------------
 
         "${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp"
-        "${BINARYFETCH_CPP}/windows/config_management.cpp"
+        "${BINARYFETCH_CPP}/windows/core/config_management.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
@@ -247,7 +247,7 @@ elseif(UNIX AND NOT APPLE)
         # ----------------------------------------------------
 
         "${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp"
-        "${BINARYFETCH_CPP}/Linux/config_management.cpp"
+        "${BINARYFETCH_CPP}/Linux/core/config_management.cpp"
 
         # ----------------------------------------------------
         # Detailed Information
