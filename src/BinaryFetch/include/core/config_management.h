@@ -14,6 +14,7 @@ public:
 
     // Enabled checks
     bool isEnabled(const std::string& section) const;
+    bool isFieldEnabled(const std::string& section, const std::string& fieldPath) const;  // NEW
     bool isSubEnabled(const std::string& section, const std::string& key) const;
     bool isSectionEnabled(const std::string& module, const std::string& section) const;
     bool isNestedEnabled(const std::string& module, const std::string& section, const std::string& key) const;
