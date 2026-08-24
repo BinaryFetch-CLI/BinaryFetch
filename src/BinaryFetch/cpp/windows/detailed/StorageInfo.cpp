@@ -1,15 +1,4 @@
-﻿/*
-===============================================================
-  Project: BinaryFetch — System Information & Hardware Insights Tool
-  Author:  Maruf Hasan  |  Founder of BinaryOxide
-  Language: C++17 (Windows API)
-  File: StorageInfo.cpp (HYPER-OPTIMIZED CROSS-PC VERSION)
-  --------------------------------------------------------------
-  FIX: Added COM initialization, privilege elevation,
-       error handling, and fallback mechanisms for external PCs
-===============================================================
-*/
-
+﻿
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0603  // Windows 8.1 or newer
 #endif
@@ -518,7 +507,7 @@ vector<storage_data> StorageInfo::get_all_storage_info() {
 }
 
 // ============================================================
-//  SAME FIX: Enhanced process_storage_info with streaming
+//   Enhanced process_storage_info with streaming
 // ============================================================
 void StorageInfo::process_storage_info(std::function<void(const storage_data&)> callback) {
     DWORD drive_mask = GetLogicalDrives();
@@ -593,7 +582,7 @@ void StorageInfo::process_storage_info(std::function<void(const storage_data&)> 
                 percent_str << "(" << (int)used_percent << "%)";
 
                 storage_data disk;
-                disk.drive_letter = "Disk (" + string(1, drive_letter) + ":)";
+                disk.drive_letter =  string(1, drive_letter) + ":";
                 disk.used_space = used_str.str();
                 disk.total_space = total_str.str();
                 disk.used_percentage = static_cast<int>(used_percent);  // Store as int directly
@@ -669,19 +658,3 @@ void StorageInfo::process_storage_info(std::function<void(const storage_data&)> 
     }
 }
 
-/*
-===============================================================
-  End of File - HYPER-OPTIMIZED & CROSS-PC COMPATIBLE
-
-  KEY IMPROVEMENTS:
-  ✅ Multiple fallback methods for drive detection
-  ✅ Reduced buffer size (16MB) for faster execution
-  ✅ Safe handle management with error tracking
-  ✅ Removed FILE_FLAG_NO_BUFFERING for compatibility
-  ✅ Try-catch protection around speed measurements
-  ✅ Graceful degradation when permissions denied
-  ✅ Skip tiny partitions (< 100MB) automatically
-  ✅ Conservative SSD fallback for unknown types
-  ✅ Compatible with standard user permissions
-===============================================================
-*/
