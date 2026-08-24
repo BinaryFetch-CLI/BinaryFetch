@@ -753,463 +753,600 @@
         }
     }
 },
-  "detailed_network_connection": {
-    "enabled": true,
-    "header": {
+"detailed_network_connection": {
+  "enabled": true,
+  "header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "Network Info ",
+    "text_color": "red",
+    "suffix": "---------------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "fields": {
+    "name": {
       "show": true,
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "Network Info ",
-      "text_color": "red",
-      "suffix": "---------------------------------------------------#",
-      "suffix_color": "cyan"
+      "label": "Network Name",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "name_prefix": "~ ",
+      "name_prefix_color": "red"
     },
-    "fields": {
-      "name": {
-        "show": true,
-        "label": "Network Name",
-        "label_color": "blue",
-        "value_color": "blue",
-        "name_prefix": "~ ",
-        "name_prefix_color": "red"
-      },
-      "type": {
-        "show": true,
-        "label": "Network Type",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "type_prefix": "~ ",
-        "type_prefix_color": "red"
-      },
-      "local_ip": {
-        "show": true,
-        "label": "Local IP",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "local_ip_prefix": "~ ",
-        "local_ip_prefix_color": "red"
-      },
-      "public_ip": {
-        "show": true,
-        "label": "Public IP:",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "public_ip_prefix": "~ ",
-        "public_ip_prefix_color": "red"
-      },
-      "locale": {
-        "show": true,
-        "label": "Locale",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "locale_prefix": "~ ",
-        "locale_prefix_color": "red"
-      },
-      "mac": {
-        "show": true,
-        "label": "Mac address",
-        "label_color": "blue",
-        "value_color": "blue",
-        "mac_prefix": "~ ",
-        "mac_prefix_color": "red"
-      },
-      "upload": {
-        "show": true,
-        "label": "avg upload speed",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "upload_prefix": "~ ",
-        "upload_prefix_color": "red"
-      },
-      "download": {
-        "show": true,
-        "label": "avg download speed",
-        "label_color": "blue",
-        "value_color": "blue",
-        "download_prefix": "~ ",
-        "download_prefix_color": "red"
-      }
+    "type": {
+      "show": true,
+      "label": "Network Type",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "type_prefix": "~ ",
+      "type_prefix_color": "red"
     },
-    "separator": {
-      "text": ":",
-      "color": "red"
+    "local_ip": {
+      "show": true,
+      "label": "Local IP",
+      "label_color": "blue",
+      "label_suffix": "                  : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "local_ip_prefix": "~ ",
+      "local_ip_prefix_color": "red"
+    },
+    "public_ip": {
+      "show": true,
+      "label": "Public IP:",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "public_ip_prefix": "~ ",
+      "public_ip_prefix_color": "red"
+    },
+    "locale": {
+      "show": true,
+      "label": "Locale",
+      "label_color": "blue",
+      "label_suffix": "                    : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "locale_prefix": "~ ",
+      "locale_prefix_color": "red"
+    },
+    "mac": {
+      "show": true,
+      "label": "Mac address",
+      "label_color": "blue",
+      "label_suffix": "               : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "mac_prefix": "~ ",
+      "mac_prefix_color": "red"
+    },
+    "upload": {
+      "show": true,
+      "label": "avg upload speed",
+      "label_color": "blue",
+      "label_suffix": "          : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "upload_prefix": "~ ",
+      "upload_prefix_color": "red"
+    },
+    "download": {
+      "show": true,
+      "label": "avg download speed",
+      "label_color": "blue",
+      "label_suffix": "        : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "download_prefix": "~ ",
+      "download_prefix_color": "red"
+    }
+  }
+},
+"dummy_network_info": {
+  "enabled": true,
+  "header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "Network Info ",
+    "text_color": "red",
+    "suffix": "---------------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "fields": {
+    "name": {
+      "show": true,
+      "prefix": "~ ",
+      "prefix_color": "red",
+      "label": "Network Name",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value": "InterCentury",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red"
+    },
+    "type": {
+      "show": true,
+      "prefix": "~ ",
+      "prefix_color": "red",
+      "label": "Network Type",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value": "Ethernet",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
+    },
+    "local_ip": {
+      "show": true,
+      "prefix": "~ ",
+      "prefix_color": "red",
+      "label": "Local IP",
+      "label_color": "blue",
+      "label_suffix": "                  : ",
+      "label_suffix_color": "red",
+      "value": "192.168.1.42",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
+    },
+    "read_speed": {
+      "show": true,
+      "prefix": "~ ",
+      "prefix_color": "red",
+      "label": "Read Speed",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value": "812.45",
+      "value_color": "bright_cyan",
+      "value_suffix": " Mbps",
+      "value_suffix_color": "cyan"
+    },
+    "write_speed": {
+      "show": true,
+      "prefix": "~ ",
+      "prefix_color": "red",
+      "label": "Write Speed",
+      "label_color": "blue",
+      "label_suffix": "               : ",
+      "label_suffix_color": "red",
+      "value": "634.10",
+      "value_color": "bright_cyan",
+      "value_suffix": " Mbps",
+      "value_suffix_color": "cyan"
+    }
+  }
+},
+"detailed_operating_system": {
+  "enabled": true,
+  "header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "Operating System ",
+    "text_color": "red",
+    "suffix": "-----------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "fields": {
+    "name": {
+      "show": true,
+      "label": "Name",
+      "label_color": "blue",
+      "label_suffix": "                      : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "name_prefix": "~ ",
+      "name_prefix_color": "red"
+    },
+    "build": {
+      "show": true,
+      "label": "Build",
+      "label_color": "blue",
+      "label_suffix": "                     : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "build_prefix": "~ ",
+      "build_prefix_color": "red"
+    },
+    "architecture": {
+      "show": true,
+      "label": "Architecture",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "architecture_prefix": "~ ",
+      "architecture_prefix_color": "red"
+    },
+    "kernel": {
+      "show": true,
+      "label": "Kernel",
+      "label_color": "blue",
+      "label_suffix": "                    : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "kernel_prefix": "~ ",
+      "kernel_prefix_color": "red"
+    },
+    "uptime": {
+      "show": true,
+      "label": "Uptime",
+      "label_color": "blue",
+      "label_suffix": "                    : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "uptime_prefix": "~ ",
+      "uptime_prefix_color": "red"
+    },
+    "install_date": {
+      "show": true,
+      "label": "Install Date",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "install_date_prefix": "~ ",
+      "install_date_prefix_color": "red"
+    },
+    "serial": {
+      "show": true,
+      "label": "Serial",
+      "label_color": "blue",
+      "label_suffix": "                    : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "serial_prefix": "~ ",
+      "serial_prefix_color": "red"
+    }
+  }
+},
+"detailed_processor": {
+  "enabled": true,
+  "header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "CPU Info ",
+    "text_color": "red",
+    "suffix": "-------------------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "separator": {
+    "text": ":",
+    "color": "red"
+  },
+  "fields": {
+    "brand": {
+      "show": true,
+      "label": "Brand",
+      "label_color": "blue",
+      "label_suffix": "                   : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "brand_prefix": "~ ",
+      "brand_prefix_color": "red"
+    },
+    "utilization": {
+      "show": true,
+      "label": "Utilization",
+      "label_color": "blue",
+      "label_suffix": "             : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "%",
+      "value_suffix_color": "cyan",
+      "utilization_prefix": "~ ",
+      "utilization_prefix_color": "red"
+    },
+    "speed": {
+      "show": true,
+      "label": "Speed",
+      "label_color": "blue",
+      "label_suffix": "                   : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "speed_prefix": "~ ",
+      "speed_prefix_color": "red"
+    },
+    "base_speed": {
+      "show": true,
+      "label": "Base Speed",
+      "label_color": "blue",
+      "label_suffix": "              : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "base_speed_prefix": "~ ",
+      "base_speed_prefix_color": "red"
+    },
+    "cores": {
+      "show": true,
+      "label": "Cores",
+      "label_color": "blue",
+      "label_suffix": "                   : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "cores_prefix": "~ ",
+      "cores_prefix_color": "red"
+    },
+    "logical_processors": {
+      "show": true,
+      "label": "Logical Processors",
+      "label_color": "blue",
+      "label_suffix": "      : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "logical_processors_prefix": "~ ",
+      "logical_processors_prefix_color": "red"
+    },
+    "sockets": {
+      "show": true,
+      "label": "Sockets",
+      "label_color": "blue",
+      "label_suffix": "                 : ",
+      "label_suffix_color": "red",
+      "value_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "sockets_prefix": "~ ",
+      "sockets_prefix_color": "red"
+    },
+    "virtualization": {
+      "show": true,
+      "label": "Virtualization",
+      "label_color": "blue",
+      "label_suffix": "          : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "virtualization_prefix": "~ ",
+      "virtualization_prefix_color": "red"
+    },
+    "l1_cache": {
+      "show": true,
+      "label": "L1 Cache",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "l1_cache_prefix": "~ ",
+      "l1_cache_prefix_color": "red"
+    },
+    "l2_cache": {
+      "show": true,
+      "label": "L2 Cache",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value_color": "cyan",
+      "value_suffix": "          ",
+      "value_suffix_color": "red",
+      "l2_cache_prefix": "~ ",
+      "l2_cache_prefix_color": "red"
+    },
+    "l3_cache": {
+      "show": true,
+      "label": "L3 Cache",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "l3_cache_prefix": "~ ",
+      "l3_cache_prefix_color": "red"
+    }
+  }
+},
+"detailed_graphics_card": {
+  "enabled": true,
+  "header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "GPU Info ",
+    "text_color": "red",
+    "suffix": "-------------------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "gpu_header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "GPU ",
+    "index_color": "blue",
+    "suffix": "----------------------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "primary_header": {
+    "show": true,
+    "prefix": "#- ",
+    "prefix_color": "bright_blue",
+    "text": "Primary GPU Details",
+    "text_color": "red",
+    "suffix": "---------------------------------------------#",
+    "suffix_color": "cyan"
+  },
+  "error_text": "No GPU detected.",
+  "error_color": "bright_cyan",
+  "fields": {
+    "name": {
+      "show": true,
+      "label": "Name",
+      "label_color": "blue",
+      "label_suffix": "                 : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "name_prefix": "|-> ",
+      "name_prefix_color": "bright_cyan"
+    },
+    "memory": {
+      "show": true,
+      "label": "Memory",
+      "label_color": "blue",
+      "label_suffix": "               : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_blue",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "memory_prefix": "|-> ",
+      "memory_prefix_color": "bright_cyan"
+    },
+    "usage": {
+      "show": true,
+      "label": "Usage",
+      "label_color": "blue",
+      "label_suffix": "                : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "%",
+      "value_suffix_color": "cyan",
+      "usage_prefix": "|-> ",
+      "usage_prefix_color": "bright_cyan"
+    },
+    "vendor": {
+      "show": true,
+      "label": "Vendor",
+      "label_color": "blue",
+      "label_suffix": "               : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "vendor_prefix": "|-> ",
+      "vendor_prefix_color": "bright_cyan"
+    },
+    "driver": {
+      "show": true,
+      "label": "Driver Version",
+      "label_color": "blue",
+      "label_suffix": "       : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "driver_prefix": "|-> ",
+      "driver_prefix_color": "bright_cyan"
+    },
+    "temperature": {
+      "show": true,
+      "label": "Temperature",
+      "label_color": "blue",
+      "label_suffix": "          : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "C",
+      "value_suffix_color": "bright_cyan",
+      "temperature_prefix": "|-> ",
+      "temperature_prefix_color": "bright_cyan"
+    },
+    "cores": {
+      "show": true,
+      "label": "Core Count",
+      "label_color": "blue",
+      "label_suffix": "           : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red",
+      "cores_prefix": "|-> ",
+      "cores_prefix_color": "bright_cyan"
     }
   },
-  "dummy_network_info": {
-    "enabled": false,
-    "header": {
-        "show": true,
-        "prefix": "#- ",
-        "prefix_color": "bright_blue",
-        "text": "Network Info ",
-        "text_color": "red",
-        "suffix": "---------------------------------------------------#",
-        "suffix_color": "cyan"
-    },
-    "fields": {
+  "primary_fields": {
         "name": {
-            "show": true,
-            "label": "Network Name",
-            "label_color": "blue",
-            "value": "InterCentury",
-            "value_color": "blue",
-            "prefix": "~ ",
-            "prefix_color": "red"
-        },
-        "type": {
-            "show": true,
-            "label": "Network Type",
-            "label_color": "blue",
-            "value": "Ethernet",
-            "value_color": "bright_cyan",
-            "prefix": "~ ",
-            "prefix_color": "red"
-        },
-        "local_ip": {
-            "show": true,
-            "label": "Local IP",
-            "label_color": "blue",
-            "value": "192.168.1.42",
-            "value_color": "cyan",
-            "prefix": "~ ",
-            "prefix_color": "red"
-        },
-        "read_speed": {
-            "show": true,
-            "label": "Read Speed",
-            "label_color": "blue",
-            "value": "812.45",
-            "value_color": "bright_cyan",
-            "unit": " Mbps",
-            "unit_color": "cyan",
-            "prefix": "~ ",
-            "prefix_color": "red"
-        },
-        "write_speed": {
-            "show": true,
-            "label": "Write Speed",
-            "label_color": "blue",
-            "value": "634.10",
-            "value_color": "bright_cyan",
-            "unit": " Mbps",
-            "unit_color": "cyan",
-            "prefix": "~ ",
-            "prefix_color": "red"
-        }
+    "show": true,
+    "label": "Name",
+    "label_color": "blue",
+    "label_suffix": "                 : ",
+    "label_suffix_color": "red",
+    "value_color": "bright_cyan",
+    "value_suffix": "",
+    "value_suffix_color": "red",
+    "name_prefix": "|-> ",
+    "name_prefix_color": "bright_cyan"
+  },
+
+  "vram": {
+    "show": true,
+    "label": "VRAM",
+    "label_color": "blue",
+    "label_suffix": "                 : ",
+    "label_suffix_color": "red",
+    "value_color": "bright_blue",
+    "value_suffix": " GiB",
+    "value_suffix_color": "bright_cyan",
+    "vram_prefix": "|-> ",
+    "vram_prefix_color": "bright_cyan"
     },
-    "separator": {
-        "text": ":",
-        "color": "red"
+    "freq": {
+      "show": true,
+      "label": "Frequency",
+      "label_color": "blue",
+      "label_suffix": "            : ",
+      "label_suffix_color": "red",
+      "value_color": "bright_blue",
+      "value_suffix": " GHz ",
+      "value_suffix_color": "bright_cyan",
+      "freq_prefix": "|-> ",
+      "freq_prefix_color": "bright_cyan"
     }
-  },
-  "detailed_operating_system": {
-    "enabled": true,
-    "header": {
-      "show": true,
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "Operating System ",
-      "text_color": "red",
-      "suffix": "-----------------------------------------------#",
-      "suffix_color": "cyan"
-    },
-    "fields": {
-      "name": {
-        "show": true,
-        "label": "Name",
-        "label_color": "blue",
-        "value_color": "blue",
-        "name_prefix": "~ ",
-        "name_prefix_color": "red"
-      },
-      "build": {
-        "show": true,
-        "label": "Build",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "build_prefix": "~ ",
-        "build_prefix_color": "red"
-      },
-      "architecture": {
-        "show": true,
-        "label": "Architecture",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "architecture_prefix": "~ ",
-        "architecture_prefix_color": "red"
-      },
-      "kernel": {
-        "show": true,
-        "label": "Kernel",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "kernel_prefix": "~ ",
-        "kernel_prefix_color": "red"
-      },
-      "uptime": {
-        "show": true,
-        "label": "Uptime",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "uptime_prefix": "~ ",
-        "uptime_prefix_color": "red"
-      },
-      "install_date": {
-        "show": true,
-        "label": "Install Date",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "install_date_prefix": "~ ",
-        "install_date_prefix_color": "red"
-      },
-      "serial": {
-        "show": true,
-        "label": "Serial",
-        "label_color": "blue",
-        "value_color": "blue",
-        "serial_prefix": "~ ",
-        "serial_prefix_color": "red"
-      }
-    },
-    "separator": {
-      "text": ":",
-      "color": "red"
-    }
-  },
-  "detailed_processor": {
-    "enabled": true,
-    "header": {
-      "show": true,
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "CPU Info ",
-      "text_color": "red",
-      "suffix": "-------------------------------------------------------#",
-      "suffix_color": "cyan"
-    },
-    "fields": {
-      "brand": {
-        "show": true,
-        "label": "Brand",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "brand_prefix": "~ ",
-        "brand_prefix_color": "red"
-      },
-      "utilization": {
-        "show": true,
-        "label": "Utilization",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "utilization_prefix": "~ ",
-        "utilization_prefix_color": "red"
-      },
-      "speed": {
-        "show": true,
-        "label": "Speed",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "speed_prefix": "~ ",
-        "speed_prefix_color": "red"
-      },
-      "base_speed": {
-        "show": true,
-        "label": "Base Speed",
-        "label_color": "blue",
-        "value_color": "blue",
-        "base_speed_prefix": "~ ",
-        "base_speed_prefix_color": "red"
-      },
-      "cores": {
-        "show": true,
-        "label": "Cores",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "cores_prefix": "~ ",
-        "cores_prefix_color": "red"
-      },
-      "logical_processors": {
-        "show": true,
-        "label": "Logical Processors",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "logical_processors_prefix": "~ ",
-        "logical_processors_prefix_color": "red"
-      },
-      "sockets": {
-        "show": true,
-        "label": "Sockets",
-        "label_color": "blue",
-        "value_color": "blue",
-        "sockets_prefix": "~ ",
-        "sockets_prefix_color": "red"
-      },
-      "virtualization": {
-        "show": true,
-        "label": "Virtualization",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "virtualization_prefix": "~ ",
-        "virtualization_prefix_color": "red"
-      },
-      "l1_cache": {
-        "show": true,
-        "label": "L1 Cache",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "l1_cache_prefix": "~ ",
-        "l1_cache_prefix_color": "red"
-      },
-      "l2_cache": {
-        "show": true,
-        "label": "L2 Cache",
-        "label_color": "blue",
-        "value_color": "cyan",
-        "l2_cache_prefix": "~ ",
-        "l2_cache_prefix_color": "red"
-      },
-      "l3_cache": {
-        "show": true,
-        "label": "L3 Cache",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "l3_cache_prefix": "~ ",
-        "l3_cache_prefix_color": "red"
-      }
-    },
-    "separator": {
-      "text": ":",
-      "color": "red"
-    },
-    "percent_sign": {
-      "text": "%",
-      "color": "cyan"
-    }
-  },
-  "detailed_graphics_card": {
-    "enabled": true,
-    "header": {
-      "show": true,
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "GPU Info ",
-      "text_color": "red",
-      "suffix": "-------------------------------------------------------#",
-      "suffix_color": "cyan"
-    },
-    "gpu_header": {
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "GPU ",
-      "index_color": "blue",
-      "suffix": "----------------------------------------------------------#",
-      "suffix_color": "cyan"
-    },
-    "primary_header": {
-      "show": true,
-      "prefix": "#- ",
-      "prefix_color": "bright_blue",
-      "text": "Primary GPU Details",
-      "text_color": "red",
-      "suffix": "---------------------------------------------#",
-      "suffix_color": "cyan"
-    },
-    "fields": {
-      "name": {
-        "show": true,
-        "label": "Name",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "name_prefix": "~ ",
-        "name_prefix_color": "bright_cyan"
-      },
-      "memory": {
-        "show": true,
-        "label": "Memory",
-        "label_color": "blue",
-        "value_color": "bright_blue",
-        "memory_prefix": "~ ",
-        "memory_prefix_color": "bright_cyan"
-      },
-      "usage": {
-        "show": true,
-        "label": "Usage",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "usage_prefix": "~ ",
-        "usage_prefix_color": "bright_cyan"
-      },
-      "vendor": {
-        "show": true,
-        "label": "Vendor",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "vendor_prefix": "~ ",
-        "vendor_prefix_color": "bright_cyan"
-      },
-      "driver": {
-        "show": true,
-        "label": "Driver Version",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "driver_prefix": "~ ",
-        "driver_prefix_color": "bright_cyan"
-      },
-      "temperature": {
-        "show": true,
-        "label": "Temperature",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "temperature_prefix": "~ ",
-        "temperature_prefix_color": "bright_cyan"
-      },
-      "cores": {
-        "show": true,
-        "label": "Core Count",
-        "label_color": "blue",
-        "value_color": "bright_cyan",
-        "cores_prefix": "~ ",
-        "cores_prefix_color": "bright_cyan"
-      }
-    },
-    "primary_fields": {
-      "name": {
-        "label": "Name",
-        "label_color": "blue",
-        "name_prefix": "~ ",
-        "name_prefix_color": "bright_cyan"
-      },
-      "vram": {
-        "label": "VRAM",
-        "label_color": "blue",
-        "vram_prefix": "~ ",
-        "vram_prefix_color": "bright_cyan"
-      },
-      "freq": {
-        "label": "Frequency",
-        "label_color": "blue",
-        "value_color": "bright_blue",
-        "freq_prefix": "~ ",
-        "freq_prefix_color": "bright_cyan"
-      }
-    },
-    "arrows": {
-      "item_arrow": "|->",
-      "item_arrow_color": "bright_cyan",
-      "gpu_arrow": "#->",
-      "gpu_arrow_color": "bright_cyan"
-    },
-    "separator": {
-      "text": ":",
-      "color": "red"
-    },
-    "percent_sign": {
-      "text": "%",
-      "color": "cyan"
-    },
-    "unit_color": "bright_cyan",
-    "error_color": "bright_cyan"
-  },
+  }
+},
 "detailed_display_monitor": {
   "enabled": true,
   "banner": {
@@ -1231,7 +1368,9 @@
       "label_color": "blue",
       "label_suffix": "                    : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "applied_resolution": {
       "show": true,
@@ -1247,7 +1386,9 @@
       "at_symbol": " @",
       "at_symbol_color": "blue",
       "hz_symbol": "Hz",
-      "hz_color": "cyan"
+      "hz_color": "cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "native_resolution": {
       "show": true,
@@ -1257,7 +1398,9 @@
       "label_color": "blue",
       "label_suffix": "       : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "aspect_ratio": {
       "show": true,
@@ -1267,7 +1410,9 @@
       "label_color": "blue",
       "label_suffix": "            : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "scaling": {
       "show": true,
@@ -1279,7 +1424,9 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "percent_symbol": "%",
-      "percent_color": "blue"
+      "percent_color": "blue",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "upscale": {
       "show": true,
@@ -1289,7 +1436,9 @@
       "label_color": "blue",
       "label_suffix": "                 : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "dsr": {
       "show": true,
@@ -1306,7 +1455,9 @@
       "bracket_open": " (",
       "bracket_close": ")",
       "brackets_color": "blue",
-      "type_color": "bright_cyan"
+      "type_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     }
   }
 },
@@ -1330,7 +1481,9 @@
       "label_color": "blue",
       "label_suffix": "               : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "bios_version": {
       "show": true,
@@ -1340,7 +1493,9 @@
       "label_color": "blue",
       "label_suffix": "              : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "bios_date": {
       "show": true,
@@ -1350,7 +1505,9 @@
       "label_color": "blue",
       "label_suffix": "                 : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "mb_model": {
       "show": true,
@@ -1360,7 +1517,9 @@
       "label_color": "blue",
       "label_suffix": "         : ",
       "label_suffix_color": "red",
-      "value_color": "bright_blue"
+      "value_color": "bright_blue",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     },
     "mb_manufacturer": {
       "show": true,
@@ -1370,7 +1529,9 @@
       "label_color": "blue",
       "label_suffix": "  : ",
       "label_suffix_color": "red",
-      "value_color": "bright_cyan"
+      "value_color": "bright_cyan",
+      "value_suffix": "",
+      "value_suffix_color": "red"
     }
   }
 },
@@ -1396,7 +1557,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "",
-      "value_suffix_color": "white"
+      "value_suffix_color": "red"
     },
     "computer_name": {
       "show": true,
@@ -1408,7 +1569,7 @@
       "label_suffix_color": "red",
       "value_color": "cyan",
       "value_suffix": "",
-      "value_suffix_color": "white"
+      "value_suffix_color": "red"
     },
     "domain": {
       "show": true,
@@ -1420,7 +1581,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_blue",
       "value_suffix": "",
-      "value_suffix_color": "white"
+      "value_suffix_color": "red"
     }
   }
 },
@@ -1446,7 +1607,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_blue",
       "value_suffix": "",
-      "value_suffix_color": "white"
+      "value_suffix_color": "red"
     },
     "cpu_usage": {
       "show": true,
@@ -1458,7 +1619,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "blue"
+      "value_suffix_color": "red"
     },
     "ram_usage": {
       "show": true,
@@ -1470,7 +1631,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "blue"
+      "value_suffix_color": "red"
     },
     "disk_usage": {
       "show": true,
@@ -1482,7 +1643,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "blue"
+      "value_suffix_color": "red"
     },
     "gpu_usage": {
       "show": true,
@@ -1494,7 +1655,7 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "blue"
+      "value_suffix_color": "red"
     }
   }
 },
@@ -1516,8 +1677,8 @@
         "prefix_color": "red",
         "index_color": "cyan",
         "name_color": "bright_cyan",
-        "name_suffix": "",
-        "name_suffix_color": "white",
+        "value_suffix": "",
+        "value_suffix_color": "red",
         "active_label": "(active)",
         "active_label_color": "cyan"
       }
@@ -1539,8 +1700,8 @@
         "prefix_color": "red",
         "index_color": "cyan",
         "name_color": "bright_cyan",
-        "name_suffix": "",
-        "name_suffix_color": "white",
+        "value_suffix": "",
+        "value_suffix_color": "red",
         "active_label": "(active)",
         "active_label_color": "cyan"
       }
@@ -1563,8 +1724,8 @@
         "brackets_color": "blue",
         "text": "Wired connection",
         "text_color": "bright_blue",
-        "text_suffix": "",
-        "text_suffix_color": "white"
+        "value_suffix": "",
+        "value_suffix_color": "red"
       },
       "battery": {
         "prefix": "~ ",
@@ -1572,7 +1733,7 @@
         "label": "Battery powered ",
         "label_color": "blue",
         "label_suffix": "",
-        "label_suffix_color": "white",
+        "label_suffix_color": "red",
         "bracket_open": "(",
         "bracket_close": ")",
         "brackets_color": "blue",
