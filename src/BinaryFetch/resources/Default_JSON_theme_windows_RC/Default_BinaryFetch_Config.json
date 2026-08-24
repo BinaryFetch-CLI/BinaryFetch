@@ -597,7 +597,7 @@
                 "suffix": "",
                 "suffix_color":"red",
                 "prefix": "",
-                "suffix_color":"red"
+                "puffix_color":"red"
             },
             "file_system": {
                 "show": true,
@@ -668,7 +668,7 @@
             },
             "serial_number": {
                 "show": true,
-                "prefix": "",
+                "prefix": "SN-",
                 "value_color": "red"
             },
             "external_status": {
@@ -681,7 +681,7 @@
         },
         "speed_unit_color": "bright_cyan",
         "brackets": {
-            "square_open": "[",
+            "square_open": " [",
             "square_close": "]",
             "square_color": "cyan"
         },
@@ -730,7 +730,7 @@
             },
             "serial_number": {
                 "show": true,
-                "prefix": "",
+                "prefix": "SN-",
                 "value_color": "bright_cyan"
             },
             "external_status": {
@@ -833,6 +833,73 @@
     "separator": {
       "text": ":",
       "color": "red"
+    }
+  },
+  "dummy_network_info": {
+    "enabled": false,
+    "header": {
+        "show": true,
+        "prefix": "#- ",
+        "prefix_color": "bright_blue",
+        "text": "Network Info ",
+        "text_color": "red",
+        "suffix": "---------------------------------------------------#",
+        "suffix_color": "cyan"
+    },
+    "fields": {
+        "name": {
+            "show": true,
+            "label": "Network Name",
+            "label_color": "blue",
+            "value": "InterCentury",
+            "value_color": "blue",
+            "prefix": "~ ",
+            "prefix_color": "red"
+        },
+        "type": {
+            "show": true,
+            "label": "Network Type",
+            "label_color": "blue",
+            "value": "Ethernet",
+            "value_color": "bright_cyan",
+            "prefix": "~ ",
+            "prefix_color": "red"
+        },
+        "local_ip": {
+            "show": true,
+            "label": "Local IP",
+            "label_color": "blue",
+            "value": "192.168.1.42",
+            "value_color": "cyan",
+            "prefix": "~ ",
+            "prefix_color": "red"
+        },
+        "read_speed": {
+            "show": true,
+            "label": "Read Speed",
+            "label_color": "blue",
+            "value": "812.45",
+            "value_color": "bright_cyan",
+            "unit": " Mbps",
+            "unit_color": "cyan",
+            "prefix": "~ ",
+            "prefix_color": "red"
+        },
+        "write_speed": {
+            "show": true,
+            "label": "Write Speed",
+            "label_color": "blue",
+            "value": "634.10",
+            "value_color": "bright_cyan",
+            "unit": " Mbps",
+            "unit_color": "cyan",
+            "prefix": "~ ",
+            "prefix_color": "red"
+        }
+    },
+    "separator": {
+        "text": ":",
+        "color": "red"
     }
   },
   "detailed_operating_system": {

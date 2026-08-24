@@ -95,6 +95,7 @@ std::string ConfigManager::resolveSectionKey(const std::string& section) const {
         {"detailed_memory", "detailed_system_memory"},
         {"detailed_storage", "detailed_disk_storage"},
         {"network_info", "detailed_network_connection"},
+        {"dummy_network_info", "detailed_dummy_network_connection"},
         {"os_info", "detailed_operating_system"},
         {"cpu_info", "detailed_processor"},
         {"gpu_info", "detailed_graphics_card"},

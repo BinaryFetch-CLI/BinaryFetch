@@ -475,7 +475,7 @@ vector<storage_data> StorageInfo::get_all_storage_info() {
                 ss << fixed << setprecision(2) << (w > 0 ? w : 0.0);
                 disk.write_speed = ss.str();
 
-                disk.serial_number = "SN-" + to_string(1000 + disk_index);
+                disk.serial_number =  to_string(1000 + disk_index);
 
                 // Predicted speeds based on type
                 if (disk.storage_type == "USB") {
@@ -630,7 +630,7 @@ void StorageInfo::process_storage_info(std::function<void(const storage_data&)> 
                 ss << fixed << setprecision(2) << (w > 0 ? w : 0.0);
                 disk.write_speed = ss.str();
 
-                disk.serial_number = "SN-" + to_string(1000 + disk_index);
+                disk.serial_number =  to_string(1000 + disk_index);
 
                 if (disk.storage_type == "USB") {
                     disk.predicted_read_speed = "100";
