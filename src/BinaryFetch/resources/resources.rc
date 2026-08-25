@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDR_DEFAULT_CONFIG    RCDATA    "Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json"
+
+// Ensure there is an empty line right here!

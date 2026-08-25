@@ -50,8 +50,14 @@ binary_fetch/Release/
 *.cache
 *.db
 
-# Ignore history folders
+# Ignore history folder
 .project_binary_fetch/.history/
 
 # vscode
 .history/
+
+# CMake build directory
+build/
+build-linux/
+
+
