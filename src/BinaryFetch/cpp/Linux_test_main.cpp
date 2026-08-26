@@ -13,6 +13,7 @@
 #include "CompactUser.h"
 #include "compact_disk_info.h"
 #include "TimeInfo.h"
+#include "StorageInfo.h"
 
 using namespace std;
 
@@ -129,9 +130,58 @@ int main() {
     }
     cout << "\n";
 
-    cout << "========================================================\n";
-    cout << "                     TEST COMPLETE                      \n";
-    cout << "========================================================\n";
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StorageInfo storage;
+ 
+    cout << "---------------- DISK PERFORMANCE & DETAILS ----------------\n";
+    storage.process_storage_info([](const storage_data& d) {
+        cout << d.drive_letter << " [ Read: " << setw(8) << d.read_speed
+             << " MB/s | Write: " << setw(8) << d.write_speed
+             << " MB/s ]  " << d.file_system
+             << "  SN-" << d.serial_number
+             << "  " << (d.is_external ? "Ext" : "Int") << " ]\n";
+    });
+ 
+    cout << "\n---------------- DISK PERFORMANCE & DETAILS (Predicted) ----------------\n";
+    for (const auto& d : storage.get_all_storage_info()) {
+        cout << d.drive_letter << " [ Read: " << setw(8) << d.predicted_read_speed
+             << " MB/s | Write: " << setw(8) << d.predicted_write_speed
+             << " MB/s ]  " << d.storage_type
+             << "  SN-" << d.serial_number
+             << "  " << (d.is_external ? "Ext" : "Int") << " ]\n";
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     return 0;
 }
