@@ -1,5 +1,7 @@
 #include "PerformanceInfo.h"
 #include <pdhmsg.h>
+#include <Windows.h>
+#include <Pdh.h>
 #include <thread>
 #include <chrono>
 #include <vector>
