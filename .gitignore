@@ -23,7 +23,6 @@
 *.o
 
 # Compiled library files
-*.lib
 *.dll
 
 # CMake
