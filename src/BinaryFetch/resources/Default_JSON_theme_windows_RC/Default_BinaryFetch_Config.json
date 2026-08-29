@@ -635,7 +635,7 @@
             "prefix": "-------------------- ",
             "prefix_color": "blue",
             "text": "DISK PERFORMANCE & DETAILS",
-            "text_color": "brighred_cyan",
+            "text_color": "red",
             "suffix": " --------------------",
             "suffix_color": "blue"
         },
