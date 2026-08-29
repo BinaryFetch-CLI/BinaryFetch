@@ -4,8 +4,6 @@ An advanced Windows system information fetcher written in C++ — featuring self
 
 ![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/984ddde6b5d583c74f146ba0a71fb131a9e91e29/Previews/00_main.png)
 ![Alt text](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/03_BinaryFetch_banner.png)
-
-
 ![Alt text](https://github.com/InterCentury/BinaryFetch/blob/main/Visual%20Instructions/Ascii_art_tutorial.png?raw=true)
 
 ##  User Customization (Only 2 Files)
