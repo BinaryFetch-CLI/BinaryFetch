@@ -401,10 +401,11 @@ if (config.isEnabled("compact_processor")) {
                << config.getColor("compact_processor", "text_color", "") << "C" << r;
         }
 
-        if (config.isFieldEnabled("compact_processor", "fields.cores.show") &&
-            config.isFieldEnabled("compact_processor", "fields.threads.show")) {
-            ss << "/";
-        }
+      if (config.isFieldEnabled("compact_processor", "fields.cores.show") &&
+         config.isFieldEnabled("compact_processor", "fields.threads.show")) {
+         ss << config.getColor("compact_processor", "separator.divider_color", "")
+            << config.getPrefix("compact_processor", "separator.divider", "/") << r;
+}
 
         if (config.isFieldEnabled("compact_processor", "fields.threads.show")) {
             ss << config.getColor("compact_processor", "fields.threads.value_color", "")
