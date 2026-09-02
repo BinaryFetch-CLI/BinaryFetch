@@ -13,7 +13,7 @@
     "show_emoji": true,
     "emoji_color": "bright_cyan",
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "╭📅 ",
       "prefix_color": "red"
     },
     "time": {
@@ -49,7 +49,7 @@
       }
     },
     "week": {
-      "enabled": true,
+      "enabled": false,
       "show_label": true,
       "show_num": true,
       "show_day_name": true,
@@ -62,7 +62,7 @@
       }
     },
     "leap_year": {
-      "enabled": true,
+      "enabled": false,
       "show_label": true,
       "show_val": true,
       "colors": {
@@ -75,7 +75,7 @@
   "compact_operating_system": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -115,7 +115,7 @@
   "compact_processor": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -156,7 +156,7 @@
   "compact_graphics_card": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -196,7 +196,7 @@
   "compact_display_monitor": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "header": {
@@ -228,7 +228,7 @@
         "value_color": "blue"
       },
       "upscale": {
-        "show": true,
+        "show": false,
         "label_color": "cyan",
         "value_color": "cyan"
       },
@@ -242,7 +242,7 @@
   "compact_system_memory": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -280,7 +280,7 @@
     "input": {
       "show": true,
       "prefixes": {
-        "prefix": "📅 ",
+        "prefix": "│📅 ",
         "prefix_color": "red"
       },
       "label": {
@@ -297,7 +297,7 @@
     "output": {
       "show": true,
       "prefixes": {
-        "prefix": "📅 ",
+        "prefix": "│📅 ",
         "prefix_color": "red"
       },
       "label": {
@@ -324,7 +324,7 @@
   "compact_resource_usage": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -367,7 +367,7 @@
   "compact_user_account": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -403,7 +403,7 @@
   "compact_network_connection": {
     "enabled": true,
     "prefixes": {
-      "prefix": "📅 ",
+      "prefix": "│📅 ",
       "prefix_color": "red"
     },
     "label": {
@@ -422,7 +422,7 @@
     },
     "fields": {
       "name": {
-        "show": true,
+        "show": false,
         "value_color": "bright_cyan"
       },
       "type": {
@@ -441,7 +441,7 @@
     "usage": {
       "show": true,
       "prefixes": {
-        "prefix": "📅 ",
+        "prefix": "│📅 ",
         "prefix_color": "red"
       },
       "label": {
@@ -456,7 +456,7 @@
     "capacity": {
       "show": true,
       "prefixes": {
-        "prefix": "📅 ",
+        "prefix": "╰📅 ",
         "prefix_color": "red"
       },
       "label": {
