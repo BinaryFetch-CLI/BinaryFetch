@@ -69,9 +69,6 @@ int global_memory_capacity = 0;
 
 
 
-//Initialize Global Variables (if any) here ------ (start)
-
-//Initialize Global Variables (if any) here ------ (end)
 
 int main(){
 
