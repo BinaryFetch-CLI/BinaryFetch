@@ -20,6 +20,7 @@ public:
     bool isNestedEnabled(const std::string& module, const std::string& section, const std::string& key) const;
     bool getNestedBool(const std::string& module, const std::string& path, bool defaultValue = true) const;
     bool getNestedBool(const std::string& path, bool defaultValue = true) const;
+    int getNestedInt(const std::string& module, const std::string& path, int defaultValue = 0) const;
 
     // Color resolution
     std::string getColor(const std::string& section, const std::string& key, const std::string& defaultColor = "white") const;
