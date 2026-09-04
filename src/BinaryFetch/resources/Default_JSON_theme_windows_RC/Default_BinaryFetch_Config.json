@@ -11,6 +11,7 @@
   "compact_date_and_time": {
     "enabled": true,
     "show_emoji": true,
+    "top_line_spacing":0,
     "emoji_color": "bright_cyan",
     "prefixes": {
       "prefix": "╭📅 ",
@@ -74,6 +75,7 @@
   },
   "compact_operating_system": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│🎯 ",
       "prefix_color": "red"
@@ -114,6 +116,7 @@
   },
   "compact_processor": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│⚙️  ",
       "prefix_color": "red"
@@ -157,6 +160,7 @@
   },
   "compact_graphics_card": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│🧿 ",
       "prefix_color": "red"
@@ -197,6 +201,7 @@
   },
   "compact_display_monitor": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│🖥️  ",
       "prefix_color": "red"
@@ -243,6 +248,7 @@
   },
   "compact_system_memory": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│📟 ",
       "prefix_color": "red"
@@ -281,6 +287,7 @@
     "enabled": true,
     "input": {
       "show": true,
+      "top_line_spacing":0,
       "prefixes": {
         "prefix": "│🎙️  ",
         "prefix_color": "red"
@@ -298,6 +305,7 @@
     },
     "output": {
       "show": true,
+      "top_line_spacing":0,
       "prefixes": {
         "prefix": "│🔉 ",
         "prefix_color": "red"
@@ -325,6 +333,7 @@
   },
   "compact_resource_usage": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│📊 ",
       "prefix_color": "red"
@@ -368,6 +377,7 @@
   },
   "compact_user_account": {
     "enabled": true,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│👾 ",
       "prefix_color": "red"
@@ -403,7 +413,8 @@
     "label_color": "blue"
   },
   "compact_network_connection": {
-    "enabled": true,
+    "enabled": false,
+    "top_line_spacing":0,
     "prefixes": {
       "prefix": "│🛜  ",
       "prefix_color": "red"
@@ -440,6 +451,7 @@
   },
   "compact_disk_storage": {
     "enabled": true,
+    "top_line_spacing":0,
     "usage": {
       "show": true,
       "prefixes": {
@@ -457,6 +469,7 @@
     },
     "capacity": {
       "show": true,
+      "top_line_spacing":0,
       "prefixes": {
         "prefix": "╰💾 ",
         "prefix_color": "red"
@@ -488,6 +501,7 @@
   },
   "detailed_system_memory": {
     "enabled": true,
+    "top_line_spacing":1,
     "sections": {
       "header": true,
       "total": true,
@@ -552,6 +566,7 @@
     "no_drives": "No drives detected.",
     "storage_summary": {
         "enabled": true,
+        "top_line_spacing":1,
         "header": {
             "show": true,
             "prefix": "------------------------- ",
@@ -632,6 +647,7 @@
     },
     "disk_performance": {
         "enabled": true,
+        "top_line_spacing":0,
         "header": {
             "show": true,
             "prefix": "-------------------- ",
@@ -694,6 +710,7 @@
     },
     "disk_performance_predicted": {
         "enabled": true,
+        "top_line_spacing":0,
         "header": {
             "show": true,
             "prefix": "---------------- ",
@@ -757,6 +774,7 @@
 },
 "detailed_network_connection": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -867,6 +885,7 @@
 },
 "dummy_network_info": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -946,6 +965,7 @@
 },
 "detailed_operating_system": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1044,6 +1064,7 @@
 },
 "detailed_processor": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1194,6 +1215,7 @@
 },
 "detailed_graphics_card": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1351,6 +1373,7 @@
 },
 "detailed_display_monitor": {
   "enabled": true,
+  "top_line_spacing":0,
   "banner": {
     "show": true,
     "prefix": "#- ",
@@ -1465,6 +1488,7 @@
 },
 "detailed_bios_and_motherboard": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1539,6 +1563,7 @@
 },
 "detailed_user_account": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1589,6 +1614,7 @@
 },
 "detailed_resource_usage": {
   "enabled": true,
+  "top_line_spacing":0,
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1663,6 +1689,7 @@
 },
 "detailed_audio_and_power": {
   "enabled": true,
+  "top_line_spacing":0,
   "output": {
     "show": true,
     "header": {
@@ -1688,6 +1715,7 @@
   },
   "input": {
     "show": true,
+    "top_line_spacing":0,
     "header": {
       "prefix": "#- ",
       "prefix_color": "bright_blue",
@@ -1711,6 +1739,7 @@
   },
   "power": {
     "show": true,
+    "top_line_spacing":0,
     "header": {
       "prefix": "#- ",
       "prefix_color": "bright_blue",

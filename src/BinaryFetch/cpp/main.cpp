@@ -134,22 +134,7 @@ int main(){
     DiskInfo disk;
     TimeInfo time;
 
-
-
-
-    
-
-    
-//-----------------------------testing site start-------------------------
-// here, we can test new features before adding them to the main codebase
-    
    
-    
-//-----------------------------testing site end-------------------------
-
-
-// json based printing workfolow starts here...........................
-        
 
 
 
@@ -194,6 +179,10 @@ if (config.isEnabled("header_settings")) {
 if (config.isEnabled("compact_date_and_time")) {
     TimeInfo time;
     ostringstream ss;
+
+    // line spacing
+    int spacing = config.getNestedInt("compact_date_and_time","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_date_and_time", "prefixes.show")) {
@@ -320,6 +309,13 @@ if (config.isEnabled("compact_date_and_time")) {
 if (config.isEnabled("compact_operating_system")) {
     ostringstream ss;
 
+
+    // line spacing
+    int spacing = config.getNestedInt("compact_operating_system","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
+
+
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_operating_system", "prefixes.show")) {
         ss << config.getColor("compact_operating_system", "prefixes.prefix_color", "")
@@ -369,6 +365,10 @@ if (config.isEnabled("compact_operating_system")) {
 // ==================== COMPACT CPU ====================
 if (config.isEnabled("compact_processor")) {
     ostringstream ss;
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_processor","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_processor", "prefixes.show")) {
@@ -431,6 +431,12 @@ if (config.isEnabled("compact_processor")) {
 if (config.isEnabled("compact_graphics_card")) {
     ostringstream ss;
 
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_graphics_card","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
+
+
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_graphics_card", "prefixes.show")) {
         ss << config.getColor("compact_graphics_card", "prefixes.prefix_color", "")
@@ -483,6 +489,10 @@ if (config.isEnabled("compact_graphics_card")) {
 if (config.isEnabled("compact_display_monitor")) {
     CompactScreen screenDetector;
     auto screens = screenDetector.getScreens();
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_display_monitor","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     if (screens.empty()) {
         ostringstream ss;
@@ -563,6 +573,10 @@ if (config.isEnabled("compact_display_monitor")) {
 if (config.isEnabled("compact_system_memory")) {
     ostringstream ss;
 
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_system_memory","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
     // Prefix - comes entirely from JSON
     if (config.isFieldEnabled("compact_system_memory", "prefixes.show")) {
         ss << config.getColor("compact_system_memory", "prefixes.prefix_color", "")
@@ -612,6 +626,10 @@ if (config.isEnabled("compact_audio_devices")) {
     if (config.isFieldEnabled("compact_audio_devices", "input.show")) {
         ostringstream ss;
 
+         // line spacing json driven
+         int spacing = config.getNestedInt("compact_audio_devices","input.top_line_spacing",0);
+         for (int n = 0; n < spacing; n++) {lp.push("");}
+
         // Input prefix - from JSON
         if (config.isFieldEnabled("compact_audio_devices", "input.prefixes.show")) {
             ss << config.getColor("compact_audio_devices", "input.prefixes.prefix_color", "")
@@ -642,6 +660,10 @@ if (config.isEnabled("compact_audio_devices")) {
     // Output device
     if (config.isFieldEnabled("compact_audio_devices", "output.show")) {
         ostringstream ss;
+
+         // line spacing json driven
+         int spacing = config.getNestedInt("compact_audio_devices","output.top_line_spacing",0);
+         for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Output prefix - from JSON
         if (config.isFieldEnabled("compact_audio_devices", "output.prefixes.show")) {
@@ -674,6 +696,10 @@ if (config.isEnabled("compact_audio_devices")) {
 // ==================== COMPACT PERFORMANCE ====================
 if (config.isEnabled("compact_resource_usage")) {
     ostringstream ss;
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_resource_usage","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // Prefix - from JSON
     if (config.isFieldEnabled("compact_resource_usage", "prefixes.show")) {
@@ -712,6 +738,10 @@ if (config.isEnabled("compact_resource_usage")) {
 // ==================== COMPACT USER ====================
 if (config.isEnabled("compact_user_account")) {
     ostringstream ss;
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_user_account","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");} 
 
     // Prefix - from JSON
     if (config.isFieldEnabled("compact_user_account", "prefixes.show")) {
@@ -756,6 +786,11 @@ if (config.isEnabled("compact_user_account")) {
 
 // ==================== COMPACT NETWORK ====================
 if (config.isEnabled("compact_network_connection")) {
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("compact_network_connection","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
     if (config.isFieldEnabled("compact_network_connection", "fields.name.show") ||
         config.isFieldEnabled("compact_network_connection", "fields.type.show") ||
         config.isFieldEnabled("compact_network_connection", "fields.ip.show")) {
@@ -813,6 +848,10 @@ if (config.isEnabled("compact_disk_storage")) {
         auto disks = disk.getAllDiskUsage();
         ostringstream ss;
 
+            // line spacing json driven
+            int spacing = config.getNestedInt("compact_disk_storage","top_line_spacing",0);
+            for (int n = 0; n < spacing; n++) {lp.push("");}
+
         // Usage prefix - from JSON
         if (config.isFieldEnabled("compact_disk_storage", "usage.prefixes.show")) {
             ss << config.getColor("compact_disk_storage", "usage.prefixes.prefix_color", "")
@@ -842,6 +881,10 @@ if (config.isEnabled("compact_disk_storage")) {
     if (config.isFieldEnabled("compact_disk_storage", "capacity.show")) {
         auto caps = disk.getDiskCapacity();
         ostringstream sc;
+
+        // line spacing json driven
+        int spacing = config.getNestedInt("compact_disk_storage","capacity.top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Capacity prefix - from JSON
         if (config.isFieldEnabled("compact_disk_storage", "capacity.prefixes.show")) {
@@ -890,7 +933,10 @@ if (config.isEnabled("compact_disk_storage")) {
 // ============================================================================
 
 if (config.isEnabled("detailed_system_memory")) {
-    lp.push("");
+    
+    // line spacing json driven
+    int spacing = config.getNestedInt("detailed_system_memory","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
     if (config.isSectionEnabled("detailed_system_memory", "header")) {
@@ -1026,7 +1072,6 @@ if (config.isEnabled("detailed_system_memory")) {
 
 if (config.isEnabled("detailed_disk_storage")) {
 
-    lp.push("");
 
     // Format storage values
     auto fmt_storage = [](const string& value) -> string {
@@ -1099,7 +1144,9 @@ if (config.isEnabled("detailed_disk_storage")) {
             "sections.storage_summary",
             true))
     {
-        lp.push("");
+     // line spacing json driven
+     int spacing = config.getNestedInt("detailed_disk_storage","storage_summary.top_line_spacing",0);
+     for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Header
         if (config.getNestedBool(
@@ -1468,7 +1515,11 @@ if (config.isEnabled("detailed_disk_storage")) {
             "sections.disk_performance",
             true))
     {
-        lp.push("");
+
+
+         // line spacing json driven
+         int spacing = config.getNestedInt("detailed_disk_storage","disk_performance.top_line_spacing",0);
+         for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Header
         if (config.getNestedBool(
@@ -1807,7 +1858,9 @@ if (config.isEnabled("detailed_disk_storage")) {
             "sections.disk_performance_predicted",
             true))
     {
-        lp.push("");
+        // line spacing json driven
+        int spacing = config.getNestedInt("detailed_disk_storage","disk_performance_predicted.top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Header
         if (config.getNestedBool(
@@ -2186,7 +2239,9 @@ if (config.isEnabled("detailed_disk_storage")) {
 // ============================================================================
 if (config.isEnabled("detailed_network_connection"))
 {
-    lp.push("");
+    // line spacing json driven
+    int spacing = config.getNestedInt("detailed_network_connection","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     const string sec = "detailed_network_connection";
 
@@ -2261,7 +2316,10 @@ if (config.isEnabled("detailed_network_connection"))
 // ============================================================================
 
 if (config.isEnabled("dummy_network_info")) {
-    lp.push("");
+    
+    // line spacing json driven
+    int spacing = config.getNestedInt("dummy_network_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     const string sec = "dummy_network_info";
 
@@ -2340,7 +2398,10 @@ if (config.isEnabled("dummy_network_info")) {
 
     // OS Info (JSON Driven)
     if (config.isEnabled("os_info")) {
-        lp.push("");
+        
+        // line spacing json driven
+        int spacing = config.getNestedInt("os_info","top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         const string sec = "os_info";
 
@@ -2397,7 +2458,10 @@ if (config.isEnabled("dummy_network_info")) {
 // ============================================================================
 
     if (config.isEnabled("detailed_processor")) {
-        lp.push("");
+        
+        // line spacing json driven
+        int spacing = config.getNestedInt("detailed_processor","top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}    
 
         // Header
         if (config.getNestedBool("detailed_processor", "header.show", true)) {
@@ -2600,7 +2664,10 @@ if (config.isEnabled("dummy_network_info")) {
 // ============================================================================
 
     if (config.isEnabled("detailed_graphics_card")) {
-        lp.push("");
+        
+        // line spacing json driven
+        int spacing = config.getNestedInt("detailed_graphics_card","top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         auto all_gpu_info = obj_gpu.get_all_gpu_info();
 
@@ -2780,7 +2847,7 @@ if (config.isEnabled("dummy_network_info")) {
             auto primary = detailed_gpu_info.primary_gpu_info();
 
             if (config.getNestedBool("detailed_graphics_card", "primary_header.show", true)) {
-                lp.push("");
+                
 
                 ostringstream ss;
                 ss << config.getNestedColor("detailed_graphics_card", "primary_header.prefix_color", "")
@@ -2865,7 +2932,10 @@ if (config.isEnabled("dummy_network_info")) {
 //  • DSR / VSR           - Dynamic Super Resolution status
 // ============================================================================
 if (config.isEnabled("display_info")) {
-    lp.push("");
+    
+    // line spacing json driven
+    int spacing = config.getNestedInt("display_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     const auto& screens = di.getScreens();
 
@@ -3024,7 +3094,7 @@ if (config.isEnabled("display_info")) {
             lp.push(ss.str());
         }
 
-        lp.push("");
+        
     }
 }
 
@@ -3058,7 +3128,10 @@ if (config.isEnabled("display_info")) {
 //  ~ Motherboard Manufacturer: ASUSTeK COMPUTER INC.
 // ============================================================================
 if (config.isEnabled("bios_mb_info")) {
-    lp.push("");
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("bios_mb_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
     if (config.getNestedBool("bios_mb_info", "header.show", true)) {
@@ -3179,7 +3252,10 @@ if (config.isEnabled("bios_mb_info")) {
 //  ~ Domain                : WORKGROUP
 // ============================================================================
 if (config.isEnabled("user_info")) {
-    lp.push("");
+    
+    // line spacing json driven
+    int spacing = config.getNestedInt("user_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
     if (config.getNestedBool("user_info", "header.show", true)) {
@@ -3273,7 +3349,10 @@ if (config.isEnabled("user_info")) {
 
 // Performance Info (JSON Driven)
 if (config.isEnabled("performance_info")) {
-    lp.push("");
+    
+    // line spacing json driven
+    int spacing = config.getNestedInt("performance_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
     if (config.getNestedBool("performance_info", "header.show", true)) {
@@ -3397,12 +3476,24 @@ if (config.isEnabled("performance_info")) {
 
 // Audio & Power Info (JSON Driven)
 if (config.isEnabled("audio_power_info")) {
-    lp.push("");
+    
+
+
+    // line spacing json driven
+    int spacing = config.getNestedInt("audio_power_info","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
+
     ExtraInfo audio;
 
     // ---------- OUTPUT DEVICES ----------
     if (config.getNestedBool("audio_power_info", "output.show", true)) {
         vector<AudioDevice> outputDevices = audio.get_output_devices();
+
+       // line spacing json driven
+      int spacing = config.getNestedInt("audio_power_info","output.top_line_spacing",0);
+      for (int n = 0; n < spacing; n++) {lp.push("");}
+
 
         ostringstream ss;
         ss << config.getNestedColor("audio_power_info", "output.header.prefix_color", "")
@@ -3438,6 +3529,10 @@ if (config.isEnabled("audio_power_info")) {
     if (config.getNestedBool("audio_power_info", "input.show", true)) {
         vector<AudioDevice> inputDevices = audio.get_input_devices();
 
+      // line spacing json driven
+      int spacing = config.getNestedInt("audio_power_info","input.top_line_spacing",0);
+      for (int n = 0; n < spacing; n++) {lp.push("");}
+
         ostringstream ss;
         ss << config.getNestedColor("audio_power_info", "input.header.prefix_color", "")
            << config.getLabel("audio_power_info", "input.header.prefix", "") << r
@@ -3470,7 +3565,12 @@ if (config.isEnabled("audio_power_info")) {
 
     // ---------- POWER STATUS ----------
     if (config.getNestedBool("audio_power_info", "power.show", true)) {
-        lp.push("");
+        
+
+       // line spacing json driven
+       int spacing = config.getNestedInt("audio_power_info","power.top_line_spacing",0);
+       for (int n = 0; n < spacing; n++) {lp.push("");}
+
         PowerStatus power = audio.get_power_status();
 
         ostringstream ss;
