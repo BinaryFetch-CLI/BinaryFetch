@@ -884,7 +884,7 @@
   }
 },
 "dummy_network_info": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing":0,
   "header": {
     "show": true,
