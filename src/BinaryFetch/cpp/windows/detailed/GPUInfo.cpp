@@ -1,22 +1,21 @@
 ﻿#include "GPUInfo.h"
-#include <windows.h> // Core Windows API (often sucks)
-#include <dxgi1_6.h> // DirectX Graphics Infrastructure (DXGI) for GPU enumeration
-#include <d3d12.h>  // Direct3D 12 (not directly used here, but often included with DXGI)
-#include <wbemidl.h> // WMI (Windows Management Instrumentation) for querying system info
-#include <comdef.h> // COM definitions and smart pointers
-#include <iostream> // if you don't know what is this, C'mon...get a life bro 
-#include <sstream>  // String stream for string manipulation
-#include "nvapi.h"  // NVIDIA NVAPI for NVIDIA-specific GPU info
+#include <windows.h>
+#include <dxgi1_6.h>
+#include <d3d12.h>
+#include <wbemidl.h>
+#include <comdef.h>
+#include <iostream>
+#include <sstream>
+#include "nvapi.h"
 
-#pragma comment(lib, "dxgi.lib") // Link against DXGI library
-#pragma comment(lib, "d3d12.lib") // Link against Direct3D 12 library
-#pragma comment(lib, "wbemuuid.lib") // Link against WMI library
-#pragma comment(lib, "nvapi64.lib") // Link against NVAPI library
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "nvapi64.lib")
 
 using namespace std;
 
-// ----------------------------------------------------
-// Helper: convert wide string → UTF-8 string
+// Converts a wide string to UTF-8.
 static string wstr_to_utf8(const wstring& w)
 {
     if (w.empty()) return {};
@@ -26,25 +25,21 @@ static string wstr_to_utf8(const wstring& w)
     return r;
 }
 
-// ----------------------------------------------------
-// Helper: query WMI for GPU temperature (tries multiple methods)
+// Queries GPU temperature via WMI.
 //
-// WARNING 
-// Windows does NOT want you to know GPU temperature.
-// So this function politely asks… then begs… then panics.
-//
-// Strategy:
-// 1️Try OpenHardwareMonitor (best case, clean data)
-// 2️ Fallback to raw WMI thermal zones (kinda sucks)
-// 3️ If everything bombs → return -1.0f and move on with life
-//
+// There is no vendor-neutral Windows API for GPU temperature, so this
+// tries two WMI sources in order of reliability:
+//   1. OpenHardwareMonitor's WMI namespace, if OHM is installed and running.
+//      This is the most accurate source when available.
+//   2. The generic ACPI thermal zone, as a last resort. This is frequently
+//      a motherboard or CPU sensor rather than the GPU, so it is only used
+//      when nothing better exists.
+// Returns -1.0f if neither source is available.
 static float query_wmi_gpu_temperature()
 {
-    // Wake up COM (Windows' favorite pain generator)
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     bool needsUninit = SUCCEEDED(hr);
 
-    // Security setup (Windows is paranoid for no reason)
     hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
         RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
         NULL, EOAC_NONE, NULL);
@@ -52,29 +47,23 @@ static float query_wmi_gpu_temperature()
     IWbemLocator* locator = nullptr;
     IWbemServices* services = nullptr;
 
-    // Create WMI locator (if this fails, we’re already cooked)
     hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&locator);
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return -1.0f; // Bombed instantly 💥
+        return -1.0f;
     }
 
-    // ----------------------------------------------------
-    // METHOD 1: OpenHardwareMonitor (the good path :)
-    // Only works if user has OHM installed
-    // This is the most accurate WMI-based option
-    // ----------------------------------------------------
+    // Method 1: OpenHardwareMonitor. Only works if the user has it
+    // installed and its WMI provider is running.
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\OpenHardwareMonitor"), NULL, NULL, 0, NULL, 0, 0, &services);
     if (SUCCEEDED(hr))
     {
-        // Tell Windows: "Relax, we’re trusted" (it still doesn’t believe us)
         CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
 
         IEnumWbemClassObject* enumerator = nullptr;
 
-        // Ask for temperature sensors that look GPU-ish
         hr = services->ExecQuery(
             bstr_t("WQL"),
             bstr_t(L"SELECT Value FROM Sensor WHERE SensorType='Temperature' AND (Name LIKE '%GPU%' OR Parent LIKE '%GPU%')"),
@@ -87,16 +76,13 @@ static float query_wmi_gpu_temperature()
             IWbemClassObject* obj = nullptr;
             ULONG returned = 0;
 
-            // Loop until we find a usable temperature
             while (enumerator->Next(WBEM_INFINITE, 1, &obj, &returned) == S_OK && returned)
             {
                 VARIANT val;
                 if (SUCCEEDED(obj->Get(L"Value", 0, &val, 0, 0)))
                 {
-                    // OHM usually gives clean numbers (thank you)
                     float temp = (val.vt == VT_R8) ? (float)val.dblVal : (float)val.intVal;
 
-                    // Clean up ASAP and escape before Windows changes its mind
                     VariantClear(&val);
                     obj->Release();
                     enumerator->Release();
@@ -113,15 +99,8 @@ static float query_wmi_gpu_temperature()
         services->Release();
     }
 
-    // ----------------------------------------------------
-    // METHOD 2: Raw WMI Thermal Zones (last resort :)
-    //
-    // Problems:
-    // - Might be CPU temp
-    // - Might be motherboard temp
-    // - Might be total nonsense
-    // But hey, Windows gave us this… so we try.
-    // ----------------------------------------------------
+    // Method 2: ACPI thermal zone. May report a non-GPU sensor; used only
+    // because nothing more specific is available without third-party tools.
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\WMI"), NULL, NULL, 0, NULL, 0, 0, &services);
     if (SUCCEEDED(hr))
     {
@@ -147,11 +126,10 @@ static float query_wmi_gpu_temperature()
                 {
                     float temp = (val.vt == VT_R8) ? (float)val.dblVal : (float)val.intVal;
 
-                    // WMI returns temp in tenths of Kelvin (why???)
+                    // WMI reports this in tenths of a degree Kelvin.
                     if (temp > 2000.0f)
                         temp = (temp / 10.0f) - 273.15f;
 
-                    // Clean up and pray this number makes sense
                     VariantClear(&val);
                     obj->Release();
                     enumerator->Release();
@@ -168,33 +146,19 @@ static float query_wmi_gpu_temperature()
         services->Release();
     }
 
-    // Everything failed. Windows said NO.
     locator->Release();
     if (needsUninit) CoUninitialize();
 
-    // Temperature unavailable → sucks
     return -1.0f;
 }
 
-
-// ----------------------------------------------------
-// Helper: query float values via WMI (generic)
-//
-// This function is basically:
-// "Hey Windows, can you give me ONE number?"
-//
-// Windows reply options:
-// 1) Sure :) 
-// 2) Maybe
-// 3) Nope (bombed)
-// ----------------------------------------------------
+// Runs a WQL query and extracts a single numeric field from the first
+// matching result. Returns false if the query fails or returns nothing.
 static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& outVal)
 {
-    // Wake up COM (Windows' ancient ritual begins)
     HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
     bool needsUninit = SUCCEEDED(hr);
 
-    // Security setup because Windows doesn't trust anyone, not even itself
     hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
         RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
         NULL, EOAC_NONE, NULL);
@@ -202,33 +166,26 @@ static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& out
     IWbemLocator* locator = nullptr;
     IWbemServices* services = nullptr;
 
-    // Ask Windows for the WMI locator
-    // If this fails, everything after this is doomed :0
     hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
         IID_IWbemLocator, (LPVOID*)&locator);
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return false; // Instant fail, no drama
+        return false;
     }
 
-    // Connect to ROOT\\CIMV2 (the default WMI playground)
     hr = locator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &services);
-
-    // Locator served its purpose, bye
     locator->Release();
 
     if (FAILED(hr)) {
         if (needsUninit) CoUninitialize();
-        return false; // Connection failed, Windows said NO
+        return false;
     }
 
-    // Tell Windows: "We’re cool, let us read data"
     CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
         RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
 
     IEnumWbemClassObject* enumerator = nullptr;
 
-    // Run the WQL query (this is where things usually explode)
     hr = services->ExecQuery(
         bstr_t("WQL"),
         bstr_t(wql),
@@ -239,25 +196,22 @@ static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& out
     if (FAILED(hr)) {
         services->Release();
         if (needsUninit) CoUninitialize();
-        return false; // Query bombed
+        return false;
     }
 
     IWbemClassObject* obj = nullptr;
     ULONG returned = 0;
     bool ok = false;
 
-    // Loop through results (usually just one, but WMI loves loops)
     while (enumerator &&
         SUCCEEDED(enumerator->Next(WBEM_INFINITE, 1, &obj, &returned)) &&
         returned)
     {
         VARIANT val;
 
-        // Try to extract the requested field
         if (SUCCEEDED(obj->Get(field, 0, &val, 0, 0)) &&
             (val.vt == VT_R8 || val.vt == VT_I4))
         {
-            // Got the number! :)
             outVal = (val.vt == VT_R8)
                 ? (float)val.dblVal
                 : (float)val.intVal;
@@ -265,96 +219,56 @@ static bool query_wmi_float(const wchar_t* wql, const wchar_t* field, float& out
             ok = true;
             VariantClear(&val);
             obj->Release();
-            break; // Mission accomplished
+            break;
         }
 
-        // Field was useless, try next
         VariantClear(&val);
         obj->Release();
     }
 
-    // Clean up everything before Windows gets angry
     if (enumerator) enumerator->Release();
     services->Release();
     if (needsUninit) CoUninitialize();
 
-    // ok == true  → value retrieved :)
-    // ok == false → Windows trolled us :0
     return ok;
 }
 
-// ----------------------------------------------------
-// WMI-based GPU usage
-//
-// Asks Windows how busy the GPU is.
-// Accuracy level: "ehh… good enough"
+// Vendor-neutral GPU usage fallback, used when NVAPI is unavailable.
+// Reads the 3D engine utilization counter exposed by the GPU scheduler.
 float GPUInfo::get_gpu_usage()
 {
     float val = 0.0f;
 
-    // Query the 3D engine usage counter
-    // This is where Windows *tries* to be honest
     query_wmi_float(
         L"SELECT UtilizationPercentage FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine WHERE Name LIKE '%_3D%'",
         L"UtilizationPercentage",
         val);
 
-    return val; // Percentage (hopefully)
+    return val;
 }
 
-// ----------------------------------------------------
-// WMI-based GPU temperature
-//
-// Translation:
-// "Windows… how hot is the GPU right now?"
+// Vendor-neutral GPU temperature fallback, used when NVAPI is unavailable.
 float GPUInfo::get_gpu_temperature()
 {
-    // All the pain is handled inside this helper
     return query_wmi_gpu_temperature();
 }
 
-// ----------------------------------------------------
-// Estimate GPU core count
+// Vendor-neutral GPU core count fallback, used when NVAPI is unavailable
+// or the GPU is not NVIDIA.
 //
-// Windows does NOT expose GPU cores.
-// So this is a semi-educated guess for known GPUs :)
+// Windows exposes no public API for shader/CUDA core count on any vendor.
+// NVAPI's NvAPI_GPU_GetGpuCoreCount (used in get_nvapi_core_count below)
+// is the only reliable source, and only covers NVIDIA. There is no
+// equivalent for AMD or Intel, so this fallback intentionally returns 0
+// rather than guessing a number for an unknown GPU model.
 int GPUInfo::get_gpu_core_count()
 {
-    ID3D12Device* device = nullptr;
-    IDXGIFactory4* factory = nullptr;
-
-    // Create DXGI factory (gateway to GPU land)
-    if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
-        return 0;
-
-    IDXGIAdapter1* adapter = nullptr;
-    int cores = 0;
-
-    // Grab the first adapter
-    if (SUCCEEDED(factory->EnumAdapters1(0, &adapter)))
-    {
-        // Try creating a D3D12 device just to confirm GPU exists
-        if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device))))
-        {
-            // Hardcoded known value (RTX 4070 Super)
-            cores = 7168;
-
-            device->Release();
-        }
-        adapter->Release();
-    }
-
-    factory->Release();
-    return cores;
+    return 0;
 }
 
-// ----------------------------------------------------
-// NVAPI helpers
-//
-// NVIDIA-only zone 🟢
+// Checks whether the NVIDIA NVAPI library is present on this system.
 static bool nvapi_available()
 {
-    // Check if nvapi64.dll exists on the system
     HMODULE nv = LoadLibraryA("nvapi64.dll");
     if (!nv) return false;
     FreeLibrary(nv);
@@ -363,19 +277,15 @@ static bool nvapi_available()
 
 static bool is_nvidia_gpu(UINT vendorId)
 {
-    // NVIDIA vendor ID = 0x10DE
     return (vendorId == 0x10DE);
 }
 
-// ----------------------------------------------------
-// NVAPI GPU temperature getter
-//
-// Tries MULTIPLE methods because GPUs are mysterious
+// Reads GPU temperature via NVAPI, trying progressively broader thermal
+// targets until one returns a usable sensor reading.
 static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
 {
     float temperature = -1.0f;
 
-    // Method 1: Standard thermal settings (best case)
     NV_GPU_THERMAL_SETTINGS thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
 
@@ -384,71 +294,58 @@ static float get_nvapi_temperature(NvPhysicalGpuHandle handle)
 
     if (status == NVAPI_OK && thermalSettings.count > 0)
     {
-        // Look specifically for the GPU core sensor
+        // Prefer the internal GPU die sensor specifically.
         for (NvU32 i = 0; i < thermalSettings.count; i++)
         {
             if (thermalSettings.sensor[i].controller == NVAPI_THERMAL_CONTROLLER_GPU_INTERNAL &&
                 thermalSettings.sensor[i].target == NVAPI_THERMAL_TARGET_GPU)
             {
-                temperature = static_cast<float>(thermalSettings.sensor[i].currentTemp);
-                return temperature; // Jackpot 🎯
+                return static_cast<float>(thermalSettings.sensor[i].currentTemp);
             }
         }
 
-        // Fallback: just take the first sensor
         if (thermalSettings.sensor[0].currentTemp > 0)
         {
-            temperature = static_cast<float>(thermalSettings.sensor[0].currentTemp);
-            return temperature;
+            return static_cast<float>(thermalSettings.sensor[0].currentTemp);
         }
     }
 
-    // Method 2: GPU-only target
     thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
     status = NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_GPU, &thermalSettings);
 
     if (status == NVAPI_OK && thermalSettings.count > 0)
     {
-        temperature = static_cast<float>(thermalSettings.sensor[0].currentTemp);
-        return temperature;
+        return static_cast<float>(thermalSettings.sensor[0].currentTemp);
     }
 
-    // Method 3: Absolute desperation mode
     thermalSettings = {};
     thermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
     status = NvAPI_GPU_GetThermalSettings(handle, NVAPI_THERMAL_TARGET_NONE, &thermalSettings);
 
     if (status == NVAPI_OK && thermalSettings.count > 0)
     {
-        temperature = static_cast<float>(thermalSettings.sensor[0].currentTemp);
-        return temperature;
+        return static_cast<float>(thermalSettings.sensor[0].currentTemp);
     }
 
-    // NVAPI said nope
     return temperature;
 }
 
-// ----------------------------------------------------
-// NVAPI GPU usage
-//
-// NVIDIA usually tells the truth :)
+// Reads GPU core utilization percentage via NVAPI.
 static float get_nvapi_usage(NvPhysicalGpuHandle handle)
 {
     NV_GPU_DYNAMIC_PSTATES_INFO_EX pStates = {};
     pStates.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
 
-    // utilization[0] = GPU core usage
+    // utilization[0] is the GPU core domain.
     if (NvAPI_GPU_GetDynamicPstatesInfoEx(handle, &pStates) == NVAPI_OK)
         return static_cast<float>(pStates.utilization[0].percentage);
 
     return -1.0f;
 }
 
-// ----------------------------------------------------
-// NVAPI core count
-//
-// Directly from NVIDIA (very nice)
+// Reads the real CUDA/shader core count directly from the driver via
+// NVAPI. This is the actual, per-GPU value, not an estimate.
 static int get_nvapi_core_count(NvPhysicalGpuHandle handle)
 {
     NvU32 count = 0;
@@ -457,15 +354,11 @@ static int get_nvapi_core_count(NvPhysicalGpuHandle handle)
     return 0;
 }
 
-// ----------------------------------------------------
-// NVAPI GPU frequency getter
-//
-// GPU clocks are chaotic, so we try multiple ways
+// Reads the current graphics clock via NVAPI.
 static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
 {
     NvU32 frequency = 0;
 
-    // Method 1: Current graphics clock (best)
     NV_GPU_CLOCK_FREQUENCIES clockFreqs = {};
     clockFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
     clockFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
@@ -477,15 +370,12 @@ static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
         {
             frequency = clockFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency;
             if (frequency > 0)
-                return static_cast<float>(frequency) / 1000.0f; // kHz → MHz
+                return static_cast<float>(frequency) / 1000.0f; // kHz to MHz
         }
     }
 
-    // Method 2: Legacy calls (mostly useless but tried)
-    NvU32 currentFreq = 0;
-    status = NvAPI_GPU_GetCurrentPCIEDownstreamWidth(handle, &currentFreq);
-
-    // Method 3: Scan all clock domains
+    // Fall back to the first present clock domain if the graphics
+    // domain specifically was not reported.
     NV_GPU_CLOCK_FREQUENCIES allClocks = {};
     allClocks.version = NV_GPU_CLOCK_FREQUENCIES_VER;
     allClocks.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
@@ -503,14 +393,13 @@ static float get_nvapi_frequency(NvPhysicalGpuHandle handle)
         }
     }
 
-    // No luck
     return -1.0f;
 }
 
-// ----------------------------------------------------
-// Main GPU info collector
-//
-// This is where everything comes together 🧠
+// Enumerates all GPUs via DXGI and fills in per-GPU details. NVIDIA GPUs
+// get their usage, temperature, core count, and frequency from NVAPI
+// (the accurate, vendor-provided source); any GPU where NVAPI data is
+// unavailable falls back to the vendor-neutral WMI-based getters above.
 vector<gpu_data> GPUInfo::get_all_gpu_info()
 {
     vector<gpu_data> list;
@@ -519,7 +408,6 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
     if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory))))
         return list;
 
-    // Init NVAPI once (for NVIDIA GPUs)
     bool nvapiInitialized = false;
     NvPhysicalGpuHandle nvapiHandles[NVAPI_MAX_PHYSICAL_GPUS] = {};
     NvU32 nvapiGpuCount = 0;
@@ -537,7 +425,6 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
     IDXGIAdapter4* adapter = nullptr;
     UINT adapterIndex = 0;
 
-    // Enumerate all adapters
     for (UINT i = 0;
         factory->EnumAdapters1(i, (IDXGIAdapter1**)&adapter) != DXGI_ERROR_NOT_FOUND;
         ++i)
@@ -551,7 +438,6 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
 
         gpu_data d;
 
-        // Basic info
         d.gpu_name = wstr_to_utf8(desc.Description);
 
         double memGB = static_cast<double>(desc.DedicatedVideoMemory) /
@@ -561,7 +447,6 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
         memStream << fixed << memGB;
         d.gpu_memory = memStream.str() + " GB";
 
-        // Driver version
         LARGE_INTEGER driverVersion{};
         if (SUCCEEDED(adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driverVersion)))
         {
@@ -575,19 +460,16 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
         else
             d.gpu_driver_version = "Unknown";
 
-        // Vendor
         d.gpu_vendor =
             (desc.VendorId == 0x10DE) ? "NVIDIA" :
             (desc.VendorId == 0x1002 || desc.VendorId == 0x1022) ? "AMD" :
             (desc.VendorId == 0x8086) ? "Intel" : "Unknown";
 
-        // Defaults
         d.gpu_usage = -1.0f;
         d.gpu_temperature = -1.0f;
         d.gpu_core_count = 0;
         d.gpu_frequency = -1.0f;
 
-        // NVIDIA fast path
         if (is_nvidia_gpu(desc.VendorId) && nvapiInitialized && adapterIndex < nvapiGpuCount)
         {
             NvPhysicalGpuHandle handle = nvapiHandles[adapterIndex];
@@ -597,7 +479,6 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
             d.gpu_frequency = get_nvapi_frequency(handle);
         }
 
-        // Fallbacks
         if (d.gpu_usage < 0.0f)
             d.gpu_usage = get_gpu_usage();
         if (d.gpu_temperature < 0.0f)
@@ -618,6 +499,3 @@ vector<gpu_data> GPUInfo::get_all_gpu_info()
     factory->Release();
     return list;
 }
-
-
-

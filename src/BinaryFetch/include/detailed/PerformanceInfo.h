@@ -1,11 +1,10 @@
 #pragma once
-
 #include <string>
-#include <Windows.h>
-#include <Pdh.h>
+//#include <Windows.h>
+//#include <Pdh.h>
 using namespace std;
-#pragma comment(lib, "pdh.lib")
-#pragma comment(lib, "nvapi64.lib") // make sure NVAPI SDK library is linked
+//#pragma comment(lib, "pdh.lib")
+//#pragma comment(lib, "nvapi64.lib") // make sure NVAPI SDK library is linked
 
 class PerformanceInfo {
 private:

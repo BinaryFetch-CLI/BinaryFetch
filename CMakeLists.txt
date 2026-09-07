@@ -52,7 +52,7 @@ set(BINARYFETCH_RESOURCES
 # ------------------------------------------------------------
 
 set(BINARYFETCH_NVAPI
-    "${BINARYFETCH_DEPENDENCIES}/NVAPI/nvapi-main"
+    "${BINARYFETCH_DEPENDENCIES}/Windows/NVAPI/nvapi-main"
 )
 
 # ------------------------------------------------------------
@@ -67,7 +67,7 @@ set(BINARYFETCH_NVAPI
 # ------------------------------------------------------------
 
 set(BINARYFETCH_NVML_INCLUDE
-    "${BINARYFETCH_DEPENDENCIES}/NVML/usr/include"
+    "${BINARYFETCH_DEPENDENCIES}/Linux/NVML/usr/include"
 )
 
 # ============================================================
