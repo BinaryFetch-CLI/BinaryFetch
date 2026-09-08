@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.20)
 # Cross-platform CMake configuration
 # ============================================================
 
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(BinaryFetch
     VERSION 1.0.0
     DESCRIPTION "A system information and hardware monitoring tool"
@@ -325,6 +327,7 @@ endif()
 # Executable
 # ============================================================
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 add_executable(BinaryFetch
     ${BINARYFETCH_SOURCES}
     ${BINARYFETCH_HEADERS}
