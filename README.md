@@ -44,431 +44,55 @@ Output: Standard white text
 
 
 
-<details>
- <summary><h2> [ Click to expand Project Previews ] </h2></summary>
 
-![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/06_preview.jpg)
-![alt](https://github.com/BinaryFetch-CLI/BinaryFetch/blob/5c7beffcc4306b2e3d8ef5ddec5a64cd1549dae8/Previews/05_preview.jpg)
-  
-  </details>
 
-
-
-<details>
- <summary><h2> [ Click here to expand Project Infos ] </h2></summary>
-
-##  Core Features Overview
-
-* Modular system info engine
-* Compact mode & expanded mode
-* Multi-GPU support
-* Multi-monitor support
-* Audio input/output detection
-* Power & battery detection
-* Predictive disk performance 
-* Clean ASCII rendering pipeline
-* Community-shareable profiles (just JSON + ASCII)
-
----
-
-##  Project Architecture
-
-BinaryFetch follows a **module-per-domain** architecture.
-
-Each system category is implemented as an **independent class** with no side effects.
-
-**TOTAL MODULES & SUB-MODULES:**
-
-## Modules (Classes): 34
-## Sub-Modules (Functions): 158
-
-**Breakdown:**
-- **Core Modules:** 12 (compact mode)
-- **Detailed Modules:** 12 (expanded info)
-- **Utility Modules:** 10 (support/helper classes)
-**Each module has 1-11 sub-modules for specific data retrieval.**
-
-##  Self-Healing file management system (Worst-Case Handling)
-
-BinaryFetch **never breaks** due to user mistakes. (expect json syntax)
-
-### Automatic Recovery Includes:
-
-* Missing ASCII art file → recreated from bundled default
-* Missing JSON config → recreated from default schema
-* Deleted directories → recreated silently
-* Corrupted config → safely regenerated
-
-
-
----
-
-
-# **BInaryFetch Feature Overview**
-
-## ** Core Modules: 12**
-1. **Header Module** - System banner/logo display
-2. **Compact Time Module** - Real-time clock display
-3. **Compact OS Module** - OS summary
-4. **Compact CPU Module** - Processor overview
-5. **Compact GPU Module** - Graphics card overview
-6. **Compact Screen Module** - Display information
-7. **Compact Memory Module** - RAM usage summary
-8. **Compact Audio Module** - Audio device status
-9. **Compact Performance Module** - System performance metrics
-10. **Compact User Module** - User session info
-11. **Compact Network Module** - Network connection status
-12. **Compact Disk Module** - Storage usage summary
-
-## ** Detailed/Expanded Modules: 12**
-1. **Detailed Memory Module** - In-depth RAM analysis
-2. **Detailed Storage Module** - Comprehensive disk info
-3. **Network Info Module** - Complete network details
-4. **Dummy Network Info Module** - Fallback network display
-5. **OS Info Module** - Operating system details
-6. **CPU Info Module** - Processor specifications
-7. **GPU Info Module** - Graphics card details
-8. **Display Info Module** - Monitor/display configuration
-9. **BIOS/Motherboard Info Module** - Firmware and hardware details
-10. **User Info Module** - User account information
-11. **Performance Info Module** - System performance metrics
-12. **Audio & Power Info Module** - Audio devices and power status
-
-## ** Configuration Features:**
-- **Color Customization**: 14+ color options per module
-- **Toggle Controls**: Individual enable/disable for each module
-- **Granular Display**: Control over every element's visibility
-- **Emoji Support**: Optional emoji indicators
-- **Compact/Detailed Views**: Multiple display modes
-- **Theme System**: Consistent color scheme across all modules
-
-### **📈 Statistics:**
-- **Total Configurable Options**: 300+ individual settings (json toggle & color adjustment)
-- **Color Properties**: 150+ color configuration points
-- **Toggle Switches**: 80+ enable/disable controls
-- **Sub-section Controls**: 60+ detailed display options
-- **Customizable Elements**: 200+ individually configurable components
-
-## ** Key Capabilities:**
-- **Snapshot form realtime data**: e.g. Disk information inlcuding read\write\used
-- **Hardware Profiling**: Detailed component specifications
-- **Performance Tracking**: CPU/GPU/RAM/Disk utilization
-- **Network Analysis**: Connection and speed monitoring
-- **Storage Analysis**: Disk usage and performance metrics
-- **Display Configuration**: Monitor settings and resolutions
-- **Audio Monitoring**: Input/output device status
-- **User Session Info**: Account and computer details
-- **System Uptime**: Runtime tracking
-- **Power Management**: Battery status monitoring
-
-## ** Technical Features:**
-- **Modular Design**: Independent module enable/disable
-- **Fallback Systems**: Dummy/backup modules like dummy network 
-- **Detailed/Compact Toggle**: Two viewing modes for each module type
-- **Consistent Formatting**: Uniform display structure
-- **Extensible Architecture**: Easy addition of new modules
-- **Cross-Platform Ready**: Windows-focused but adaptable
-
-## ** Visual Features:**
-- **Colored Brackets/Parentheses**: Syntax highlighting
-- **Separator Lines**: Section dividers
-- **Label/Value Distinction**: Clear text differentiation
-- **Emoji Integration**: Visual indicators
-- **Header Banners**: Module identification
-- **Progress/Status Indicators**: Visual performance representation
-
-**Total Configurable Components**: 400+ individual display elements across 24 main modules with extensive customization options for appearance, content, and functionality.
-
-
-
----
-
-## **TOTAL STATISTICS:**
-- **Total Classes:** 34
-- **Total Functions:** 158
-- **Total Objects Instantiated:** 21
-- **Total Helper Lambda Functions:** 5
-- **Total Structures:** 8
-
-## **CLASS-BY-CLASS BREAKDOWN:**
-
-### **1. AsciiArt**
-- **Functions:** 1
-- Functions:
-  - `loadFromFile()` - Returns `bool` (success/failure)
-
-### **2. LivePrinter**
-- **Functions:** 2
-- Functions:
-  - `push(std::string)` - Returns `void`
-  - `finish()` - Returns `void`
-
-### **3. OSInfo**
-- **Functions:** 7
-- Functions:
-  - `GetOSName()` - Returns `std::string` (OS name)
-  - `GetOSVersion()` - Returns `std::string` (OS version)
-  - `GetOSArchitecture()` - Returns `std::string` (architecture)
-  - `get_os_kernel_info()` - Returns `std::string` (kernel info)
-  - `get_os_uptime()` - Returns `std::string` (uptime)
-  - `get_os_install_date()` - Returns `std::string` (install date)
-  - `get_os_serial_number()` - Returns `std::string` (serial number)
-
-### **4. CPUInfo**
-- **Functions:** 11
-- Functions:
-  - `get_cpu_info()` - Returns `std::string` (CPU model)
-  - `get_cpu_utilization()` - Returns `std::string` (usage percentage)
-  - `get_cpu_speed()` - Returns `std::string` (current speed)
-  - `get_cpu_base_speed()` - Returns `std::string` (base speed)
-  - `get_cpu_cores()` - Returns `std::string` (core count)
-  - `get_cpu_logical_processors()` - Returns `std::string` (logical processors)
-  - `get_cpu_sockets()` - Returns `std::string` (socket count)
-  - `get_cpu_virtualization()` - Returns `std::string` (virtualization status)
-  - `get_cpu_l1_cache()` - Returns `std::string` (L1 cache size)
-  - `get_cpu_l2_cache()` - Returns `std::string` (L2 cache size)
-  - `get_cpu_l3_cache()` - Returns `std::string` (L3 cache size)
-
-### **5. MemoryInfo**
-- **Functions:** 4
-- Functions:
-  - `getTotal()` - Returns `std::string` (total RAM in GB)
-  - `getFree()` - Returns `std::string` (free RAM in GB)
-  - `getUsedPercentage()` - Returns `std::string` (usage percentage)
-  - `getModules()` - Returns `std::vector<memory_module>` (RAM modules)
-
-### **6. GPUInfo**
-- **Functions:** 1
-- Functions:
-  - `get_all_gpu_info()` - Returns `std::vector<GPUData>` (all GPU info)
-
-### **7. DetailedGPUInfo**
-- **Functions:** 1
-- Functions:
-  - `primary_gpu_info()` - Returns `GPUDetailedData` (detailed GPU info)
-
-### **8. StorageInfo**
-- **Functions:** 1
-- Functions:
-  - `process_storage_info(callback)` - Returns `void` (processes via callback)
-
-### **9. NetworkInfo**
-- **Functions:** 7
-- Functions:
-  - `get_network_name()` - Returns `std::string` (network name)
-  - `get_local_ip()` - Returns `std::string` (local IP)
-  - `get_public_ip()` - Returns `std::string` (public IP)
-  - `get_locale()` - Returns `std::string` (locale)
-  - `get_mac_address()` - Returns `std::string` (MAC address)
-  - `get_network_upload_speed()` - Returns `std::string` (upload speed)
-  - `get_network_download_speed()` - Returns `std::string` (download speed)
-
-### **10. UserInfo**
-- **Functions:** 3
-- Functions:
-  - `get_username()` - Returns `std::string` (username)
-  - `get_computer_name()` - Returns `std::string` (computer name)
-  - `get_domain_name()` - Returns `std::string` (domain name)
-
-### **11. PerformanceInfo**
-- **Functions:** 5
-- Functions:
-  - `get_system_uptime()` - Returns `std::string` (system uptime)
-  - `get_cpu_usage_percent()` - Returns `std::string` (CPU usage %)
-  - `get_ram_usage_percent()` - Returns `std::string` (RAM usage %)
-  - `get_disk_usage_percent()` - Returns `std::string` (disk usage %)
-  - `get_gpu_usage_percent()` - Returns `std::string` (GPU usage %)
-
-### **12. DisplayInfo**
-- **Functions:** 1
-- Functions:
-  - `getScreens()` - Returns `std::vector<ScreenInfo>` (screen info)
-
-### **13. ExtraInfo**
-- **Functions:** 3
-- Functions:
-  - `get_output_devices()` - Returns `std::vector<AudioDevice>` (audio outputs)
-  - `get_input_devices()` - Returns `std::vector<AudioDevice>` (audio inputs)
-  - `get_power_status()` - Returns `PowerStatus` (power/battery info)
-
-### **14. SystemInfo**
-- **Functions:** 5
-- Functions:
-  - `get_bios_vendor()` - Returns `std::string` (BIOS vendor)
-  - `get_bios_version()` - Returns `std::string` (BIOS version)
-  - `get_bios_date()` - Returns `std::string` (BIOS date)
-  - `get_motherboard_model()` - Returns `std::string` (motherboard model)
-  - `get_motherboard_manufacturer()` - Returns `std::string` (manufacturer)
-
-### **15. TimeInfo**
-- **Functions:** 10
-- Functions:
-  - `getHour()` - Returns `int` (hour 0-23)
-  - `getMinute()` - Returns `int` (minute 0-59)
-  - `getSecond()` - Returns `int` (second 0-59)
-  - `getDay()` - Returns `int` (day 1-31)
-  - `getMonthName()` - Returns `std::string` (month name)
-  - `getMonthNumber()` - Returns `int` (month 1-12)
-  - `getYearNumber()` - Returns `int` (year)
-  - `getWeekNumber()` - Returns `int` (week number)
-  - `getDayName()` - Returns `std::string` (day name)
-  - `getLeapYear()` - Returns `std::string` (leap year status)
-
-### **16. CompactAudio**
-- **Functions:** 4
-- Functions:
-  - `active_audio_input()` - Returns `std::string` (input device)
-  - `active_audio_input_status()` - Returns `std::string` (input status)
-  - `active_audio_output()` - Returns `std::string` (output device)
-  - `active_audio_output_status()` - Returns `std::string` (output status)
-
-### **17. CompactOS**
-- **Functions:** 4
-- Functions:
-  - `getOSName()` - Returns `std::string` (OS name)
-  - `getOSBuild()` - Returns `std::string` (OS build)
-  - `getArchitecture()` - Returns `std::string` (architecture)
-  - `getUptime()` - Returns `std::string` (uptime)
-
-### **18. CompactCPU**
-- **Functions:** 4
-- Functions:
-  - `getCPUName()` - Returns `std::string` (CPU name)
-  - `getCPUCores()` - Returns `std::string` (core count)
-  - `getCPUThreads()` - Returns `std::string` (thread count)
-  - `getClockSpeed()` - Returns `std::string` (clock speed in GHz)
-
-### **19. CompactMemory**
-- **Functions:** 3
-- Functions:
-  - `get_total_memory()` - Returns `std::string` (total RAM in GB)
-  - `get_free_memory()` - Returns `std::string` (free RAM in GB)
-  - `get_used_memory_percent()` - Returns `std::string` (RAM usage %)
-
-### **20. CompactScreen**
-- **Functions:** 1
-- Functions:
-  - `getScreens()` - Returns `std::vector<CompactScreenInfo>` (screen info)
-
-### **21. CompactSystem**
-- **Functions:** 0 (declared but not used in current code)
-
-### **22. CompactGPU**
-- **Functions:** 4
-- Functions:
-  - `getGPUName()` - Returns `std::string` (GPU name)
-  - `getGPUUsagePercent()` - Returns `std::string` (GPU usage %)
-  - `getVRAMGB()` - Returns `std::string` (VRAM in GB)
-  - `getGPUFrequency()` - Returns `std::string` (GPU frequency)
-
-### **23. CompactPerformance**
-- **Functions:** 4
-- Functions:
-  - `getCPUUsage()` - Returns `std::string` (CPU usage %)
-  - `getGPUUsage()` - Returns `std::string` (GPU usage %)
-  - `getRAMUsage()` - Returns `std::string` (RAM usage %)
-  - `getDiskUsage()` - Returns `std::string` (disk usage %)
-
-### **24. CompactUser**
-- **Functions:** 3
-- Functions:
-  - `getUsername()` - Returns `std::string` (username)
-  - `getDomain()` - Returns `std::string` (domain)
-  - `isAdmin()` - Returns `std::string` (admin status)
-
-### **25. CompactNetwork**
-- **Functions:** 3
-- Functions:
-  - `get_network_name()` - Returns `std::string` (network name)
-  - `get_network_type()` - Returns `std::string` (network type)
-  - `get_network_ip()` - Returns `std::string` (IP address)
-
-### **26. DiskInfo**
-- **Functions:** 2
-- Functions:
-  - `getAllDiskUsage()` - Returns `std::map<std::string, double>` (drive:usage%)
-  - `getDiskCapacity()` - Returns `std::map<std::string, double>` (drive:capacity GB)
-
-### **27. DetailedScreen** (header included, object not created)
-- **Functions:** Not instantiated in main
-
-### **28-34. Other Included Headers** (objects not instantiated)
-- These headers are included but their classes aren't instantiated in main:
-  - CompactSystem
-  - DetailedScreen
-  - Various other headers in includes
-
-## **DATA STRUCTURES:**
-
-### **1. memory_module** (MemoryInfo)
-- **Fields:** capacity, type, speed
-
-### **2. GPUData** (GPUInfo)
-- **Fields:** gpu_name, gpu_memory, gpu_usage, gpu_vendor, gpu_driver_version, gpu_temperature, gpu_core_count
-
-### **3. GPUDetailedData** (DetailedGPUInfo)
-- **Fields:** name, vram_gb, frequency_ghz
-
-### **4. storage_data** (StorageInfo)
-- **Fields:** drive_letter, total_space, used_space, used_percentage, file_system, is_external, serial_number, read_speed, write_speed, predicted_read_speed, predicted_write_speed, storage_type
-
-### **5. ScreenInfo** (DisplayInfo)
-- **Fields:** name, current_width, current_height, native_resolution, refresh_rate, aspect_ratio, scale_percent, upscale, dsr_enabled, dsr_type
-
-### **6. AudioDevice** (ExtraInfo)
-- **Fields:** name, isActive
-
-### **7. PowerStatus** (ExtraInfo)
-- **Fields:** hasBattery, batteryPercent, isCharging
-
-### **8. CompactScreenInfo** (CompactScreen)
-- **Fields:** name, native_width, native_height, scale_percent, upscale, refresh_rate
-
-## **HELPER LAMBDA FUNCTIONS:**
-
-### **1. getColor()**
-- Returns: `std::string` (ANSI color code)
-- Parameters: section, key, defaultColor
-
-### **2. isEnabled()**
-- Returns: `bool` (section enabled status)
-- Parameters: section
-
-### **3. isSubEnabled()**
-- Returns: `bool` (subsection enabled status)
-- Parameters: section, key
-
-### **4. isSectionEnabled()**
-- Returns: `bool` (nested section enabled status)
-- Parameters: module, section
-
-### **5. isNestedEnabled()**
-- Returns: `bool` (deep nested config enabled status)
-- Parameters: module, section, key
-
-## **RETURN TYPE SUMMARY:**
-- **String Returns:** 121 functions (76.6%)
-- **Vector Returns:** 6 functions (3.8%)
-- **Map Returns:** 2 functions (1.3%)
-- **Structure Returns:** 8 functions (5.1%)
-- **Boolean Returns:** 1 function (0.6%)
-- **Void Returns:** 6 functions (3.8%)
-- **Integer Returns:** 10 functions (6.3%)
-- **Callback-based:** 1 function (0.6%)
-
-## **KEY OBSERVATIONS:**
-1. **String Dominance:** Most functions (76.6%) return strings for easy display formatting
-2. **Modular Design:** Each class has a specific, focused responsibility
-3. **Data Structures:** Well-defined structures for complex data types
-4. **Configuration Integration:** All output is JSON-configurable via helper functions
-5. **Separation of Concerns:** Compact vs Detailed modules for different display needs
-
----
-  
-  </details>
-
-
-
+**Features Overview: Compact Modules:**
+```
+Date/Time: Hour/ Minute/ Second/ Day/ MonthName/ MonthNum/ Year/ WeekNum/ DayName/ LeapYear
+OS:          Name/ Build/ Architecture/ Uptime
+CPU:         Name/ Cores/ Threads/ Clock
+GPU:         Name/ Usage/ VRAM/ Frequency
+Display:     Index/ Name/ Resolution/ Scale/ Upscale/ RefreshRate
+Memory:      Total/ Free/ UsedPercent
+Audio:       InputName/ InputStatus/ OutputName/ OutputStatus
+Performance: CPU/ GPU/ RAM/ Disk
+User:        Username/ Domain/ UserType
+Network:     Name/ Type/ IP
+Disk:        DriveLetter/ UsedPercent/ Capacity
+```
+**Features Overview: Detailed Modules:**
+```
+Memory:       Total/ Free/ UsedPercent/ ModuleCap/ ModuleType/ ModuleSpeed
+Storage:      DriveLetter/ StorageType/ UsedSpace/ TotalSpace/ UsedPercent/ 
+              FileSystem/ ExtStatus/ ReadSpeed/ WriteSpeed/ SerialNumber/ 
+              PredictedRead/ PredictedWrite
+Network:      Name/ Type/ LocalIP/ PublicIP/ Locale/ MAC/ UploadSpeed/ DownloadSpeed
+DummyNetwork: Name/ Type/ LocalIP/ ReadSpeed/ WriteSpeed
+OS:           Name/ Build/ Architecture/ Kernel/ Uptime/ InstallDate/ Serial
+CPU:          Brand/ Utilization/ CurrentSpeed/ BaseSpeed/ Cores/ LogicalProcs/ 
+              Sockets/ Virtualization/ L1Cache/ L2Cache/ L3Cache
+GPU:          Name/ Memory/ Usage/ Vendor/ Driver/ Temperature/ CoreCount/ PrimaryName/ 
+              PrimaryVRAM/ PrimaryFreq
+Display:      Index/ Name/ CurrentRes/ RefreshRate/ NativeRes/ AspectRatio/ Scaling/ 
+              Upscale/ DSRStatus/ DSRType
+BIOS/MB:      BiosVendor/ BiosVersion/ BiosDate/ MotherboardModel/ MotherboardManufacturer
+User:         Username/ ComputerName/ Domain
+Performance:  Uptime/ CPUUsage/ RAMUsage/ DiskUsage/ GPUUsage
+Audio/Power:  OutputDevices/ InputDevices/ PowerStatus/ BatteryPercent/ ChargingStatus
+```
+**Technical Overview: Classes (27 total)**
+```
+[AsciiArt.cpp ][ConfigManager.cpp ][LivePrinter.cpp ][OSInfo.cpp ]
+[CPUInfo.cpp ][MemoryInfo.cpp ][GPUInfo.cpp ][DetailedGPUInfo.cpp ]
+[StorageInfo.cpp ][NetworkInfo.cpp ][UserInfo.cpp ]
+[PerformanceInfo.cpp ][DisplayInfo.cpp ][ExtraInfo.cpp ]
+[SystemInfo.cpp ][CompactAudio.cpp ][CompactOS.cpp ]
+[CompactCPU.cpp ][CompactMemory.cpp ][CompactSystem.cpp ]
+[CompactGPU.cpp ][CompactPerformance.cpp ][CompactUser.cpp ]
+[CompactNetwork.cpp ][DiskInfo.cpp ][TimeInfo.cpp ][CompactScreen]
+
+
+```
 
 **Q: What about the Linux version of Binary Fetch?**  
 **A:** It's under development.
