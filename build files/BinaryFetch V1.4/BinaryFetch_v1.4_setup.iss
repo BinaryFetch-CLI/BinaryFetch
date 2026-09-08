@@ -1,8 +1,8 @@
 ; -----------------------------------------------------------
 ;  BinaryFetch Installer
-;  Author: Maruf Hasan
+;  Author: BinaryFetch-CLI
 ;  Publisher: BinaryFetch-CLI
-;  Version: 1.3
+;  Version: 1.4
 ;
 ;  Installs BinaryFetch.exe and adds it to the system PATH.
 ; -----------------------------------------------------------
@@ -12,7 +12,7 @@
 AppId={{9F6E2C2A-8A7B-4C6F-9A2D-3F6A0C91E4A1}}
 
 AppName=BinaryFetch
-AppVersion=1.3
+AppVersion=1.4
 AppPublisher=BinaryFetch-CLI
 
 AppPublisherURL=https://github.com/BinaryFetch-CLI
@@ -24,11 +24,11 @@ DefaultGroupName=BinaryFetch
 
 UninstallDisplayIcon={app}\BinaryFetch.exe
 
-LicenseFile=H:\programming\git_and_github\BinaryFetch\build files\BinaryFetch v1.3\License.txt
-SetupIconFile=H:\programming\git_and_github\BinaryFetch\build files\BinaryFetch v1.3\BinaryFetch.ico
+LicenseFile=H:\programming\git_and_github\BinaryFetch\build files\Build-License\License.txt
+SetupIconFile=H:\programming\git\_and\_github\BinaryFetch\build files\Icon & Banners\BinaryFetch.ico
 
 OutputDir=C:\Users\OBITO\Downloads
-OutputBaseFilename=BinaryFetch-v1.3-Setup
+OutputBaseFilename=BinaryFetch-v1.4-Setup
 
 Compression=lzma
 SolidCompression=yes
@@ -44,7 +44,7 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "H:\programming\git_and_github\BinaryFetch\project_binary_fetch\binary_fetch_v1\x64\Release\BinaryFetch.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\programming\git\_and\_github\BinaryFetch\build\bin\Release\BinaryFetch.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\BinaryFetch"; Filename: "{app}\BinaryFetch.exe"
@@ -186,10 +186,10 @@ begin
       AddAppPathToSystemPath();
 
     MsgBox(
-      'BinaryFetch v1.3 installed successfully.'#13#13 +
+      'BinaryFetch v1.4 installed successfully.'#13#13 +
       'Open a NEW terminal and type:'#13 +
       'binaryfetch'#13#13 +
-      'If it still doesn't work, sign out and back in (or restart).',
+      'If it still doesn''t work, sign out and back in (or restart).',
       mbInformation,
       MB_OK
     );
