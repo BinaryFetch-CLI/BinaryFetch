@@ -181,10 +181,12 @@ int main(){
    
 
 
-
+  std::map<std::string, std::function<void()>> sections;
 
 // ==================== HEADER BANNER ====================
-if (config.isEnabled("header_settings")) {
+sections["header_settings"] = [&]() {
+    if (!config.isEnabled("header_settings")) return;
+
     ostringstream ss;
     string r = config.getResetColor();
     
@@ -201,7 +203,7 @@ if (config.isEnabled("header_settings")) {
        << config.getPrefix("header_settings", "header_suffix", "") << r;
     
     lp.push(ss.str());
-}
+};
 
 
 
@@ -217,7 +219,8 @@ if (config.isEnabled("header_settings")) {
 
 
 // ==================== COMPACT TIME ====================
-if (config.isEnabled("compact_date_and_time")) {
+sections["compact_date_and_time"] = [&]() {
+    if (!config.isEnabled("compact_date_and_time")) return;
     TimeInfo time;
     ostringstream ss;
 
@@ -344,10 +347,11 @@ if (config.isEnabled("compact_date_and_time")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT OPERATING SYSTEM ====================
-if (config.isEnabled("compact_operating_system")) {
+sections["compact_operating_system"] = [&]() {
+    if (!config.isEnabled("compact_operating_system")) return;
     ostringstream ss;
 
 
@@ -401,10 +405,11 @@ if (config.isEnabled("compact_operating_system")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT CPU ====================
-if (config.isEnabled("compact_processor")) {
+sections["compact_processor"] = [&]() {
+    if (!config.isEnabled("compact_processor")) return;
     ostringstream ss;
 
     // line spacing json driven
@@ -466,10 +471,11 @@ if (config.isEnabled("compact_processor")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT GPU ====================
-if (config.isEnabled("compact_graphics_card")) {
+sections["compact_graphics_card"] = [&]() {
+    if (!config.isEnabled("compact_graphics_card")) return;
     ostringstream ss;
 
     // line spacing json driven
@@ -524,10 +530,11 @@ if (config.isEnabled("compact_graphics_card")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT DISPLAY ====================
-if (config.isEnabled("compact_display_monitor")) {
+sections["compact_display_monitor"] = [&]() {
+    if (!config.isEnabled("compact_display_monitor")) return;
     CompactScreen screenDetector;
     auto screens = screenDetector.getScreens();
 
@@ -608,10 +615,11 @@ if (config.isEnabled("compact_display_monitor")) {
             lp.push(ss.str());
         }
     }
-}
+};
 
 // ==================== COMPACT MEMORY ====================
-if (config.isEnabled("compact_system_memory")) {
+sections["compact_system_memory"] = [&]() {
+    if (!config.isEnabled("compact_system_memory")) return;
     ostringstream ss;
 
     // line spacing json driven
@@ -659,10 +667,11 @@ if (config.isEnabled("compact_system_memory")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT AUDIO ====================
-if (config.isEnabled("compact_audio_devices")) {
+sections["compact_audio_devices"] = [&]() {
+    if (!config.isEnabled("compact_audio_devices")) return;
     // Input device
     if (config.isFieldEnabled("compact_audio_devices", "input.show")) {
         ostringstream ss;
@@ -732,10 +741,11 @@ if (config.isEnabled("compact_audio_devices")) {
 
         lp.push(ss.str());
     }
-}
+};
 
 // ==================== COMPACT PERFORMANCE ====================
-if (config.isEnabled("compact_resource_usage")) {
+sections["compact_resource_usage"] = [&]() {
+    if (!config.isEnabled("compact_resource_usage")) return;
     ostringstream ss;
 
     // line spacing json driven
@@ -774,10 +784,11 @@ if (config.isEnabled("compact_resource_usage")) {
     addPerf("disk", "Disk", "disk_color", c_perf.getDiskUsage());
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT USER ====================
-if (config.isEnabled("compact_user_account")) {
+sections["compact_user_account"] = [&]() {
+    if (!config.isEnabled("compact_user_account")) return;
     ostringstream ss;
 
     // line spacing json driven
@@ -823,10 +834,11 @@ if (config.isEnabled("compact_user_account")) {
     }
 
     lp.push(ss.str());
-}
+};
 
 // ==================== COMPACT NETWORK ====================
-if (config.isEnabled("compact_network_connection")) {
+sections["compact_network_connection"] = [&]() {
+    if (!config.isEnabled("compact_network_connection")) return;
 
     // line spacing json driven
     int spacing = config.getNestedInt("compact_network_connection","top_line_spacing",0);
@@ -880,10 +892,11 @@ if (config.isEnabled("compact_network_connection")) {
 
         lp.push(ss.str());
     }
-}
+};
 
 // ==================== COMPACT DISK ====================
-if (config.isEnabled("compact_disk_storage")) {
+sections["compact_disk_storage"] = [&]() {
+    if (!config.isEnabled("compact_disk_storage")) return;
     // Disk Usage
     if (config.isFieldEnabled("compact_disk_storage", "usage.show")) {
         auto disks = disk.getAllDiskUsage();
@@ -952,7 +965,7 @@ if (config.isEnabled("compact_disk_storage")) {
         }
         lp.push(sc.str());
     }
-}
+};
 
 
 
@@ -974,7 +987,8 @@ if (config.isEnabled("compact_disk_storage")) {
 //   Memory 0 : (Used: 44%) 16GB DDR5 6000MHz
 //   Memory 1 : (Used: 44%) 16GB DDR5 6000MHz
 
-if (config.isEnabled("detailed_system_memory")) {
+sections["detailed_system_memory"] = [&]() {
+    if (!config.isEnabled("detailed_system_memory")) return;
     
     // line spacing json driven
     int spacing = config.getNestedInt("detailed_system_memory","top_line_spacing",0);
@@ -1074,7 +1088,7 @@ if (config.isEnabled("detailed_system_memory")) {
             lp.push(ss.str());
         }
     }
-}
+};
     
 
  
@@ -1107,7 +1121,8 @@ if (config.isEnabled("detailed_system_memory")) {
 
 // ----------------- DETAILED STORAGE SECTION -----------------
 
-if (config.isEnabled("detailed_disk_storage")) {
+sections["detailed_disk_storage"] = [&]() {
+    if (!config.isEnabled("detailed_disk_storage")) return;
 
 
     // Format storage values
@@ -2238,7 +2253,7 @@ if (config.isEnabled("detailed_disk_storage")) {
                 "")
         );
     }
-}
+};
 
 // ----------------- END DETAILED STORAGE SECTION -----------------
 
@@ -2269,8 +2284,8 @@ if (config.isEnabled("detailed_disk_storage")) {
 //  ~ Mac address             : 00:1A:2B:3C:4D:5E
 //  ~ avg upload speed        : 10.5 Mbps
 //  ~ avg download speed      : 85.2 Mbps
-if (config.isEnabled("detailed_network_connection"))
-{
+sections["detailed_network_connection"] = [&]() {
+    if (!config.isEnabled("detailed_network_connection")) return;
     // line spacing json driven
     int spacing = config.getNestedInt("detailed_network_connection","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
@@ -2317,7 +2332,7 @@ if (config.isEnabled("detailed_network_connection"))
     field("mac",       "mac",       net.get_mac_address());
     field("upload",    "upload",    net.get_network_upload_speed());
     field("download",  "download",  net.get_network_download_speed());
-}
+};
 
 //  ██████╗ ██╗   ██╗███╗   ███╗███╗   ███╗██╗   ██╗
 //  ██╔══██╗██║   ██║████╗ ████║████╗ ████║╚██╗ ██╔╝
@@ -2342,7 +2357,8 @@ if (config.isEnabled("detailed_network_connection"))
 //  ~ Read Speed              : 812.45 Mbps
 //  ~ Write Speed             : 634.10 Mbps
 
-if (config.isEnabled("dummy_network_info")) {
+sections["dummy_network_info"] = [&]() {
+    if (!config.isEnabled("dummy_network_info")) return;
     
     // line spacing json driven
     int spacing = config.getNestedInt("dummy_network_info","top_line_spacing",0);
@@ -2387,7 +2403,7 @@ if (config.isEnabled("dummy_network_info")) {
     field("local_ip");
     field("read_speed");
     field("write_speed");
-}
+};
 
 
 //   ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
@@ -2418,8 +2434,8 @@ if (config.isEnabled("dummy_network_info")) {
 //  ~ Install Date            : 2024-01-15
 //  ~ Serial                  : XXXXX-XXXXX-XXXXX-XXXXX
 
-    // OS Info (JSON Driven)
-    if (config.isEnabled("os_info")) {
+sections["detailed_operating_system"] = [&]() {
+    if (!config.isEnabled("detailed_operating_system")) return;
         
         // line spacing json driven
         int spacing = config.getNestedInt("os_info","top_line_spacing",0);
@@ -2466,7 +2482,7 @@ if (config.isEnabled("dummy_network_info")) {
         field("uptime",       "uptime",       os.get_os_uptime());
         field("install_date", "install_date", os.get_os_install_date());
         field("serial",       "serial",       os.get_os_serial_number());
-    }
+    };
 
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
@@ -2476,7 +2492,8 @@ if (config.isEnabled("dummy_network_info")) {
 //   ╚═════╝╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
 //                       D E T A I L E D   P R O C E S S O R
 
-    if (config.isEnabled("detailed_processor")) {
+sections["detailed_processor"] = [&]() {
+    if (!config.isEnabled("detailed_processor")) return;
         
         // line spacing json driven
         int spacing = config.getNestedInt("detailed_processor","top_line_spacing",0);
@@ -2669,7 +2686,7 @@ if (config.isEnabled("dummy_network_info")) {
                << config.getPrefix("detailed_processor", "fields.l3_cache.value_suffix", "") << r;
             lp.push(ss.str());
         }
-    }
+    };
 
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
@@ -2679,7 +2696,8 @@ if (config.isEnabled("dummy_network_info")) {
 //   ╚═════╝ ╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
 //                    D E T A I L E D   G R A P H I C S   C A R D
 
-    if (config.isEnabled("detailed_graphics_card")) {
+sections["detailed_graphics_card"] = [&]() {
+    if (!config.isEnabled("detailed_graphics_card")) return;
         
         // line spacing json driven
         int spacing = config.getNestedInt("detailed_graphics_card","top_line_spacing",0);
@@ -2923,7 +2941,7 @@ if (config.isEnabled("dummy_network_info")) {
                 }
             }
         }
-    }
+    };
 
 
 
@@ -2943,10 +2961,12 @@ if (config.isEnabled("dummy_network_info")) {
 //  • Scaling             - DPI scaling percentage
 //  • Upscale             - Upscaling multiplier
 //  • DSR / VSR           - Dynamic Super Resolution status
-if (config.isEnabled("display_info")) {
+
+sections["detailed_display_monitor"] = [&]() {
+    if (!config.isEnabled("detailed_display_monitor")) return;
     
     // line spacing json driven
-    int spacing = config.getNestedInt("display_info","top_line_spacing",0);
+    int spacing = config.getNestedInt("detailed_display_monitor","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
     const auto& screens = di.getScreens();
@@ -2955,160 +2975,160 @@ if (config.isEnabled("display_info")) {
         const auto& s = screens[i];
 
         // ---------- Display Banner ----------
-        if (config.getNestedBool("display_info", "banner.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "banner.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "banner.prefix_color", "")
-               << config.getPrefix("display_info", "banner.prefix", "") << r
-               << config.getNestedColor("display_info", "banner.text_color", "")
-               << config.getLabel("display_info", "banner.text", "")
-               << config.getNestedColor("display_info", "banner.index_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "banner.prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "banner.prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "banner.text_color", "")
+               << config.getLabel("detailed_display_monitor", "banner.text", "")
+               << config.getNestedColor("detailed_display_monitor", "banner.index_color", "")
                << (i + 1) << " " << r
-               << config.getNestedColor("display_info", "banner.suffix_color", "")
-               << config.getPrefix("display_info", "banner.suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "banner.suffix_color", "")
+               << config.getPrefix("detailed_display_monitor", "banner.suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Name ----------
-        if (config.getNestedBool("display_info", "fields.name.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.name.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.name.name_prefix_color", "")
-               << config.getPrefix("display_info", "fields.name.name_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.name.label_color", "")
-               << config.getLabel("display_info", "fields.name.label", "") << r
-               << config.getNestedColor("display_info", "fields.name.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.name.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.name.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.name.name_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.name.name_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.name.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.name.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.name.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.name.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.name.value_color", "")
                << s.name << r
-               << config.getNestedColor("display_info", "fields.name.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.name.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.name.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.name.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Applied Resolution ----------
-        if (config.getNestedBool("display_info", "fields.applied_resolution.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.applied_resolution.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.applied_resolution.applied_resolution_prefix_color", "")
-               << config.getPrefix("display_info", "fields.applied_resolution.applied_resolution_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.label_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.label", "") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.applied_resolution_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.applied_resolution.applied_resolution_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.value_color", "")
                << s.current_width
-               << config.getNestedColor("display_info", "fields.applied_resolution.x_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.x_symbol", "x") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.value_color", "")
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.x_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.x_symbol", "x") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.value_color", "")
                << s.current_height
-               << config.getNestedColor("display_info", "fields.applied_resolution.at_symbol_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.at_symbol", " @") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.value_color", "")
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.at_symbol_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.at_symbol", " @") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.value_color", "")
                << s.refresh_rate
-               << config.getNestedColor("display_info", "fields.applied_resolution.hz_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.hz_symbol", "Hz") << r
-               << config.getNestedColor("display_info", "fields.applied_resolution.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.applied_resolution.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.hz_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.hz_symbol", "Hz") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.applied_resolution.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.applied_resolution.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Native Resolution ----------
-        if (config.getNestedBool("display_info", "fields.native_resolution.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.native_resolution.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.native_resolution.native_resolution_prefix_color", "")
-               << config.getPrefix("display_info", "fields.native_resolution.native_resolution_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.native_resolution.label_color", "")
-               << config.getLabel("display_info", "fields.native_resolution.label", "") << r
-               << config.getNestedColor("display_info", "fields.native_resolution.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.native_resolution.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.native_resolution.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.native_resolution.native_resolution_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.native_resolution.native_resolution_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.native_resolution.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.native_resolution.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.native_resolution.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.native_resolution.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.native_resolution.value_color", "")
                << s.native_resolution << r
-               << config.getNestedColor("display_info", "fields.native_resolution.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.native_resolution.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.native_resolution.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.native_resolution.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Aspect Ratio ----------
-        if (config.getNestedBool("display_info", "fields.aspect_ratio.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.aspect_ratio.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.aspect_ratio.aspect_ratio_prefix_color", "")
-               << config.getPrefix("display_info", "fields.aspect_ratio.aspect_ratio_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.aspect_ratio.label_color", "")
-               << config.getLabel("display_info", "fields.aspect_ratio.label", "") << r
-               << config.getNestedColor("display_info", "fields.aspect_ratio.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.aspect_ratio.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.aspect_ratio.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.aspect_ratio.aspect_ratio_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.aspect_ratio.aspect_ratio_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.aspect_ratio.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.aspect_ratio.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.aspect_ratio.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.aspect_ratio.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.aspect_ratio.value_color", "")
                << s.aspect_ratio << r
-               << config.getNestedColor("display_info", "fields.aspect_ratio.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.aspect_ratio.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.aspect_ratio.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.aspect_ratio.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Scaling ----------
-        if (config.getNestedBool("display_info", "fields.scaling.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.scaling.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.scaling.scaling_prefix_color", "")
-               << config.getPrefix("display_info", "fields.scaling.scaling_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.scaling.label_color", "")
-               << config.getLabel("display_info", "fields.scaling.label", "") << r
-               << config.getNestedColor("display_info", "fields.scaling.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.scaling.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.scaling.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.scaling.scaling_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.scaling.scaling_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.scaling.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.scaling.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.scaling.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.scaling.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.scaling.value_color", "")
                << s.scale_percent
-               << config.getNestedColor("display_info", "fields.scaling.percent_color", "")
-               << config.getLabel("display_info", "fields.scaling.percent_symbol", "%") << r
-               << config.getNestedColor("display_info", "fields.scaling.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.scaling.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.scaling.percent_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.scaling.percent_symbol", "%") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.scaling.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.scaling.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- Upscale ----------
-        if (config.getNestedBool("display_info", "fields.upscale.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.upscale.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.upscale.upscale_prefix_color", "")
-               << config.getPrefix("display_info", "fields.upscale.upscale_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.upscale.label_color", "")
-               << config.getLabel("display_info", "fields.upscale.label", "") << r
-               << config.getNestedColor("display_info", "fields.upscale.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.upscale.label_suffix", "") << r
-               << config.getNestedColor("display_info", "fields.upscale.value_color", "")
+            ss << config.getNestedColor("detailed_display_monitor", "fields.upscale.upscale_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.upscale.upscale_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.upscale.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.upscale.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.upscale.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.upscale.label_suffix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.upscale.value_color", "")
                << s.upscale << r
-               << config.getNestedColor("display_info", "fields.upscale.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.upscale.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.upscale.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.upscale.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         // ---------- DSR / VSR ----------
-        if (config.getNestedBool("display_info", "fields.dsr.show", true)) {
+        if (config.getNestedBool("detailed_display_monitor", "fields.dsr.show", true)) {
             ostringstream ss;
-            ss << config.getNestedColor("display_info", "fields.dsr.dsr_prefix_color", "")
-               << config.getPrefix("display_info", "fields.dsr.dsr_prefix", "") << r
-               << config.getNestedColor("display_info", "fields.dsr.label_color", "")
-               << config.getLabel("display_info", "fields.dsr.label", "") << r
-               << config.getNestedColor("display_info", "fields.dsr.label_suffix_color", "")
-               << config.getLabel("display_info", "fields.dsr.label_suffix", "") << r
+            ss << config.getNestedColor("detailed_display_monitor", "fields.dsr.dsr_prefix_color", "")
+               << config.getPrefix("detailed_display_monitor", "fields.dsr.dsr_prefix", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.label_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.dsr.label", "") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.label_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.dsr.label_suffix", "") << r
                << config.getNestedColor(
-                    "display_info",
+                    "detailed_display_monitor",
                     s.dsr_enabled ? "fields.dsr.enabled_color" : "fields.dsr.disabled_color",
                     ""
                   )
                << config.getLabel(
-                    "display_info",
+                    "detailed_display_monitor",
                     s.dsr_enabled ? "fields.dsr.enabled_text" : "fields.dsr.disabled_text",
                     s.dsr_enabled ? "Enabled" : "Disabled"
                   ) << r
-               << config.getNestedColor("display_info", "fields.dsr.brackets_color", "")
-               << config.getLabel("display_info", "fields.dsr.bracket_open", " (") << r
-               << config.getNestedColor("display_info", "fields.dsr.type_color", "")
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.brackets_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.dsr.bracket_open", " (") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.type_color", "")
                << s.dsr_type
-               << config.getNestedColor("display_info", "fields.dsr.brackets_color", "")
-               << config.getLabel("display_info", "fields.dsr.bracket_close", ")") << r
-               << config.getNestedColor("display_info", "fields.dsr.value_suffix_color", "")
-               << config.getLabel("display_info", "fields.dsr.value_suffix", "") << r;
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.brackets_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.dsr.bracket_close", ")") << r
+               << config.getNestedColor("detailed_display_monitor", "fields.dsr.value_suffix_color", "")
+               << config.getLabel("detailed_display_monitor", "fields.dsr.value_suffix", "") << r;
             lp.push(ss.str());
         }
 
         
     }
-}
+};
 
 
 //  ██████╗ ██╗ ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
@@ -3125,7 +3145,7 @@ if (config.isEnabled("display_info")) {
 //  4. Motherboard Model     - Model identifier of the motherboard
 //  5. Motherboard Manufacturer - Motherboard vendor/brand
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
-//  via the "detailed_bios_and_motherboard" config block (aliased as "bios_mb_info").
+//  via the "detailed_bios_and_motherboard" config block (aliased as "detailed_bios_and_motherboard").
 //
 //  Output Example:
 //  #- BIOS & Motherboard Info ----------------------------------------#
@@ -3134,104 +3154,105 @@ if (config.isEnabled("display_info")) {
 //  ~ Bios Date               : 2024-03-12
 //  ~ Motherboard Model       : ROG STRIX B650E-F
 //  ~ Motherboard Manufacturer: ASUSTeK COMPUTER INC.
-if (config.isEnabled("bios_mb_info")) {
+sections["detailed_bios_and_motherboard"] = [&]() {
+    if (!config.isEnabled("detailed_bios_and_motherboard")) return;
 
     // line spacing json driven
-    int spacing = config.getNestedInt("bios_mb_info","top_line_spacing",0);
+    int spacing = config.getNestedInt("detailed_bios_and_motherboard","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
-    if (config.getNestedBool("bios_mb_info", "header.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "header.prefix_color", "")
-           << config.getPrefix("bios_mb_info", "header.prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "header.text_color", "")
-           << config.getLabel("bios_mb_info", "header.text", "") << r
-           << config.getNestedColor("bios_mb_info", "header.suffix_color", "")
-           << config.getPrefix("bios_mb_info", "header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "header.prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "header.prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "header.text_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "header.text", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "header.suffix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "header.suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- BIOS VENDOR ----------
-    if (config.getNestedBool("bios_mb_info", "fields.bios_vendor.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_vendor.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "fields.bios_vendor.bios_vendor_prefix_color", "")
-           << config.getPrefix("bios_mb_info", "fields.bios_vendor.bios_vendor_prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_vendor.label_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_vendor.label", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_vendor.label_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_vendor.label_suffix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_vendor.value_color", "")
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.bios_vendor_prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_vendor.bios_vendor_prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.label_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.label", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.label_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.label_suffix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.value_color", "")
            << sys.get_bios_vendor() << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_vendor.value_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_vendor.value_suffix", "") << r;
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.value_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- BIOS VERSION ----------
-    if (config.getNestedBool("bios_mb_info", "fields.bios_version.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_version.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "fields.bios_version.bios_version_prefix_color", "")
-           << config.getPrefix("bios_mb_info", "fields.bios_version.bios_version_prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_version.label_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_version.label", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_version.label_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_version.label_suffix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_version.value_color", "")
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.bios_version_prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_version.bios_version_prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.label_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.label", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.label_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.label_suffix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.value_color", "")
            << sys.get_bios_version() << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_version.value_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_version.value_suffix", "") << r;
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.value_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- BIOS DATE ----------
-    if (config.getNestedBool("bios_mb_info", "fields.bios_date.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_date.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "fields.bios_date.bios_date_prefix_color", "")
-           << config.getPrefix("bios_mb_info", "fields.bios_date.bios_date_prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_date.label_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_date.label", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_date.label_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_date.label_suffix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_date.value_color", "")
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.bios_date_prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_date.bios_date_prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.label_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.label", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.label_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.label_suffix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.value_color", "")
            << sys.get_bios_date() << r
-           << config.getNestedColor("bios_mb_info", "fields.bios_date.value_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.bios_date.value_suffix", "") << r;
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.value_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- MOTHERBOARD MODEL ----------
-    if (config.getNestedBool("bios_mb_info", "fields.mb_model.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "fields.mb_model.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "fields.mb_model.mb_model_prefix_color", "")
-           << config.getPrefix("bios_mb_info", "fields.mb_model.mb_model_prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_model.label_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_model.label", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_model.label_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_model.label_suffix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_model.value_color", "")
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.mb_model_prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "fields.mb_model.mb_model_prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.label_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.label", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.label_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.label_suffix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.value_color", "")
            << sys.get_motherboard_model() << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_model.value_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_model.value_suffix", "") << r;
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.value_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- MOTHERBOARD MANUFACTURER ----------
-    if (config.getNestedBool("bios_mb_info", "fields.mb_manufacturer.show", true)) {
+    if (config.getNestedBool("detailed_bios_and_motherboard", "fields.mb_manufacturer.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("bios_mb_info", "fields.mb_manufacturer.mb_manufacturer_prefix_color", "")
-           << config.getPrefix("bios_mb_info", "fields.mb_manufacturer.mb_manufacturer_prefix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_manufacturer.label_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_manufacturer.label", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_manufacturer.label_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_manufacturer.label_suffix", "") << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_manufacturer.value_color", "")
+        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.mb_manufacturer_prefix_color", "")
+           << config.getPrefix("detailed_bios_and_motherboard", "fields.mb_manufacturer.mb_manufacturer_prefix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.label", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_suffix", "") << r
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_color", "")
            << sys.get_motherboard_manufacturer() << r
-           << config.getNestedColor("bios_mb_info", "fields.mb_manufacturer.value_suffix_color", "")
-           << config.getLabel("bios_mb_info", "fields.mb_manufacturer.value_suffix", "") << r;
+           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_suffix_color", "")
+           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_suffix", "") << r;
         lp.push(ss.str());
     }
-}
+};
 
 
 //  ██╗   ██╗███████╗███████╗██████╗     ██╗███╗   ██╗███████╗ ██████╗ 
@@ -3246,79 +3267,81 @@ if (config.isEnabled("bios_mb_info")) {
 //  2. Computer Name      - The hostname of the machine
 //  3. Domain             - The Windows domain or workgroup the PC belongs to
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
-//  via the "detailed_user_account" config block (aliased as "user_info").
+//  via the "detailed_user_account" config block (aliased as "detailed_user_account").
 //
 //  Output Example:
 //  #- User Info ------------------------------------------------------#
 //  ~ Username              : JohnDoe
 //  ~ Computer Name         : DESKTOP-4X9K2P1
 //  ~ Domain                : WORKGROUP
-if (config.isEnabled("user_info")) {
+
+sections["detailed_user_account"] = [&]() {
+    if (!config.isEnabled("detailed_user_account")) return;
     
     // line spacing json driven
-    int spacing = config.getNestedInt("user_info","top_line_spacing",0);
+    int spacing = config.getNestedInt("detailed_user_account","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
-    if (config.getNestedBool("user_info", "header.show", true)) {
+    if (config.getNestedBool("detailed_user_account", "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("user_info", "header.prefix_color", "")
-           << config.getPrefix("user_info", "header.prefix", "") << r
-           << config.getNestedColor("user_info", "header.text_color", "")
-           << config.getLabel("user_info", "header.text", "") << r
-           << config.getNestedColor("user_info", "header.suffix_color", "")
-           << config.getPrefix("user_info", "header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_user_account", "header.prefix_color", "")
+           << config.getPrefix("detailed_user_account", "header.prefix", "") << r
+           << config.getNestedColor("detailed_user_account", "header.text_color", "")
+           << config.getLabel("detailed_user_account", "header.text", "") << r
+           << config.getNestedColor("detailed_user_account", "header.suffix_color", "")
+           << config.getPrefix("detailed_user_account", "header.suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- USERNAME ----------
-    if (config.getNestedBool("user_info", "fields.username.show", true)) {
+    if (config.getNestedBool("detailed_user_account", "fields.username.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("user_info", "fields.username.username_prefix_color", "")
-           << config.getPrefix("user_info", "fields.username.username_prefix", "") << r
-           << config.getNestedColor("user_info", "fields.username.label_color", "")
-           << config.getLabel("user_info", "fields.username.label", "") << r
-           << config.getNestedColor("user_info", "fields.username.label_suffix_color", "")
-           << config.getLabel("user_info", "fields.username.label_suffix", "") << r
-           << config.getNestedColor("user_info", "fields.username.value_color", "")
+        ss << config.getNestedColor("detailed_user_account", "fields.username.username_prefix_color", "")
+           << config.getPrefix("detailed_user_account", "fields.username.username_prefix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.username.label_color", "")
+           << config.getLabel("detailed_user_account", "fields.username.label", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.username.label_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.username.label_suffix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.username.value_color", "")
            << user.get_username() << r
-           << config.getNestedColor("user_info", "fields.username.value_suffix_color", "")
-           << config.getLabel("user_info", "fields.username.value_suffix", "") << r;
+           << config.getNestedColor("detailed_user_account", "fields.username.value_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.username.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- COMPUTER NAME ----------
-    if (config.getNestedBool("user_info", "fields.computer_name.show", true)) {
+    if (config.getNestedBool("detailed_user_account", "fields.computer_name.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("user_info", "fields.computer_name.computer_name_prefix_color", "")
-           << config.getPrefix("user_info", "fields.computer_name.computer_name_prefix", "") << r
-           << config.getNestedColor("user_info", "fields.computer_name.label_color", "")
-           << config.getLabel("user_info", "fields.computer_name.label", "") << r
-           << config.getNestedColor("user_info", "fields.computer_name.label_suffix_color", "")
-           << config.getLabel("user_info", "fields.computer_name.label_suffix", "") << r
-           << config.getNestedColor("user_info", "fields.computer_name.value_color", "")
+        ss << config.getNestedColor("detailed_user_account", "fields.computer_name.computer_name_prefix_color", "")
+           << config.getPrefix("detailed_user_account", "fields.computer_name.computer_name_prefix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.computer_name.label_color", "")
+           << config.getLabel("detailed_user_account", "fields.computer_name.label", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.computer_name.label_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.computer_name.label_suffix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.computer_name.value_color", "")
            << user.get_computer_name() << r
-           << config.getNestedColor("user_info", "fields.computer_name.value_suffix_color", "")
-           << config.getLabel("user_info", "fields.computer_name.value_suffix", "") << r;
+           << config.getNestedColor("detailed_user_account", "fields.computer_name.value_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.computer_name.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- DOMAIN ----------
-    if (config.getNestedBool("user_info", "fields.domain.show", true)) {
+    if (config.getNestedBool("detailed_user_account", "fields.domain.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("user_info", "fields.domain.domain_prefix_color", "")
-           << config.getPrefix("user_info", "fields.domain.domain_prefix", "") << r
-           << config.getNestedColor("user_info", "fields.domain.label_color", "")
-           << config.getLabel("user_info", "fields.domain.label", "") << r
-           << config.getNestedColor("user_info", "fields.domain.label_suffix_color", "")
-           << config.getLabel("user_info", "fields.domain.label_suffix", "") << r
-           << config.getNestedColor("user_info", "fields.domain.value_color", "")
+        ss << config.getNestedColor("detailed_user_account", "fields.domain.domain_prefix_color", "")
+           << config.getPrefix("detailed_user_account", "fields.domain.domain_prefix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.domain.label_color", "")
+           << config.getLabel("detailed_user_account", "fields.domain.label", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.domain.label_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.domain.label_suffix", "") << r
+           << config.getNestedColor("detailed_user_account", "fields.domain.value_color", "")
            << user.get_domain_name() << r
-           << config.getNestedColor("user_info", "fields.domain.value_suffix_color", "")
-           << config.getLabel("user_info", "fields.domain.value_suffix", "") << r;
+           << config.getNestedColor("detailed_user_account", "fields.domain.value_suffix_color", "")
+           << config.getLabel("detailed_user_account", "fields.domain.value_suffix", "") << r;
         lp.push(ss.str());
     }
-}
+};
 
 //  ██████╗ ███████╗██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗ █████╗ ███╗   ██╗ ██████╗███████╗
 //  ██╔══██╗██╔════╝██╔══██╗██╔════╝██╔═══██╗██╔══██╗████╗ ████║██╔══██╗████╗  ██║██╔════╝██╔════╝
@@ -3334,7 +3357,7 @@ if (config.isEnabled("user_info")) {
 //  4. Disk Usage          - Current storage utilization percentage
 //  5. GPU Usage           - Current graphics card utilization percentage
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
-//  via the "detailed_resource_usage" config block (aliased as "performance_info").
+//  via the "detailed_resource_usage" config block (aliased as "detailed_resource_usage").
 //
 //  Output Example:
 //  #- Performance Info -----------------------------------------------#
@@ -3345,167 +3368,168 @@ if (config.isEnabled("user_info")) {
 //  ~ GPU Usage              : 8%
 
 // Performance Info (JSON Driven)
-if (config.isEnabled("performance_info")) {
+sections["detailed_resource_usage"] = [&]() {
+    if (!config.isEnabled("detailed_resource_usage")) return;
     
     // line spacing json driven
-    int spacing = config.getNestedInt("performance_info","top_line_spacing",0);
+    int spacing = config.getNestedInt("detailed_resource_usage","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
-    if (config.getNestedBool("performance_info", "header.show", true)) {
+    if (config.getNestedBool("detailed_resource_usage", "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("performance_info", "header.prefix_color", "")
-           << config.getLabel("performance_info", "header.prefix", "") << r
-           << config.getNestedColor("performance_info", "header.text_color", "")
-           << config.getLabel("performance_info", "header.text", "") << r
-           << config.getNestedColor("performance_info", "header.suffix_color", "")
-           << config.getLabel("performance_info", "header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_resource_usage", "header.prefix_color", "")
+           << config.getLabel("detailed_resource_usage", "header.prefix", "") << r
+           << config.getNestedColor("detailed_resource_usage", "header.text_color", "")
+           << config.getLabel("detailed_resource_usage", "header.text", "") << r
+           << config.getNestedColor("detailed_resource_usage", "header.suffix_color", "")
+           << config.getLabel("detailed_resource_usage", "header.suffix", "") << r;
         lp.push(ss.str());
     }
 
     // ---------- SYSTEM UPTIME ----------
-    if (config.getNestedBool("performance_info", "fields.uptime.show", true)) {
+    if (config.getNestedBool("detailed_resource_usage", "fields.uptime.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.uptime.uptime_prefix_color", "")
-           << config.getLabel("performance_info", "fields.uptime.uptime_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.uptime.label_color", "")
-           << config.getLabel("performance_info", "fields.uptime.label", "") << r
-           << config.getNestedColor("performance_info", "fields.uptime.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.uptime.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.uptime.value_color", "")
+        ss << config.getNestedColor("detailed_resource_usage", "fields.uptime.uptime_prefix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.uptime.uptime_prefix", "") << r
+           << config.getNestedColor("detailed_resource_usage", "fields.uptime.label_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.uptime.label", "") << r
+           << config.getNestedColor("detailed_resource_usage", "fields.uptime.label_suffix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.uptime.label_suffix", "") << r
+           << config.getNestedColor("detailed_resource_usage", "fields.uptime.value_color", "")
            << perf.get_system_uptime() << r
-           << config.getNestedColor("performance_info", "fields.uptime.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.uptime.value_suffix", "") << r;
+           << config.getNestedColor("detailed_resource_usage", "fields.uptime.value_suffix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.uptime.value_suffix", "") << r;
         lp.push(ss.str());
     }
 
 // ---------- CPU USAGE ----------
 
-    if (config.getNestedBool("performance_info", "fields.cpu_usage.show", true))
+    if (config.getNestedBool("detailed_resource_usage", "fields.cpu_usage.show", true))
     {
       float cpu = perf.get_cpu_usage_percent();
       
       // call the visualizer funtion
-      std::string cpuVisualizer = makeVisualizer(cpu,config,"performance_info","cpu_usage");
+      std::string cpuVisualizer = makeVisualizer(cpu,config,"detailed_resource_usage","cpu_usage");
 
       ostringstream cpuSs;
 
-      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.cpu_usage_prefix_color", "")
-            << config.getLabel("performance_info", "fields.cpu_usage.cpu_usage_prefix", "") << r
+      cpuSs << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.cpu_usage_prefix_color", "")
+            << config.getLabel("detailed_resource_usage", "fields.cpu_usage.cpu_usage_prefix", "") << r
 
-            << config.getNestedColor("performance_info", "fields.cpu_usage.label_color", "")
-            << config.getLabel("performance_info", "fields.cpu_usage.label", "") << r
+            << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.label_color", "")
+            << config.getLabel("detailed_resource_usage", "fields.cpu_usage.label", "") << r
 
-            << config.getNestedColor("performance_info", "fields.cpu_usage.label_suffix_color", "")
-            << config.getLabel("performance_info", "fields.cpu_usage.label_suffix", "") << r;
+            << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.label_suffix_color", "")
+            << config.getLabel("detailed_resource_usage", "fields.cpu_usage.label_suffix", "") << r;
 
       // Add the visualizer.
       if (!cpuVisualizer.empty())
           cpuSs << cpuVisualizer << " ";
 
       // Apply the normal value color again after the visualizer reset.
-      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.value_color", "")
+      cpuSs << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.value_color", "")
             << static_cast<int>(cpu)
-            << config.getNestedColor("performance_info", "fields.cpu_usage.value_suffix_color", "")
-            << config.getLabel("performance_info", "fields.cpu_usage.value_suffix", "") << r;
+            << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.value_suffix_color", "")
+            << config.getLabel("detailed_resource_usage", "fields.cpu_usage.value_suffix", "") << r;
 
        lp.push(cpuSs.str());
     }
 
 // ---------- RAM USAGE ----------
 
-if (config.getNestedBool("performance_info", "fields.ram_usage.show", true))
+if (config.getNestedBool("detailed_resource_usage", "fields.ram_usage.show", true))
 {
     float ram = perf.get_ram_usage_percent();
 
     // call the visualizer function
-    std::string ramVisualizer = makeVisualizer(ram,config,"performance_info","ram_usage");
+    std::string ramVisualizer = makeVisualizer(ram,config,"detailed_resource_usage","ram_usage");
 
     ostringstream ramSs;
 
-    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.ram_usage_prefix_color", "")
-          << config.getLabel("performance_info", "fields.ram_usage.ram_usage_prefix", "") << r
-          << config.getNestedColor("performance_info", "fields.ram_usage.label_color", "")
-          << config.getLabel("performance_info", "fields.ram_usage.label", "") << r
-          << config.getNestedColor("performance_info", "fields.ram_usage.label_suffix_color", "")
-          << config.getLabel("performance_info", "fields.ram_usage.label_suffix", "") << r;
+    ramSs << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.ram_usage_prefix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.ram_usage.ram_usage_prefix", "") << r
+          << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.label_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.ram_usage.label", "") << r
+          << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.label_suffix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.ram_usage.label_suffix", "") << r;
 
     // Add the visualizer.
     if (!ramVisualizer.empty())
         ramSs << ramVisualizer << " ";
 
     // Apply the normal value color again after the visualizer reset.
-    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.value_color", "")
+    ramSs << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.value_color", "")
           << static_cast<int>(ram)
-          << config.getNestedColor("performance_info", "fields.ram_usage.value_suffix_color", "")
-          << config.getLabel("performance_info", "fields.ram_usage.value_suffix", "") << r;
+          << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.value_suffix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.ram_usage.value_suffix", "") << r;
 
     lp.push(ramSs.str());
 }
 
 // ---------- DISK USAGE ----------
 
-if (config.getNestedBool("performance_info", "fields.disk_usage.show", true))
+if (config.getNestedBool("detailed_resource_usage", "fields.disk_usage.show", true))
 {
     float disk = perf.get_disk_usage_percent();
 
     // call the visualizer function
-    std::string diskVisualizer = makeVisualizer(disk,config,"performance_info","disk_usage");
+    std::string diskVisualizer = makeVisualizer(disk,config,"detailed_resource_usage","disk_usage");
 
     ostringstream diskSs;
 
-    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.disk_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.disk_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.disk_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.disk_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.label_suffix", "") << r;
+    diskSs << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.disk_usage_prefix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.disk_usage.disk_usage_prefix", "") << r
+           << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.label_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.disk_usage.label", "") << r
+           << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.label_suffix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.disk_usage.label_suffix", "") << r;
 
     // Add the visualizer.
     if (!diskVisualizer.empty())
         diskSs << diskVisualizer << " ";
 
     // Apply the normal value color again after the visualizer reset.
-    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.value_color", "")
+    diskSs << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.value_color", "")
            << static_cast<int>(disk)
-           << config.getNestedColor("performance_info", "fields.disk_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.value_suffix", "") << r;
+           << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.value_suffix_color", "")
+           << config.getLabel("detailed_resource_usage", "fields.disk_usage.value_suffix", "") << r;
 
     lp.push(diskSs.str());
 }
 
 // ---------- GPU USAGE ----------
 
-if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true))
+if (config.getNestedBool("detailed_resource_usage", "fields.gpu_usage.show", true))
 {
     float gpu = perf.get_gpu_usage_percent();
 
     // call the visualizer function
-    std::string gpuVisualizer = makeVisualizer(gpu,config,"performance_info","gpu_usage");
+    std::string gpuVisualizer = makeVisualizer(gpu,config,"detailed_resource_usage","gpu_usage");
 
     ostringstream gpuSs;
 
-    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.gpu_usage_prefix_color", "")
-          << config.getLabel("performance_info", "fields.gpu_usage.gpu_usage_prefix", "") << r
-          << config.getNestedColor("performance_info", "fields.gpu_usage.label_color", "")
-          << config.getLabel("performance_info", "fields.gpu_usage.label", "") << r
-          << config.getNestedColor("performance_info", "fields.gpu_usage.label_suffix_color", "")
-          << config.getLabel("performance_info", "fields.gpu_usage.label_suffix", "") << r;
+    gpuSs << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.gpu_usage_prefix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.gpu_usage.gpu_usage_prefix", "") << r
+          << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.label_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.gpu_usage.label", "") << r
+          << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.label_suffix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.gpu_usage.label_suffix", "") << r;
 
     // Add the visualizer.
     if (!gpuVisualizer.empty())
         gpuSs << gpuVisualizer << " ";
 
     // Apply the normal value color again after the visualizer reset.
-    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.value_color", "")
+    gpuSs << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.value_color", "")
           << static_cast<int>(gpu)
-          << config.getNestedColor("performance_info", "fields.gpu_usage.value_suffix_color", "")
-          << config.getLabel("performance_info", "fields.gpu_usage.value_suffix", "") << r;
+          << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.value_suffix_color", "")
+          << config.getLabel("detailed_resource_usage", "fields.gpu_usage.value_suffix", "") << r;
 
     lp.push(gpuSs.str());
 }
 
-}
+};
 
 //   █████╗ ██╗   ██╗██████╗ ██╗ ██████╗     █████╗     ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ 
 //  ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗   ██╔══██╗    ██╔══██╗██╔═══██╗██║    ██║██╔════╝██╔══██╗
@@ -3519,7 +3543,7 @@ if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true))
 //  2. Audio Input Devices  - List of active/available recording devices
 //  3. Power Status         - Wired connection or battery percentage/charging state
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
-//  via the "detailed_audio_and_power" config block (aliased as "audio_power_info").
+//  via the "detailed_audio_and_power" config block (aliased as "detailed_audio_and_power").
 //
 //  Output Example:
 //  #- Audio Output -----------------------------------------------------#
@@ -3530,168 +3554,185 @@ if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true))
 //  ~ Battery powered (87%) (Charging)
 
 // Audio & Power Info (JSON Driven)
-if (config.isEnabled("audio_power_info")) {
-    
 
+sections["detailed_audio_and_power"] = [&]() {
+    if (!config.isEnabled("detailed_audio_and_power")) return;
 
     // line spacing json driven
-    int spacing = config.getNestedInt("audio_power_info","top_line_spacing",0);
+    int spacing = config.getNestedInt("detailed_audio_and_power","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
-
 
     ExtraInfo audio;
 
     // ---------- OUTPUT DEVICES ----------
-    if (config.getNestedBool("audio_power_info", "output.show", true)) {
+    if (config.getNestedBool("detailed_audio_and_power", "output.show", true)) {
         vector<AudioDevice> outputDevices = audio.get_output_devices();
 
        // line spacing json driven
-      int spacing = config.getNestedInt("audio_power_info","output.top_line_spacing",0);
+      int spacing = config.getNestedInt("detailed_audio_and_power","output.top_line_spacing",0);
       for (int n = 0; n < spacing; n++) {lp.push("");}
 
 
         ostringstream ss;
-        ss << config.getNestedColor("audio_power_info", "output.header.prefix_color", "")
-           << config.getLabel("audio_power_info", "output.header.prefix", "") << r
-           << config.getNestedColor("audio_power_info", "output.header.text_color", "")
-           << config.getLabel("audio_power_info", "output.header.text", "") << r
-           << config.getNestedColor("audio_power_info", "output.header.suffix_color", "")
-           << config.getLabel("audio_power_info", "output.header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_audio_and_power", "output.header.prefix_color", "")
+           << config.getLabel("detailed_audio_and_power", "output.header.prefix", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "output.header.text_color", "")
+           << config.getLabel("detailed_audio_and_power", "output.header.text", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "output.header.suffix_color", "")
+           << config.getLabel("detailed_audio_and_power", "output.header.suffix", "") << r;
         lp.push(ss.str());
 
         int audio_output_device_count = 0;
         for (const auto& device : outputDevices) {
             audio_output_device_count++;
             ostringstream oss;
-            oss << config.getNestedColor("audio_power_info", "output.fields.device.prefix_color", "")
-                << config.getLabel("audio_power_info", "output.fields.device.prefix", "") << r
-                << config.getNestedColor("audio_power_info", "output.fields.device.index_color", "")
+            oss << config.getNestedColor("detailed_audio_and_power", "output.fields.device.prefix_color", "")
+                << config.getLabel("detailed_audio_and_power", "output.fields.device.prefix", "") << r
+                << config.getNestedColor("detailed_audio_and_power", "output.fields.device.index_color", "")
                 << audio_output_device_count << r << " "
-                << config.getNestedColor("audio_power_info", "output.fields.device.name_color", "")
+                << config.getNestedColor("detailed_audio_and_power", "output.fields.device.name_color", "")
                 << device.name << r
-                << config.getNestedColor("audio_power_info", "output.fields.device.value_suffix_color", "")
-                << config.getLabel("audio_power_info", "output.fields.device.value_suffix", "") << r;
+                << config.getNestedColor("detailed_audio_and_power", "output.fields.device.value_suffix_color", "")
+                << config.getLabel("detailed_audio_and_power", "output.fields.device.value_suffix", "") << r;
 
             if (device.isActive) {
-                oss << " " << config.getNestedColor("audio_power_info", "output.fields.device.active_label_color", "")
-                    << config.getLabel("audio_power_info", "output.fields.device.active_label", "") << r;
+                oss << " " << config.getNestedColor("detailed_audio_and_power", "output.fields.device.active_label_color", "")
+                    << config.getLabel("detailed_audio_and_power", "output.fields.device.active_label", "") << r;
             }
             lp.push(oss.str());
         }
     }
 
     // ---------- INPUT DEVICES ----------
-    if (config.getNestedBool("audio_power_info", "input.show", true)) {
+    if (config.getNestedBool("detailed_audio_and_power", "input.show", true)) {
         vector<AudioDevice> inputDevices = audio.get_input_devices();
 
       // line spacing json driven
-      int spacing = config.getNestedInt("audio_power_info","input.top_line_spacing",0);
+      int spacing = config.getNestedInt("detailed_audio_and_power","input.top_line_spacing",0);
       for (int n = 0; n < spacing; n++) {lp.push("");}
 
         ostringstream ss;
-        ss << config.getNestedColor("audio_power_info", "input.header.prefix_color", "")
-           << config.getLabel("audio_power_info", "input.header.prefix", "") << r
-           << config.getNestedColor("audio_power_info", "input.header.text_color", "")
-           << config.getLabel("audio_power_info", "input.header.text", "") << r
-           << config.getNestedColor("audio_power_info", "input.header.suffix_color", "")
-           << config.getLabel("audio_power_info", "input.header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_audio_and_power", "input.header.prefix_color", "")
+           << config.getLabel("detailed_audio_and_power", "input.header.prefix", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "input.header.text_color", "")
+           << config.getLabel("detailed_audio_and_power", "input.header.text", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "input.header.suffix_color", "")
+           << config.getLabel("detailed_audio_and_power", "input.header.suffix", "") << r;
         lp.push(ss.str());
 
         int audio_input_device_count = 0;
         for (const auto& device : inputDevices) {
             audio_input_device_count++;
             ostringstream oss;
-            oss << config.getNestedColor("audio_power_info", "input.fields.device.prefix_color", "")
-                << config.getLabel("audio_power_info", "input.fields.device.prefix", "") << r
-                << config.getNestedColor("audio_power_info", "input.fields.device.index_color", "")
+            oss << config.getNestedColor("detailed_audio_and_power", "input.fields.device.prefix_color", "")
+                << config.getLabel("detailed_audio_and_power", "input.fields.device.prefix", "") << r
+                << config.getNestedColor("detailed_audio_and_power", "input.fields.device.index_color", "")
                 << audio_input_device_count << r << " "
-                << config.getNestedColor("audio_power_info", "input.fields.device.name_color", "")
+                << config.getNestedColor("detailed_audio_and_power", "input.fields.device.name_color", "")
                 << device.name << r
-                << config.getNestedColor("audio_power_info", "input.fields.device.value_suffix_color", "")
-                << config.getLabel("audio_power_info", "input.fields.device.value_suffix", "") << r;
+                << config.getNestedColor("detailed_audio_and_power", "input.fields.device.value_suffix_color", "")
+                << config.getLabel("detailed_audio_and_power", "input.fields.device.value_suffix", "") << r;
 
             if (device.isActive) {
-                oss << " " << config.getNestedColor("audio_power_info", "input.fields.device.active_label_color", "")
-                    << config.getLabel("audio_power_info", "input.fields.device.active_label", "") << r;
+                oss << " " << config.getNestedColor("detailed_audio_and_power", "input.fields.device.active_label_color", "")
+                    << config.getLabel("detailed_audio_and_power", "input.fields.device.active_label", "") << r;
             }
             lp.push(oss.str());
         }
     }
 
     // ---------- POWER STATUS ----------
-    if (config.getNestedBool("audio_power_info", "power.show", true)) {
+    if (config.getNestedBool("detailed_audio_and_power", "power.show", true)) {
         
 
        // line spacing json driven
-       int spacing = config.getNestedInt("audio_power_info","power.top_line_spacing",0);
+       int spacing = config.getNestedInt("detailed_audio_and_power","power.top_line_spacing",0);
        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         PowerStatus power = audio.get_power_status();
 
         ostringstream ss;
-        ss << config.getNestedColor("audio_power_info", "power.header.prefix_color", "")
-           << config.getLabel("audio_power_info", "power.header.prefix", "") << r
-           << config.getNestedColor("audio_power_info", "power.header.text_color", "")
-           << config.getLabel("audio_power_info", "power.header.text", "") << r
-           << config.getNestedColor("audio_power_info", "power.header.suffix_color", "")
-           << config.getLabel("audio_power_info", "power.header.suffix", "") << r;
+        ss << config.getNestedColor("detailed_audio_and_power", "power.header.prefix_color", "")
+           << config.getLabel("detailed_audio_and_power", "power.header.prefix", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "power.header.text_color", "")
+           << config.getLabel("detailed_audio_and_power", "power.header.text", "") << r
+           << config.getNestedColor("detailed_audio_and_power", "power.header.suffix_color", "")
+           << config.getLabel("detailed_audio_and_power", "power.header.suffix", "") << r;
         lp.push(ss.str());
 
         ostringstream ossPower;
         if (!power.hasBattery) {
-            ossPower << config.getNestedColor("audio_power_info", "power.fields.wired.brackets_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.wired.bracket_open", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.wired.text_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.wired.text", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.wired.value_suffix_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.wired.value_suffix", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.wired.brackets_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.wired.bracket_close", "") << r;
+            ossPower << config.getNestedColor("detailed_audio_and_power", "power.fields.wired.brackets_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.wired.bracket_open", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.wired.text_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.wired.text", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.wired.value_suffix_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.wired.value_suffix", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.wired.brackets_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.wired.bracket_close", "") << r;
         }
         else {
-            ossPower << config.getNestedColor("audio_power_info", "power.fields.battery.prefix_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.prefix", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.label_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.label", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.label_suffix_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.label_suffix", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.brackets_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.bracket_open", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.value_color", "")
+            ossPower << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.prefix_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.prefix", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.label_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.label", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.label_suffix_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.label_suffix", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.brackets_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.bracket_open", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.value_color", "")
                       << power.batteryPercent << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.value_suffix_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.value_suffix", "") << r
-                      << config.getNestedColor("audio_power_info", "power.fields.battery.brackets_color", "")
-                      << config.getLabel("audio_power_info", "power.fields.battery.bracket_close", "") << r;
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.value_suffix_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.value_suffix", "") << r
+                      << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.brackets_color", "")
+                      << config.getLabel("detailed_audio_and_power", "power.fields.battery.bracket_close", "") << r;
 
             if (power.isCharging) {
-                ossPower << " " << config.getNestedColor("audio_power_info", "power.fields.battery.charging_color", "")
-                          << config.getLabel("audio_power_info", "power.fields.battery.charging_text", "") << r;
+                ossPower << " " << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.charging_color", "")
+                          << config.getLabel("detailed_audio_and_power", "power.fields.battery.charging_text", "") << r;
             }
             else {
-                ossPower << " " << config.getNestedColor("audio_power_info", "power.fields.battery.not_charging_color", "")
-                          << config.getLabel("audio_power_info", "power.fields.battery.not_charging_text", "") << r;
+                ossPower << " " << config.getNestedColor("detailed_audio_and_power", "power.fields.battery.not_charging_color", "")
+                          << config.getLabel("detailed_audio_and_power", "power.fields.battery.not_charging_text", "") << r;
             }
         }
         lp.push(ossPower.str());
     }
+};
+
+
+
+// Walk through the section names in the order the JSON "layout" array
+// specifies (or the hardcoded default order, if "layout" is missing).
+for (const auto& key : config.getLayoutOrder()) {
+
+    // Look up whether a section with this exact name was registered
+    // earlier in main() via sections["some_name"] = [&]() { ... };
+    auto it = sections.find(key);
+
+    if (it != sections.end()) {
+        // Found a match — run that section's lambda now.
+        // This is what actually prints the section (header, fields,
+        // colors, etc.) to the LivePrinter (lp).
+        it->second();
+    }
+#ifdef _DEBUG
+    else {
+        // No section is registered under this name — likely a typo
+        // in the JSON "layout" array, or a section that was removed
+        // from the sections map but left in the JSON.
+        // Only warns in debug builds; release builds skip silently
+        // so a bad config entry never crashes or interrupts output.
+        std::cerr << "Warning: layout entry '" << key
+                   << "' does not match any registered section.\n";
+    }
+#endif
 }
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
- 
 
 
     // Print remaining ASCII art lines (if art is taller than info)

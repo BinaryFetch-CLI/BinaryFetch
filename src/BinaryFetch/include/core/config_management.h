@@ -37,6 +37,14 @@ public:
     std::string getPrefix(const std::string& section, const std::string& key, const std::string& defaultPrefix = "") const;
     std::string getNestedPrefix(const std::string& module, const std::string& section, const std::string& key, const std::string& defaultPrefix = "") const;
 
+    // String array resolution (for "layout" / "order" JSON keys)
+    std::vector<std::string> getStringArray(
+        const std::string& module,
+        const std::string& path,
+        const std::vector<std::string>& fallback) const;
+    std::vector<std::string> getLayoutOrder() const;
+
+
     // Raw JSON access if required
     const nlohmann::json& getJson() const;
 
