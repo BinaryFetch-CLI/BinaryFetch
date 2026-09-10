@@ -95,7 +95,7 @@ int main(){
     // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 🛰️
     //                    (self-heals from embedded EXE resource if the file is missing)
     //                    NEVER overwrites an existing user config.
-    bool DEV_MODE = true; // ← set to true while developing, false before shipping
+    bool DEV_MODE = false; // ← set to true while developing, false before shipping
     ConfigManager config(DEV_MODE);
     string r = config.getResetColor();
 

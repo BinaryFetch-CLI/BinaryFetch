@@ -2,7 +2,7 @@
 ;  BinaryFetch Installer
 ;  Author: BinaryFetch-CLI
 ;  Publisher: BinaryFetch-CLI
-;  Version: 1.4
+;  Version: 1.5
 ;
 ;  Installs BinaryFetch.exe and adds it to the system PATH.
 ; -----------------------------------------------------------
@@ -12,7 +12,7 @@
 AppId={{9F6E2C2A-8A7B-4C6F-9A2D-3F6A0C91E4A1}}
 
 AppName=BinaryFetch
-AppVersion=1.4
+AppVersion=1.5
 AppPublisher=BinaryFetch-CLI
 
 AppPublisherURL=https://github.com/BinaryFetch-CLI
@@ -28,7 +28,7 @@ LicenseFile=H:\programming\git_and_github\BinaryFetch\build files\Build-License\
 SetupIconFile=H:\programming\git_and_github\BinaryFetch\build files\Icon & Banners\BinaryFetch.ico
 
 OutputDir=C:\Users\OBITO\Downloads
-OutputBaseFilename=BinaryFetch-v1.4-Setup
+OutputBaseFilename=BinaryFetch-v1.5-Setup
 
 Compression=lzma
 SolidCompression=yes
@@ -188,7 +188,7 @@ begin
     if not WizardSilent() then
     begin
       MsgBox(
-        'BinaryFetch v1.4 installed successfully.'#13#13 +
+        'BinaryFetch v1.5 installed successfully.'#13#13 +
         'Open a NEW terminal and type:'#13 +
         'binaryfetch'#13#13 +
         'If it still doesn''t work, sign out and back in (or restart).',
