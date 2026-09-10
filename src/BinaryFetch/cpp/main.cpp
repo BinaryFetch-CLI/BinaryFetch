@@ -10,6 +10,9 @@
 #include <fstream>        // File stream operations (reading/writing files) 
 #include <string>         // Standard string class and methods 
 #include <regex>          // Regular expressions for pattern matching 
+#include <algorithm>
+
+
 
 #ifdef _WIN32
      #include <windows.h>      // Core Windows API functions (handles, processes) 
@@ -58,18 +61,56 @@
 
 #include "nlohmann/json.hpp" 
 using json = nlohmann::json;
-
-
 using namespace std;
-//since we've decleared std, we may no longer need it 
-
-// (start) - place holder for global
-int global_memory_capacity = 0;
-
-// (end) - place holder for global varaibles
 
 
 
+
+// Builds a customizable performance bar using the metric's JSON settings.
+std::string makeVisualizer(float percentage, const ConfigManager& config,
+                           const std::string& module, const std::string& field)
+{
+    const std::string path = "fields." + field + ".visualizer.";
+
+    if (!config.getNestedBool(module, path + "enabled", false))
+        return "";
+
+    int width = config.getNestedInt(module, path + "width", 0);
+
+    std::string filled = config.getNestedString(module, path + "filled", "");
+    std::string empty  = config.getNestedString(module, path + "empty", "");
+    std::string left   = config.getNestedString(module, path + "left", "");
+    std::string right  = config.getNestedString(module, path + "right", "");
+
+    std::string filledColor = config.getNestedColor(module, path + "filled_color", "white");
+    std::string emptyColor  = config.getNestedColor(module, path + "empty_color", "white");
+    std::string leftColor   = config.getNestedColor(module, path + "left_color", "white");
+    std::string rightColor  = config.getNestedColor(module, path + "right_color", "white");
+
+    if (width <= 0 || filled.empty() || empty.empty())
+        return "";
+
+    percentage = std::clamp(percentage, 0.0f, 100.0f);
+
+    int filledCount = static_cast<int>((percentage / 100.0f) * width);
+    int emptyCount = width - filledCount;
+
+    std::string result = leftColor + left;
+
+    result += filledColor;
+
+    for (int i = 0; i < filledCount; ++i)
+        result += filled;
+
+    result += emptyColor;
+
+    for (int i = 0; i < emptyCount; ++i)
+        result += empty;
+
+    result += rightColor + right;
+
+    return result + config.getResetColor();
+}
 
 
 int main(){
@@ -98,7 +139,7 @@ int main(){
     // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 🛰️
     //                    (self-heals from embedded EXE resource if the file is missing)
     //                    NEVER overwrites an existing user config.
-    bool DEV_MODE = false; // ← set to true while developing, false before shipping
+    bool DEV_MODE = true; // ← set to true while developing, false before shipping
     ConfigManager config(DEV_MODE);
     string r = config.getResetColor();
 
@@ -3338,69 +3379,132 @@ if (config.isEnabled("performance_info")) {
         lp.push(ss.str());
     }
 
-    // ---------- CPU USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.cpu_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.cpu_usage.cpu_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.cpu_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.value_color", "")
-           << perf.get_cpu_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.value_suffix", "") << r;
-        lp.push(ss.str());
+// ---------- CPU USAGE ----------
+
+    if (config.getNestedBool("performance_info", "fields.cpu_usage.show", true))
+    {
+      float cpu = perf.get_cpu_usage_percent();
+      
+      // call the visualizer funtion
+      std::string cpuVisualizer = makeVisualizer(cpu,config,"performance_info","cpu_usage");
+
+      ostringstream cpuSs;
+
+      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.cpu_usage_prefix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.cpu_usage_prefix", "") << r
+
+            << config.getNestedColor("performance_info", "fields.cpu_usage.label_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.label", "") << r
+
+            << config.getNestedColor("performance_info", "fields.cpu_usage.label_suffix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.label_suffix", "") << r;
+
+      // Add the visualizer.
+      if (!cpuVisualizer.empty())
+          cpuSs << cpuVisualizer << " ";
+
+      // Apply the normal value color again after the visualizer reset.
+      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.value_color", "")
+            << static_cast<int>(cpu)
+            << config.getNestedColor("performance_info", "fields.cpu_usage.value_suffix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.value_suffix", "") << r;
+
+       lp.push(cpuSs.str());
     }
 
-    // ---------- RAM USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.ram_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.ram_usage.ram_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.ram_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.value_color", "")
-           << perf.get_ram_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
+// ---------- RAM USAGE ----------
 
-    // ---------- DISK USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.disk_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.disk_usage.disk_usage_prefix_color", "")
+if (config.getNestedBool("performance_info", "fields.ram_usage.show", true))
+{
+    float ram = perf.get_ram_usage_percent();
+
+    // call the visualizer function
+    std::string ramVisualizer = makeVisualizer(ram,config,"performance_info","ram_usage");
+
+    ostringstream ramSs;
+
+    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.ram_usage_prefix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.ram_usage_prefix", "") << r
+          << config.getNestedColor("performance_info", "fields.ram_usage.label_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.label", "") << r
+          << config.getNestedColor("performance_info", "fields.ram_usage.label_suffix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!ramVisualizer.empty())
+        ramSs << ramVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.value_color", "")
+          << static_cast<int>(ram)
+          << config.getNestedColor("performance_info", "fields.ram_usage.value_suffix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.value_suffix", "") << r;
+
+    lp.push(ramSs.str());
+}
+
+// ---------- DISK USAGE ----------
+
+if (config.getNestedBool("performance_info", "fields.disk_usage.show", true))
+{
+    float disk = perf.get_disk_usage_percent();
+
+    // call the visualizer function
+    std::string diskVisualizer = makeVisualizer(disk,config,"performance_info","disk_usage");
+
+    ostringstream diskSs;
+
+    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.disk_usage_prefix_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.disk_usage_prefix", "") << r
            << config.getNestedColor("performance_info", "fields.disk_usage.label_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.label", "") << r
            << config.getNestedColor("performance_info", "fields.disk_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.disk_usage.value_color", "")
-           << perf.get_disk_usage_percent() << r
+           << config.getLabel("performance_info", "fields.disk_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!diskVisualizer.empty())
+        diskSs << diskVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.value_color", "")
+           << static_cast<int>(disk)
            << config.getNestedColor("performance_info", "fields.disk_usage.value_suffix_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
 
-    // ---------- GPU USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.gpu_usage.gpu_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.gpu_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.value_color", "")
-           << perf.get_gpu_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
+    lp.push(diskSs.str());
+}
+
+// ---------- GPU USAGE ----------
+
+if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true))
+{
+    float gpu = perf.get_gpu_usage_percent();
+
+    // call the visualizer function
+    std::string gpuVisualizer = makeVisualizer(gpu,config,"performance_info","gpu_usage");
+
+    ostringstream gpuSs;
+
+    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.gpu_usage_prefix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.gpu_usage_prefix", "") << r
+          << config.getNestedColor("performance_info", "fields.gpu_usage.label_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.label", "") << r
+          << config.getNestedColor("performance_info", "fields.gpu_usage.label_suffix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!gpuVisualizer.empty())
+        gpuSs << gpuVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.value_color", "")
+          << static_cast<int>(gpu)
+          << config.getNestedColor("performance_info", "fields.gpu_usage.value_suffix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.value_suffix", "") << r;
+
+    lp.push(gpuSs.str());
+}
+
 }
 
 //   █████╗ ██╗   ██╗██████╗ ██╗ ██████╗     █████╗     ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ 
