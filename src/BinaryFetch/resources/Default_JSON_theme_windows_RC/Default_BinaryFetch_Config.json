@@ -1647,8 +1647,20 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "red"
-    },
+      "value_suffix_color": "red",
+      "visualizer": {
+       "enabled": true,
+       "width": 20,
+       "filled": "█",
+       "filled_color": "bright_green",
+       "empty": "░",
+       "empty_color": "white",
+       "left": "[",
+       "left_color": "cyan",
+       "right": "]",
+       "right_color": "cyan"
+   }
+},
     "ram_usage": {
       "show": true,
       "ram_usage_prefix": "~ ",
@@ -1659,7 +1671,19 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "red"
+      "value_suffix_color": "red",
+      "visualizer": {
+        "enabled": true,
+        "width": 20,
+        "filled": "█",
+        "filled_color": "bright_green",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "cyan",
+        "right": "]",
+        "right_color": "cyan"
+    }  
     },
     "disk_usage": {
       "show": true,
@@ -1671,7 +1695,19 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "red"
+      "value_suffix_color": "red",
+      "visualizer": {
+        "enabled": true,
+        "width": 20,
+        "filled": "█",
+        "filled_color": "bright_green",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "cyan",
+        "right": "]",
+        "right_color": "cyan"
+    }    
     },
     "gpu_usage": {
       "show": true,
@@ -1683,7 +1719,19 @@
       "label_suffix_color": "red",
       "value_color": "bright_cyan",
       "value_suffix": "%",
-      "value_suffix_color": "red"
+      "value_suffix_color": "red",
+      "visualizer": {
+        "enabled": true,
+        "width": 20,
+        "filled": "█",
+        "filled_color": "bright_green",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "cyan",
+        "right": "]",
+        "right_color": "cyan"
+      }    
     }
   }
 },

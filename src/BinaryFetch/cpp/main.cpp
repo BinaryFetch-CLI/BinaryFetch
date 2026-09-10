@@ -10,12 +10,17 @@
 #include <fstream>        // File stream operations (reading/writing files) 
 #include <string>         // Standard string class and methods 
 #include <regex>          // Regular expressions for pattern matching 
-#include <windows.h>      // Core Windows API functions (handles, processes) 
-#include <shlobj.h>       // Shell object functions (folder paths, UI) 
-#include <direct.h>       // Directory and file handling functions (_mkdir, _chdir) 
-#include <comdef.h>       // Native C++ compiler COM support 
-#include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
+#include <algorithm>
 
+
+
+#ifdef _WIN32
+     #include <windows.h>      // Core Windows API functions (handles, processes) 
+     #include <shlobj.h>       // Shell object functions (folder paths, UI) 
+     #include <direct.h>       // Directory and file handling functions (_mkdir, _chdir) 
+     #include <comdef.h>       // Native C++ compiler COM support 
+     #include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
+#endif 
 
 // ASCII Art functionality
 #include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
@@ -56,41 +61,80 @@
 
 #include "nlohmann/json.hpp" 
 using json = nlohmann::json;
-
-
 using namespace std;
-//since we've decleared std, we may no longer need it 
-
-// (start) - place holder for global
-int global_memory_capacity = 0;
-
-// (end) - place holder for global varaibles
 
 
 
+
+// Builds a customizable performance bar using the metric's JSON settings.
+std::string makeVisualizer(float percentage, const ConfigManager& config,
+                           const std::string& module, const std::string& field)
+{
+    const std::string path = "fields." + field + ".visualizer.";
+
+    if (!config.getNestedBool(module, path + "enabled", false))
+        return "";
+
+    int width = config.getNestedInt(module, path + "width", 0);
+
+    std::string filled = config.getNestedString(module, path + "filled", "");
+    std::string empty  = config.getNestedString(module, path + "empty", "");
+    std::string left   = config.getNestedString(module, path + "left", "");
+    std::string right  = config.getNestedString(module, path + "right", "");
+
+    std::string filledColor = config.getNestedColor(module, path + "filled_color", "white");
+    std::string emptyColor  = config.getNestedColor(module, path + "empty_color", "white");
+    std::string leftColor   = config.getNestedColor(module, path + "left_color", "white");
+    std::string rightColor  = config.getNestedColor(module, path + "right_color", "white");
+
+    if (width <= 0 || filled.empty() || empty.empty())
+        return "";
+
+    percentage = std::clamp(percentage, 0.0f, 100.0f);
+
+    int filledCount = static_cast<int>((percentage / 100.0f) * width);
+    int emptyCount = width - filledCount;
+
+    std::string result = leftColor + left;
+
+    result += filledColor;
+
+    for (int i = 0; i < filledCount; ++i)
+        result += filled;
+
+    result += emptyColor;
+
+    for (int i = 0; i < emptyCount; ++i)
+        result += empty;
+
+    result += rightColor + right;
+
+    return result + config.getResetColor();
+}
 
 
 int main(){
 
     
-	
+   #ifdef _WIN32
+          SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console
+   #endif
 
 
-    
-    // ========== SIMPLIFIED ASCII ART LOADING ==========
+        // SIMPLIFIED ASCII ART LOADING 
         // Just call loadFromFile() - it handles everything automatically!
         // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
-        // - If missing, copies from Default_Ascii_Art.txt and creates it
-        // - User can modify their art anytime in AppData folder
-
-	SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console (for emoji printing)
+        //      or, ~/.config/BinaryFetch/BinaryArt.txt
+        // - If missing, create a new file named "BinaryArts.txt" then paste the 
+        // default ASCII art based on distro and loads from there.
+        // - User can modify their art anytime from their config folder
     AsciiArt art;
     if (!art.loadFromFile()) {
         cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
         // Program continues even if art fails to load
     }
 
-    // ========== CONFIG MANAGEMENT ==========
+    // CONFIG MANAGEMENT 
     // DEV_MODE = true  → load default JSON directly from project folder (fast iteration 🧪)
     // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 🛰️
     //                    (self-heals from embedded EXE resource if the file is missing)
@@ -100,7 +144,7 @@ int main(){
     string r = config.getResetColor();
 
 	// Anyway....this is how we're allowed to print emojis in C++ console
-    // :cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
+    // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
     // Create LivePrinter
@@ -162,16 +206,13 @@ if (config.isEnabled("header_settings")) {
 
 
 
-// ============================================================================
 //   ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗  ██████╗████████╗
 //  ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔════╝╚══██╔══╝
 //  ██║     ██║   ██║██╔████╔██║██████╔╝███████║██║        ██║   
 //  ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██╔══██║██║        ██║   
 //  ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ██║  ██║╚██████╗   ██║   
 //   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝   
-// ============================================================================
 //                       C O M P A C T   M O D U L E S
-// ============================================================================
 
 
 
@@ -915,22 +956,23 @@ if (config.isEnabled("compact_disk_storage")) {
 
 
 
-// ============================================================================
-//  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗ 
-//  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗
-//  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██   ██╔
-//  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗
-//  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝
-//  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝ 
-// ============================================================================
-//                      D E T A I L E D   M O D U L E S
-// ============================================================================
 
-
-
-// ============================================================================
-//                         DETAILED SYSTEM MEMORY
-// ============================================================================
+//  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ███╗   ███╗███████╗███╗   ███╗ ██████╗ ██████╗ ██╗   ██╗
+//  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗    ████╗ ████║██╔════╝████╗ ████║██╔═══██╗██╔══██╗╚██╗ ██╔╝
+//  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██████╔╝    ██╔████╔██║█████╗  ██╔████╔██║██║   ██║██████╔╝ ╚████╔╝ 
+//  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗    ██║╚██╔╝██║██╔══╝  ██║╚██╔╝██║██║   ██║██╔══██╗  ╚██╔╝  
+//  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝    ██║ ╚═╝ ██║███████╗██║ ╚═╝ ██║╚██████╔╝██║  ██║   ██║   
+//  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝     ╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
+//  This section displays comprehensive system memory information:
+//  1. SUMMARY  - Total, free, and used percentage of system RAM
+//  2. MODULES  - Per-stick capacity, type, and speed for each installed
+//     memory module
+//
+//  Output Example:
+//  #- Memory Info -------------------------#
+//   (Total: 32 GB) (Free: 18 GB) (Used: 44%)
+//   Memory 0 : (Used: 44%) 16GB DDR5 6000MHz
+//   Memory 1 : (Used: 44%) 16GB DDR5 6000MHz
 
 if (config.isEnabled("detailed_system_memory")) {
     
@@ -1039,34 +1081,29 @@ if (config.isEnabled("detailed_system_memory")) {
 
 
 
-// ============================================================================
 //  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ██████╗ ██╗███████╗██╗  ██╗
 //  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗    ██╔══██╗██║██╔════╝██║ ██╔╝
 //  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██████╔╝    ██║  ██║██║███████╗█████╔╝ 
 //  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗    ██║  ██║██║╚════██║██╔═██╗ 
 //  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝    ██████╔╝██║███████║██║  ██╗
 //  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝╚══════╝╚═╝  ╚═╝
-// ============================================================================
 //                         D E T A I L E D   S T O R A G E
-// ============================================================================
 //  This section displays comprehensive disk information in two main parts:
 //  1. STORAGE SUMMARY - Shows each disk with capacity, usage, file system,
 //     and external/internal status
 //  2. DISK PERFORMANCE - Displays read/write speeds and serial numbers
 //  3. PREDICTED PERFORMANCE - Estimated speeds (if enabled)
-// ============================================================================
 //
 //  Output Example:
 //  ------------------------- STORAGE SUMMARY --------------------------
 //   SSD Disk (C:) [ (Used)  218.90 GiB / 237.10 GiB    92% - NTFS  Int ]
-//  HDD Disk (D:) [ (Used)  189.10 GiB / 465.76 GiB    40% - NTFS  Int ]
+//   HDD Disk (D:) [ (Used)  189.10 GiB / 465.76 GiB    40% - NTFS  Int ]
 //   USB Disk (G:) [ (Used)  104.02 GiB / 112.64 GiB    92% - NTFS  Ext ]
 //
 //   -------------------- DISK PERFORMANCE & DETAILS --------------------
 //  Disk (C:) [ Read: 1225.44 MB/s | Write:  131.03 MB/s | SN-1000 Int ]
 //  Disk (D:) [ Read:  128.76 MB/s | Write:  111.68 MB/s | SN-1001 Int ]
 //  Disk (G:) [ Read:  151.20 MB/s | Write:    3.73 MB/s | SN-1002 Ext ]
-// ============================================================================
 
 // ----------------- DETAILED STORAGE SECTION -----------------
 
@@ -1137,7 +1174,7 @@ if (config.isEnabled("detailed_disk_storage")) {
     vector<storage_data> all_disks_captured;
 
 
-    // ----------------- STORAGE SUMMARY -----------------
+    //  STORAGE SUMMARY 
 
     if (config.getNestedBool(
             "detailed_disk_storage",
@@ -1507,7 +1544,7 @@ if (config.isEnabled("detailed_disk_storage")) {
     }
 
 
-    // ----------------- DISK PERFORMANCE -----------------
+    //  DISK PERFORMANCE 
 
     if (!all_disks_captured.empty() &&
         config.getNestedBool(
@@ -2205,16 +2242,13 @@ if (config.isEnabled("detailed_disk_storage")) {
 
 // ----------------- END DETAILED STORAGE SECTION -----------------
 
-// ============================================================================
 //  ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗
 //  ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝
 //  ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ 
 //  ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗ 
 //  ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗
 //  ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-// ============================================================================
 //                      D E T A I L E D   N E T W O R K
-// ============================================================================
 //  This section displays comprehensive network information including:
 //  1. Network Name      - The name of the active network connection
 //  2. Network Type      - Type of network (Ethernet, Wi-Fi, etc.)
@@ -2224,7 +2258,6 @@ if (config.isEnabled("detailed_disk_storage")) {
 //  6. MAC Address       - The physical hardware address of the adapter
 //  7. Upload Speed      - The average upload speed of the connection
 //  8. Download Speed    - The average download speed of the connection
-// ============================================================================
 //
 //  Output Example:
 //  #- Network Info ---------------------------------------------------#
@@ -2236,7 +2269,6 @@ if (config.isEnabled("detailed_disk_storage")) {
 //  ~ Mac address             : 00:1A:2B:3C:4D:5E
 //  ~ avg upload speed        : 10.5 Mbps
 //  ~ avg download speed      : 85.2 Mbps
-// ============================================================================
 if (config.isEnabled("detailed_network_connection"))
 {
     // line spacing json driven
@@ -2287,16 +2319,13 @@ if (config.isEnabled("detailed_network_connection"))
     field("download",  "download",  net.get_network_download_speed());
 }
 
-// ============================================================================
 //  ██████╗ ██╗   ██╗███╗   ███╗███╗   ███╗██╗   ██╗
 //  ██╔══██╗██║   ██║████╗ ████║████╗ ████║╚██╗ ██╔╝
 //  ██║  ██║██║   ██║██╔████╔██║██╔████╔██║ ╚████╔╝ 
 //  ██║  ██║██║   ██║██║╚██╔╝██║██║╚██╔╝██║  ╚██╔╝  
 //  ██████╔╝╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║   ██║   
 //  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝   ╚═╝   
-// ============================================================================
 //                   D E T A I L E D   D U M M Y   N E T W O R K
-// ============================================================================
 //  This section displays dummy/example network information for testing:
 //  1. Network Name      - Example: "InterCentury"
 //  2. Network Type      - Example: "Ethernet"
@@ -2304,7 +2333,6 @@ if (config.isEnabled("detailed_network_connection"))
 //  4. Read Speed         - Example: "812.45 Mbps"
 //  5. Write Speed        - Example: "634.10 Mbps"
 //  All values, labels, colors, prefixes, and units are fully JSON-driven.
-// ============================================================================
 //
 //  Output Example:
 //  #- Network Info ---------------------------------------------------#
@@ -2313,7 +2341,6 @@ if (config.isEnabled("detailed_network_connection"))
 //  ~ Local IP                : 192.168.1.42
 //  ~ Read Speed              : 812.45 Mbps
 //  ~ Write Speed             : 634.10 Mbps
-// ============================================================================
 
 if (config.isEnabled("dummy_network_info")) {
     
@@ -2363,16 +2390,13 @@ if (config.isEnabled("dummy_network_info")) {
 }
 
 
-// ============================================================================
 //   ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔═══██╗██╔════╝    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║   ██║███████╗    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║╚════██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝███████║    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚══════╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                    D E T A I L E D   O P E R A T I N G   S Y S T E M
-// ============================================================================
 //  This section displays comprehensive OS information including:
 //  1. Name          - OS name (e.g., "Windows 11 Pro")
 //  2. Build         - OS build/version number
@@ -2383,7 +2407,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  7. Serial        - OS serial number
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_operating_system" config block (aliased as "os_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Operating System -----------------------------------------#
@@ -2394,7 +2417,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  ~ Uptime                  : 3d 4h 12m
 //  ~ Install Date            : 2024-01-15
 //  ~ Serial                  : XXXXX-XXXXX-XXXXX-XXXXX
-// ============================================================================
 
     // OS Info (JSON Driven)
     if (config.isEnabled("os_info")) {
@@ -2446,16 +2468,13 @@ if (config.isEnabled("dummy_network_info")) {
         field("serial",       "serial",       os.get_os_serial_number());
     }
 
-// ============================================================================
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║     ██████╔╝██║   ██║    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║     ██╔═══╝ ██║   ██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╗██║     ╚██████╔╝    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                       D E T A I L E D   P R O C E S S O R
-// ============================================================================
 
     if (config.isEnabled("detailed_processor")) {
         
@@ -2652,16 +2671,13 @@ if (config.isEnabled("dummy_network_info")) {
         }
     }
 
-// ============================================================================
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║  ███╗██████╔╝██║   ██║    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║██╔═══╝ ██║   ██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝██║     ╚██████╔╝    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                    D E T A I L E D   G R A P H I C S   C A R D
-// ============================================================================
 
     if (config.isEnabled("detailed_graphics_card")) {
         
@@ -2911,16 +2927,13 @@ if (config.isEnabled("dummy_network_info")) {
 
 
 
-// ============================================================================
 //   ██████╗ ██╗███████╗██████╗ ██╗      █████╗ ██╗   ██╗
 //   ██╔══██╗██║██╔════╝██╔══██╗██║     ██╔══██╗╚██╗ ██╔╝
 //   ██║  ██║██║███████╗██████╔╝██║     ███████║ ╚████╔╝ 
 //   ██║  ██║██║     ██ ██╗     ██║     ██╔══██║  ╚██╔╝  
 //   ██████╔╝██║███████╗██║     ███████╗██║  ██║   ██║   
 //   ╚═════╝ ╚═╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   
-// ============================================================================
 //                      D E T A I L E D   D I S P L A Y
-// ============================================================================
 //  Displays comprehensive monitor information:
 //  • Display Banner      - Index number with formatted header
 //  • Display Name        - Manufacturer and model
@@ -2930,7 +2943,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  • Scaling             - DPI scaling percentage
 //  • Upscale             - Upscaling multiplier
 //  • DSR / VSR           - Dynamic Super Resolution status
-// ============================================================================
 if (config.isEnabled("display_info")) {
     
     // line spacing json driven
@@ -3099,16 +3111,13 @@ if (config.isEnabled("display_info")) {
 }
 
 
-// ============================================================================
 //  ██████╗ ██╗ ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔══██╗██║██╔═══██╗██╔════╝    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██████╔╝██║██║   ██║███████╗    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██╔══██╗██║██║   ██║╚════██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ██████╔╝██║╚██████╔╝███████║    ██║██║ ╚████║██║     ╚██████╔╝
 //  ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //              D E T A I L E D   B I O S   &   M O T H E R B O A R D
-// ============================================================================
 //  This section displays comprehensive BIOS and motherboard information:
 //  1. Bios Vendor           - Manufacturer of the system BIOS/UEFI
 //  2. Bios Version          - Installed BIOS/UEFI version string
@@ -3117,7 +3126,6 @@ if (config.isEnabled("display_info")) {
 //  5. Motherboard Manufacturer - Motherboard vendor/brand
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_bios_and_motherboard" config block (aliased as "bios_mb_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- BIOS & Motherboard Info ----------------------------------------#
@@ -3126,7 +3134,6 @@ if (config.isEnabled("display_info")) {
 //  ~ Bios Date               : 2024-03-12
 //  ~ Motherboard Model       : ROG STRIX B650E-F
 //  ~ Motherboard Manufacturer: ASUSTeK COMPUTER INC.
-// ============================================================================
 if (config.isEnabled("bios_mb_info")) {
 
     // line spacing json driven
@@ -3227,30 +3234,25 @@ if (config.isEnabled("bios_mb_info")) {
 }
 
 
-// ============================================================================
 //  ██╗   ██╗███████╗███████╗██████╗     ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██║   ██║██╔════╝██╔════╝██╔══██╗    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║   ██║███████╗█████╗  ██████╔╝    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║╚════██║██╔══╝  ██╔══██╗    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝███████║███████╗██║  ██║    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                      D E T A I L E D   U S E R   A C C O U N T
-// ============================================================================
 //  This section displays comprehensive user account information:
 //  1. Username           - The currently logged-in user's account name
 //  2. Computer Name      - The hostname of the machine
 //  3. Domain             - The Windows domain or workgroup the PC belongs to
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_user_account" config block (aliased as "user_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- User Info ------------------------------------------------------#
 //  ~ Username              : JohnDoe
 //  ~ Computer Name         : DESKTOP-4X9K2P1
 //  ~ Domain                : WORKGROUP
-// ============================================================================
 if (config.isEnabled("user_info")) {
     
     // line spacing json driven
@@ -3318,16 +3320,13 @@ if (config.isEnabled("user_info")) {
     }
 }
 
-// ============================================================================
 //  ██████╗ ███████╗██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗ █████╗ ███╗   ██╗ ██████╗███████╗
 //  ██╔══██╗██╔════╝██╔══██╗██╔════╝██╔═══██╗██╔══██╗████╗ ████║██╔══██╗████╗  ██║██╔════╝██╔════╝
 //  ██████╔╝█████╗  ██████╔╝█████╗  ██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║██║     █████╗  
 //  ██╔═══╝ ██╔══╝  ██╔══██╗██╔══╝  ██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║██║     ██╔══╝  
 //  ██║     ███████╗██║  ██║██║     ╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║╚██████╗███████╗
 //  ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝      ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝
-// ============================================================================
 //                       D E T A I L E D   P E R F O R M A N C E
-// ============================================================================
 //  This section displays real-time system performance metrics:
 //  1. System Uptime      - Time elapsed since the last system boot
 //  2. CPU Usage          - Current processor utilization percentage
@@ -3336,7 +3335,6 @@ if (config.isEnabled("user_info")) {
 //  5. GPU Usage           - Current graphics card utilization percentage
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_resource_usage" config block (aliased as "performance_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Performance Info -----------------------------------------------#
@@ -3345,7 +3343,6 @@ if (config.isEnabled("user_info")) {
 //  ~ RAM Usage              : 47%
 //  ~ Disk Usage             : 68%
 //  ~ GPU Usage              : 8%
-// ============================================================================
 
 // Performance Info (JSON Driven)
 if (config.isEnabled("performance_info")) {
@@ -3382,88 +3379,147 @@ if (config.isEnabled("performance_info")) {
         lp.push(ss.str());
     }
 
-    // ---------- CPU USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.cpu_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.cpu_usage.cpu_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.cpu_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.value_color", "")
-           << perf.get_cpu_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.cpu_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.cpu_usage.value_suffix", "") << r;
-        lp.push(ss.str());
+// ---------- CPU USAGE ----------
+
+    if (config.getNestedBool("performance_info", "fields.cpu_usage.show", true))
+    {
+      float cpu = perf.get_cpu_usage_percent();
+      
+      // call the visualizer funtion
+      std::string cpuVisualizer = makeVisualizer(cpu,config,"performance_info","cpu_usage");
+
+      ostringstream cpuSs;
+
+      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.cpu_usage_prefix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.cpu_usage_prefix", "") << r
+
+            << config.getNestedColor("performance_info", "fields.cpu_usage.label_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.label", "") << r
+
+            << config.getNestedColor("performance_info", "fields.cpu_usage.label_suffix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.label_suffix", "") << r;
+
+      // Add the visualizer.
+      if (!cpuVisualizer.empty())
+          cpuSs << cpuVisualizer << " ";
+
+      // Apply the normal value color again after the visualizer reset.
+      cpuSs << config.getNestedColor("performance_info", "fields.cpu_usage.value_color", "")
+            << static_cast<int>(cpu)
+            << config.getNestedColor("performance_info", "fields.cpu_usage.value_suffix_color", "")
+            << config.getLabel("performance_info", "fields.cpu_usage.value_suffix", "") << r;
+
+       lp.push(cpuSs.str());
     }
 
-    // ---------- RAM USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.ram_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.ram_usage.ram_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.ram_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.value_color", "")
-           << perf.get_ram_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.ram_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.ram_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
+// ---------- RAM USAGE ----------
 
-    // ---------- DISK USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.disk_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.disk_usage.disk_usage_prefix_color", "")
+if (config.getNestedBool("performance_info", "fields.ram_usage.show", true))
+{
+    float ram = perf.get_ram_usage_percent();
+
+    // call the visualizer function
+    std::string ramVisualizer = makeVisualizer(ram,config,"performance_info","ram_usage");
+
+    ostringstream ramSs;
+
+    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.ram_usage_prefix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.ram_usage_prefix", "") << r
+          << config.getNestedColor("performance_info", "fields.ram_usage.label_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.label", "") << r
+          << config.getNestedColor("performance_info", "fields.ram_usage.label_suffix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!ramVisualizer.empty())
+        ramSs << ramVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    ramSs << config.getNestedColor("performance_info", "fields.ram_usage.value_color", "")
+          << static_cast<int>(ram)
+          << config.getNestedColor("performance_info", "fields.ram_usage.value_suffix_color", "")
+          << config.getLabel("performance_info", "fields.ram_usage.value_suffix", "") << r;
+
+    lp.push(ramSs.str());
+}
+
+// ---------- DISK USAGE ----------
+
+if (config.getNestedBool("performance_info", "fields.disk_usage.show", true))
+{
+    float disk = perf.get_disk_usage_percent();
+
+    // call the visualizer function
+    std::string diskVisualizer = makeVisualizer(disk,config,"performance_info","disk_usage");
+
+    ostringstream diskSs;
+
+    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.disk_usage_prefix_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.disk_usage_prefix", "") << r
            << config.getNestedColor("performance_info", "fields.disk_usage.label_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.label", "") << r
            << config.getNestedColor("performance_info", "fields.disk_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.disk_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.disk_usage.value_color", "")
-           << perf.get_disk_usage_percent() << r
+           << config.getLabel("performance_info", "fields.disk_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!diskVisualizer.empty())
+        diskSs << diskVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    diskSs << config.getNestedColor("performance_info", "fields.disk_usage.value_color", "")
+           << static_cast<int>(disk)
            << config.getNestedColor("performance_info", "fields.disk_usage.value_suffix_color", "")
            << config.getLabel("performance_info", "fields.disk_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
 
-    // ---------- GPU USAGE ----------
-    if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true)) {
-        ostringstream ss;
-        ss << config.getNestedColor("performance_info", "fields.gpu_usage.gpu_usage_prefix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.gpu_usage_prefix", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.label_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.label", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.label_suffix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.label_suffix", "") << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.value_color", "")
-           << perf.get_gpu_usage_percent() << r
-           << config.getNestedColor("performance_info", "fields.gpu_usage.value_suffix_color", "")
-           << config.getLabel("performance_info", "fields.gpu_usage.value_suffix", "") << r;
-        lp.push(ss.str());
-    }
+    lp.push(diskSs.str());
 }
 
-// ============================================================================
+// ---------- GPU USAGE ----------
+
+if (config.getNestedBool("performance_info", "fields.gpu_usage.show", true))
+{
+    float gpu = perf.get_gpu_usage_percent();
+
+    // call the visualizer function
+    std::string gpuVisualizer = makeVisualizer(gpu,config,"performance_info","gpu_usage");
+
+    ostringstream gpuSs;
+
+    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.gpu_usage_prefix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.gpu_usage_prefix", "") << r
+          << config.getNestedColor("performance_info", "fields.gpu_usage.label_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.label", "") << r
+          << config.getNestedColor("performance_info", "fields.gpu_usage.label_suffix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.label_suffix", "") << r;
+
+    // Add the visualizer.
+    if (!gpuVisualizer.empty())
+        gpuSs << gpuVisualizer << " ";
+
+    // Apply the normal value color again after the visualizer reset.
+    gpuSs << config.getNestedColor("performance_info", "fields.gpu_usage.value_color", "")
+          << static_cast<int>(gpu)
+          << config.getNestedColor("performance_info", "fields.gpu_usage.value_suffix_color", "")
+          << config.getLabel("performance_info", "fields.gpu_usage.value_suffix", "") << r;
+
+    lp.push(gpuSs.str());
+}
+
+}
+
 //   █████╗ ██╗   ██╗██████╗ ██╗ ██████╗     █████╗     ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ 
 //  ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗   ██╔══██╗    ██╔══██╗██╔═══██╗██║    ██║██╔════╝██╔══██╗
 //  ███████║██║   ██║██║  ██║██║██║   ██║   ███████║    ██████╔╝██║   ██║██║ █╗ ██║█████╗  ██████╔╝
 //  ██╔══██║██║   ██║██║  ██║██║██║   ██║   ██╔══██║    ██╔═══╝ ██║   ██║██║███╗██║██╔══╝  ██╔══██╗
 //  ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝   ██║  ██║    ██║     ╚██████╔╝╚███╔███╔╝███████╗██║  ██║
 //  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝    ╚═╝  ╚═╝    ╚═╝      ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝
-// ============================================================================
 //                   D E T A I L E D   A U D I O   &   P O W E R
-// ============================================================================
 //  This section displays audio device and power/battery information:
 //  1. Audio Output Devices - List of active/available playback devices
 //  2. Audio Input Devices  - List of active/available recording devices
 //  3. Power Status         - Wired connection or battery percentage/charging state
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_audio_and_power" config block (aliased as "audio_power_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Audio Output -----------------------------------------------------#
@@ -3472,7 +3528,6 @@ if (config.isEnabled("performance_info")) {
 //  ~ 1 Microphone Array (Realtek High Definition Audio) (active)
 //  #- Power  -------------------------------------------------------------#
 //  ~ Battery powered (87%) (Charging)
-// ============================================================================
 
 // Audio & Power Info (JSON Driven)
 if (config.isEnabled("audio_power_info")) {

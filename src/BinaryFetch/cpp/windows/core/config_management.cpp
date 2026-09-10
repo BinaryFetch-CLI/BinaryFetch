@@ -407,6 +407,51 @@ int ConfigManager::getNestedInt(
 }
 
 
+
+
+
+//nested string:
+std::string ConfigManager::getNestedString(
+    const std::string& rawModule,
+    const std::string& path,
+    const std::string& defaultValue) const
+{
+    std::string module = resolveSectionKey(rawModule);
+
+    if (!m_loaded || !m_config.contains(module))
+        return defaultValue;
+
+    std::vector<std::string> keys;
+    std::stringstream ss(path);
+    std::string key;
+
+    while (std::getline(ss, key, '.'))
+    {
+        keys.push_back(key);
+    }
+
+    if (!keys.empty())
+    {
+        keys[0] = resolveSubsectionKey(module, keys[0]);
+    }
+
+    nlohmann::json current = m_config[module];
+
+    for (const auto& k : keys)
+    {
+        if (!current.contains(k))
+            return defaultValue;
+
+        current = current[k];
+    }
+
+    if (current.is_string())
+        return current.get<std::string>();
+
+    return defaultValue;
+}
+
+
 // ===================== LABEL RESOLUTION =====================
 std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string section = resolveSectionKey(rawSection);

@@ -22,6 +22,8 @@ public:
     bool getNestedBool(const std::string& path, bool defaultValue = true) const;
     int getNestedInt(const std::string& module, const std::string& path, int defaultValue = 0) const;
 
+    std::string getNestedString(const std::string& module,const std::string& path,const std::string& defaultValue = "") const;
+
     // Color resolution
     std::string getColor(const std::string& section, const std::string& key, const std::string& defaultColor = "white") const;
     std::string getNestedColor(const std::string& module, const std::string& subsection, const std::string& key, const std::string& defaultColor) const;
