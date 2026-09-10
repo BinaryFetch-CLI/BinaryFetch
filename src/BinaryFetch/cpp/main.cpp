@@ -10,12 +10,14 @@
 #include <fstream>        // File stream operations (reading/writing files) 
 #include <string>         // Standard string class and methods 
 #include <regex>          // Regular expressions for pattern matching 
-#include <windows.h>      // Core Windows API functions (handles, processes) 
-#include <shlobj.h>       // Shell object functions (folder paths, UI) 
-#include <direct.h>       // Directory and file handling functions (_mkdir, _chdir) 
-#include <comdef.h>       // Native C++ compiler COM support 
-#include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
 
+#ifdef _WIN32
+     #include <windows.h>      // Core Windows API functions (handles, processes) 
+     #include <shlobj.h>       // Shell object functions (folder paths, UI) 
+     #include <direct.h>       // Directory and file handling functions (_mkdir, _chdir) 
+     #include <comdef.h>       // Native C++ compiler COM support 
+     #include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
+#endif 
 
 // ASCII Art functionality
 #include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
@@ -73,24 +75,25 @@ int global_memory_capacity = 0;
 int main(){
 
     
-	
+   #ifdef _WIN32
+          SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console
+   #endif
 
 
-    
-    // ========== SIMPLIFIED ASCII ART LOADING ==========
+        // SIMPLIFIED ASCII ART LOADING 
         // Just call loadFromFile() - it handles everything automatically!
         // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
-        // - If missing, copies from Default_Ascii_Art.txt and creates it
-        // - User can modify their art anytime in AppData folder
-
-	SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console (for emoji printing)
+        //      or, ~/.config/BinaryFetch/BinaryArt.txt
+        // - If missing, create a new file named "BinaryArts.txt" then paste the 
+        // default ASCII art based on distro and loads from there.
+        // - User can modify their art anytime from their config folder
     AsciiArt art;
     if (!art.loadFromFile()) {
         cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
         // Program continues even if art fails to load
     }
 
-    // ========== CONFIG MANAGEMENT ==========
+    // CONFIG MANAGEMENT 
     // DEV_MODE = true  → load default JSON directly from project folder (fast iteration 🧪)
     // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 🛰️
     //                    (self-heals from embedded EXE resource if the file is missing)
@@ -100,7 +103,7 @@ int main(){
     string r = config.getResetColor();
 
 	// Anyway....this is how we're allowed to print emojis in C++ console
-    // :cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
+    // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
     // Create LivePrinter
@@ -162,16 +165,13 @@ if (config.isEnabled("header_settings")) {
 
 
 
-// ============================================================================
 //   ██████╗ ██████╗ ███╗   ███╗██████╗  █████╗  ██████╗████████╗
 //  ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔════╝╚══██╔══╝
 //  ██║     ██║   ██║██╔████╔██║██████╔╝███████║██║        ██║   
 //  ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██╔══██║██║        ██║   
 //  ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ██║  ██║╚██████╗   ██║   
 //   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝   
-// ============================================================================
 //                       C O M P A C T   M O D U L E S
-// ============================================================================
 
 
 
@@ -915,22 +915,23 @@ if (config.isEnabled("compact_disk_storage")) {
 
 
 
-// ============================================================================
-//  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗ 
-//  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗
-//  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██   ██╔
-//  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗
-//  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝
-//  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝ 
-// ============================================================================
-//                      D E T A I L E D   M O D U L E S
-// ============================================================================
 
-
-
-// ============================================================================
-//                         DETAILED SYSTEM MEMORY
-// ============================================================================
+//  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ███╗   ███╗███████╗███╗   ███╗ ██████╗ ██████╗ ██╗   ██╗
+//  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗    ████╗ ████║██╔════╝████╗ ████║██╔═══██╗██╔══██╗╚██╗ ██╔╝
+//  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██████╔╝    ██╔████╔██║█████╗  ██╔████╔██║██║   ██║██████╔╝ ╚████╔╝ 
+//  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗    ██║╚██╔╝██║██╔══╝  ██║╚██╔╝██║██║   ██║██╔══██╗  ╚██╔╝  
+//  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝    ██║ ╚═╝ ██║███████╗██║ ╚═╝ ██║╚██████╔╝██║  ██║   ██║   
+//  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝     ╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
+//  This section displays comprehensive system memory information:
+//  1. SUMMARY  - Total, free, and used percentage of system RAM
+//  2. MODULES  - Per-stick capacity, type, and speed for each installed
+//     memory module
+//
+//  Output Example:
+//  #- Memory Info -------------------------#
+//   (Total: 32 GB) (Free: 18 GB) (Used: 44%)
+//   Memory 0 : (Used: 44%) 16GB DDR5 6000MHz
+//   Memory 1 : (Used: 44%) 16GB DDR5 6000MHz
 
 if (config.isEnabled("detailed_system_memory")) {
     
@@ -1039,34 +1040,29 @@ if (config.isEnabled("detailed_system_memory")) {
 
 
 
-// ============================================================================
 //  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ██████╗ ██╗███████╗██╗  ██╗
 //  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗    ██╔══██╗██║██╔════╝██║ ██╔╝
 //  ██║  ██║█████╗     ██║   ███████║██║██║     █████╗  ██████╔╝    ██║  ██║██║███████╗█████╔╝ 
 //  ██║  ██║██╔══╝     ██║   ██╔══██║██║██║     ██╔══╝  ██╔══██╗    ██║  ██║██║╚════██║██╔═██╗ 
 //  ██████╔╝███████╗   ██║   ██║  ██║██║███████╗███████╗██████╔╝    ██████╔╝██║███████║██║  ██╗
 //  ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝     ╚═════╝ ╚═╝╚══════╝╚═╝  ╚═╝
-// ============================================================================
 //                         D E T A I L E D   S T O R A G E
-// ============================================================================
 //  This section displays comprehensive disk information in two main parts:
 //  1. STORAGE SUMMARY - Shows each disk with capacity, usage, file system,
 //     and external/internal status
 //  2. DISK PERFORMANCE - Displays read/write speeds and serial numbers
 //  3. PREDICTED PERFORMANCE - Estimated speeds (if enabled)
-// ============================================================================
 //
 //  Output Example:
 //  ------------------------- STORAGE SUMMARY --------------------------
 //   SSD Disk (C:) [ (Used)  218.90 GiB / 237.10 GiB    92% - NTFS  Int ]
-//  HDD Disk (D:) [ (Used)  189.10 GiB / 465.76 GiB    40% - NTFS  Int ]
+//   HDD Disk (D:) [ (Used)  189.10 GiB / 465.76 GiB    40% - NTFS  Int ]
 //   USB Disk (G:) [ (Used)  104.02 GiB / 112.64 GiB    92% - NTFS  Ext ]
 //
 //   -------------------- DISK PERFORMANCE & DETAILS --------------------
 //  Disk (C:) [ Read: 1225.44 MB/s | Write:  131.03 MB/s | SN-1000 Int ]
 //  Disk (D:) [ Read:  128.76 MB/s | Write:  111.68 MB/s | SN-1001 Int ]
 //  Disk (G:) [ Read:  151.20 MB/s | Write:    3.73 MB/s | SN-1002 Ext ]
-// ============================================================================
 
 // ----------------- DETAILED STORAGE SECTION -----------------
 
@@ -1137,7 +1133,7 @@ if (config.isEnabled("detailed_disk_storage")) {
     vector<storage_data> all_disks_captured;
 
 
-    // ----------------- STORAGE SUMMARY -----------------
+    //  STORAGE SUMMARY 
 
     if (config.getNestedBool(
             "detailed_disk_storage",
@@ -1507,7 +1503,7 @@ if (config.isEnabled("detailed_disk_storage")) {
     }
 
 
-    // ----------------- DISK PERFORMANCE -----------------
+    //  DISK PERFORMANCE 
 
     if (!all_disks_captured.empty() &&
         config.getNestedBool(
@@ -2205,16 +2201,13 @@ if (config.isEnabled("detailed_disk_storage")) {
 
 // ----------------- END DETAILED STORAGE SECTION -----------------
 
-// ============================================================================
 //  ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗
 //  ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝
 //  ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ 
 //  ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗ 
 //  ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗
 //  ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-// ============================================================================
 //                      D E T A I L E D   N E T W O R K
-// ============================================================================
 //  This section displays comprehensive network information including:
 //  1. Network Name      - The name of the active network connection
 //  2. Network Type      - Type of network (Ethernet, Wi-Fi, etc.)
@@ -2224,7 +2217,6 @@ if (config.isEnabled("detailed_disk_storage")) {
 //  6. MAC Address       - The physical hardware address of the adapter
 //  7. Upload Speed      - The average upload speed of the connection
 //  8. Download Speed    - The average download speed of the connection
-// ============================================================================
 //
 //  Output Example:
 //  #- Network Info ---------------------------------------------------#
@@ -2236,7 +2228,6 @@ if (config.isEnabled("detailed_disk_storage")) {
 //  ~ Mac address             : 00:1A:2B:3C:4D:5E
 //  ~ avg upload speed        : 10.5 Mbps
 //  ~ avg download speed      : 85.2 Mbps
-// ============================================================================
 if (config.isEnabled("detailed_network_connection"))
 {
     // line spacing json driven
@@ -2287,16 +2278,13 @@ if (config.isEnabled("detailed_network_connection"))
     field("download",  "download",  net.get_network_download_speed());
 }
 
-// ============================================================================
 //  ██████╗ ██╗   ██╗███╗   ███╗███╗   ███╗██╗   ██╗
 //  ██╔══██╗██║   ██║████╗ ████║████╗ ████║╚██╗ ██╔╝
 //  ██║  ██║██║   ██║██╔████╔██║██╔████╔██║ ╚████╔╝ 
 //  ██║  ██║██║   ██║██║╚██╔╝██║██║╚██╔╝██║  ╚██╔╝  
 //  ██████╔╝╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║   ██║   
 //  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝   ╚═╝   
-// ============================================================================
 //                   D E T A I L E D   D U M M Y   N E T W O R K
-// ============================================================================
 //  This section displays dummy/example network information for testing:
 //  1. Network Name      - Example: "InterCentury"
 //  2. Network Type      - Example: "Ethernet"
@@ -2304,7 +2292,6 @@ if (config.isEnabled("detailed_network_connection"))
 //  4. Read Speed         - Example: "812.45 Mbps"
 //  5. Write Speed        - Example: "634.10 Mbps"
 //  All values, labels, colors, prefixes, and units are fully JSON-driven.
-// ============================================================================
 //
 //  Output Example:
 //  #- Network Info ---------------------------------------------------#
@@ -2313,7 +2300,6 @@ if (config.isEnabled("detailed_network_connection"))
 //  ~ Local IP                : 192.168.1.42
 //  ~ Read Speed              : 812.45 Mbps
 //  ~ Write Speed             : 634.10 Mbps
-// ============================================================================
 
 if (config.isEnabled("dummy_network_info")) {
     
@@ -2363,16 +2349,13 @@ if (config.isEnabled("dummy_network_info")) {
 }
 
 
-// ============================================================================
 //   ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔═══██╗██╔════╝    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║   ██║███████╗    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║╚════██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝███████║    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚══════╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                    D E T A I L E D   O P E R A T I N G   S Y S T E M
-// ============================================================================
 //  This section displays comprehensive OS information including:
 //  1. Name          - OS name (e.g., "Windows 11 Pro")
 //  2. Build         - OS build/version number
@@ -2383,7 +2366,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  7. Serial        - OS serial number
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_operating_system" config block (aliased as "os_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Operating System -----------------------------------------#
@@ -2394,7 +2376,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  ~ Uptime                  : 3d 4h 12m
 //  ~ Install Date            : 2024-01-15
 //  ~ Serial                  : XXXXX-XXXXX-XXXXX-XXXXX
-// ============================================================================
 
     // OS Info (JSON Driven)
     if (config.isEnabled("os_info")) {
@@ -2446,16 +2427,13 @@ if (config.isEnabled("dummy_network_info")) {
         field("serial",       "serial",       os.get_os_serial_number());
     }
 
-// ============================================================================
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║     ██████╔╝██║   ██║    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║     ██╔═══╝ ██║   ██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╗██║     ╚██████╔╝    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                       D E T A I L E D   P R O C E S S O R
-// ============================================================================
 
     if (config.isEnabled("detailed_processor")) {
         
@@ -2652,16 +2630,13 @@ if (config.isEnabled("dummy_network_info")) {
         }
     }
 
-// ============================================================================
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║  ███╗██████╔╝██║   ██║    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║██╔═══╝ ██║   ██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝██║     ╚██████╔╝    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚═╝      ╚═════╝     ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                    D E T A I L E D   G R A P H I C S   C A R D
-// ============================================================================
 
     if (config.isEnabled("detailed_graphics_card")) {
         
@@ -2911,16 +2886,13 @@ if (config.isEnabled("dummy_network_info")) {
 
 
 
-// ============================================================================
 //   ██████╗ ██╗███████╗██████╗ ██╗      █████╗ ██╗   ██╗
 //   ██╔══██╗██║██╔════╝██╔══██╗██║     ██╔══██╗╚██╗ ██╔╝
 //   ██║  ██║██║███████╗██████╔╝██║     ███████║ ╚████╔╝ 
 //   ██║  ██║██║     ██ ██╗     ██║     ██╔══██║  ╚██╔╝  
 //   ██████╔╝██║███████╗██║     ███████╗██║  ██║   ██║   
 //   ╚═════╝ ╚═╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   
-// ============================================================================
 //                      D E T A I L E D   D I S P L A Y
-// ============================================================================
 //  Displays comprehensive monitor information:
 //  • Display Banner      - Index number with formatted header
 //  • Display Name        - Manufacturer and model
@@ -2930,7 +2902,6 @@ if (config.isEnabled("dummy_network_info")) {
 //  • Scaling             - DPI scaling percentage
 //  • Upscale             - Upscaling multiplier
 //  • DSR / VSR           - Dynamic Super Resolution status
-// ============================================================================
 if (config.isEnabled("display_info")) {
     
     // line spacing json driven
@@ -3099,16 +3070,13 @@ if (config.isEnabled("display_info")) {
 }
 
 
-// ============================================================================
 //  ██████╗ ██╗ ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔══██╗██║██╔═══██╗██╔════╝    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██████╔╝██║██║   ██║███████╗    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██╔══██╗██║██║   ██║╚════██║    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ██████╔╝██║╚██████╔╝███████║    ██║██║ ╚████║██║     ╚██████╔╝
 //  ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //              D E T A I L E D   B I O S   &   M O T H E R B O A R D
-// ============================================================================
 //  This section displays comprehensive BIOS and motherboard information:
 //  1. Bios Vendor           - Manufacturer of the system BIOS/UEFI
 //  2. Bios Version          - Installed BIOS/UEFI version string
@@ -3117,7 +3085,6 @@ if (config.isEnabled("display_info")) {
 //  5. Motherboard Manufacturer - Motherboard vendor/brand
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_bios_and_motherboard" config block (aliased as "bios_mb_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- BIOS & Motherboard Info ----------------------------------------#
@@ -3126,7 +3093,6 @@ if (config.isEnabled("display_info")) {
 //  ~ Bios Date               : 2024-03-12
 //  ~ Motherboard Model       : ROG STRIX B650E-F
 //  ~ Motherboard Manufacturer: ASUSTeK COMPUTER INC.
-// ============================================================================
 if (config.isEnabled("bios_mb_info")) {
 
     // line spacing json driven
@@ -3227,30 +3193,25 @@ if (config.isEnabled("bios_mb_info")) {
 }
 
 
-// ============================================================================
 //  ██╗   ██╗███████╗███████╗██████╗     ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██║   ██║██╔════╝██╔════╝██╔══██╗    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║   ██║███████╗█████╗  ██████╔╝    ██║██╔██╗ ██║█████╗  ██║   ██║
 //  ██║   ██║╚════██║██╔══╝  ██╔══██╗    ██║██║╚██╗██║██╔══╝  ██║   ██║
 //  ╚██████╔╝███████║███████╗██║  ██║    ██║██║ ╚████║██║     ╚██████╔╝
 //   ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝    ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝ 
-// ============================================================================
 //                      D E T A I L E D   U S E R   A C C O U N T
-// ============================================================================
 //  This section displays comprehensive user account information:
 //  1. Username           - The currently logged-in user's account name
 //  2. Computer Name      - The hostname of the machine
 //  3. Domain             - The Windows domain or workgroup the PC belongs to
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_user_account" config block (aliased as "user_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- User Info ------------------------------------------------------#
 //  ~ Username              : JohnDoe
 //  ~ Computer Name         : DESKTOP-4X9K2P1
 //  ~ Domain                : WORKGROUP
-// ============================================================================
 if (config.isEnabled("user_info")) {
     
     // line spacing json driven
@@ -3318,16 +3279,13 @@ if (config.isEnabled("user_info")) {
     }
 }
 
-// ============================================================================
 //  ██████╗ ███████╗██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗ █████╗ ███╗   ██╗ ██████╗███████╗
 //  ██╔══██╗██╔════╝██╔══██╗██╔════╝██╔═══██╗██╔══██╗████╗ ████║██╔══██╗████╗  ██║██╔════╝██╔════╝
 //  ██████╔╝█████╗  ██████╔╝█████╗  ██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║██║     █████╗  
 //  ██╔═══╝ ██╔══╝  ██╔══██╗██╔══╝  ██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║██║     ██╔══╝  
 //  ██║     ███████╗██║  ██║██║     ╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║╚██████╗███████╗
 //  ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝      ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝
-// ============================================================================
 //                       D E T A I L E D   P E R F O R M A N C E
-// ============================================================================
 //  This section displays real-time system performance metrics:
 //  1. System Uptime      - Time elapsed since the last system boot
 //  2. CPU Usage          - Current processor utilization percentage
@@ -3336,7 +3294,6 @@ if (config.isEnabled("user_info")) {
 //  5. GPU Usage           - Current graphics card utilization percentage
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_resource_usage" config block (aliased as "performance_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Performance Info -----------------------------------------------#
@@ -3345,7 +3302,6 @@ if (config.isEnabled("user_info")) {
 //  ~ RAM Usage              : 47%
 //  ~ Disk Usage             : 68%
 //  ~ GPU Usage              : 8%
-// ============================================================================
 
 // Performance Info (JSON Driven)
 if (config.isEnabled("performance_info")) {
@@ -3447,23 +3403,19 @@ if (config.isEnabled("performance_info")) {
     }
 }
 
-// ============================================================================
 //   █████╗ ██╗   ██╗██████╗ ██╗ ██████╗     █████╗     ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ 
 //  ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗   ██╔══██╗    ██╔══██╗██╔═══██╗██║    ██║██╔════╝██╔══██╗
 //  ███████║██║   ██║██║  ██║██║██║   ██║   ███████║    ██████╔╝██║   ██║██║ █╗ ██║█████╗  ██████╔╝
 //  ██╔══██║██║   ██║██║  ██║██║██║   ██║   ██╔══██║    ██╔═══╝ ██║   ██║██║███╗██║██╔══╝  ██╔══██╗
 //  ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝   ██║  ██║    ██║     ╚██████╔╝╚███╔███╔╝███████╗██║  ██║
 //  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝    ╚═╝  ╚═╝    ╚═╝      ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝
-// ============================================================================
 //                   D E T A I L E D   A U D I O   &   P O W E R
-// ============================================================================
 //  This section displays audio device and power/battery information:
 //  1. Audio Output Devices - List of active/available playback devices
 //  2. Audio Input Devices  - List of active/available recording devices
 //  3. Power Status         - Wired connection or battery percentage/charging state
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
 //  via the "detailed_audio_and_power" config block (aliased as "audio_power_info").
-// ============================================================================
 //
 //  Output Example:
 //  #- Audio Output -----------------------------------------------------#
@@ -3472,7 +3424,6 @@ if (config.isEnabled("performance_info")) {
 //  ~ 1 Microphone Array (Realtek High Definition Audio) (active)
 //  #- Power  -------------------------------------------------------------#
 //  ~ Battery powered (87%) (Charging)
-// ============================================================================
 
 // Audio & Power Info (JSON Driven)
 if (config.isEnabled("audio_power_info")) {
