@@ -1788,13 +1788,27 @@ sections["dummy_network_info"] = [&]() {
         lp.push(ss.str());
     };
 
-    field("name");
-    field("type");
-    field("local_ip");
-    field("read_speed");
-    field("write_speed");
-};
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
 
+    fields["name"]        = [&]() { field("name"); };
+    fields["type"]        = [&]() { field("type"); };
+    fields["local_ip"]    = [&]() { field("local_ip"); };
+    fields["read_speed"]  = [&]() { field("read_speed"); };
+    fields["write_speed"] = [&]() { field("write_speed"); };
+
+    // ---- Run fields in the order JSON specifies ----
+    // Each field prints its own line, so this only controls sequence,
+    // not inter-field spacing (unlike the compact single-line sections).
+    static const std::vector<std::string> defaultOrder =
+        {"name", "type", "local_ip", "read_speed", "write_speed"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
+
+    for (const auto& key : order) {
+        auto it = fields.find(key);
+        if (it != fields.end()) it->second();
+    }
+};
 
 //   ██████╗ ███████╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔═══██╗██╔════╝    ██║████╗  ██║██╔════╝██╔═══██╗
@@ -1823,7 +1837,6 @@ sections["dummy_network_info"] = [&]() {
 //  ~ Uptime                  : 3d 4h 12m
 //  ~ Install Date            : 2024-01-15
 //  ~ Serial                  : XXXXX-XXXXX-XXXXX-XXXXX
-
 sections["detailed_operating_system"] = [&]() {
     if (!config.isEnabled("detailed_operating_system")) return;
         
@@ -1865,15 +1878,27 @@ sections["detailed_operating_system"] = [&]() {
             lp.push(ss.str());
         };
 
-        field("name",         "name",         os.GetOSName());
-        field("build",        "build",        os.GetOSVersion());
-        field("architecture", "architecture", os.GetOSArchitecture());
-        field("kernel",       "kernel",       os.get_os_kernel_info());
-        field("uptime",       "uptime",       os.get_os_uptime());
-        field("install_date", "install_date", os.get_os_install_date());
-        field("serial",       "serial",       os.get_os_serial_number());
-    };
+        // ---- Register each orderable field as a named lambda ----
+        std::map<std::string, std::function<void()>> fields;
 
+        fields["name"]         = [&]() { field("name",         "name",         os.GetOSName()); };
+        fields["build"]        = [&]() { field("build",        "build",        os.GetOSVersion()); };
+        fields["architecture"] = [&]() { field("architecture", "architecture", os.GetOSArchitecture()); };
+        fields["kernel"]       = [&]() { field("kernel",       "kernel",       os.get_os_kernel_info()); };
+        fields["uptime"]       = [&]() { field("uptime",       "uptime",       os.get_os_uptime()); };
+        fields["install_date"] = [&]() { field("install_date", "install_date", os.get_os_install_date()); };
+        fields["serial"]       = [&]() { field("serial",       "serial",       os.get_os_serial_number()); };
+
+        // ---- Run fields in the order JSON specifies ----
+        static const std::vector<std::string> defaultOrder =
+            {"name", "build", "architecture", "kernel", "uptime", "install_date", "serial"};
+        auto order = config.getStringArray(sec, "order", defaultOrder);
+
+        for (const auto& key : order) {
+            auto it = fields.find(key);
+            if (it != fields.end()) it->second();
+        }
+    };
 //   ██████╗██████╗ ██╗   ██╗    ██╗███╗   ██╗███████╗ ██████╗ 
 //  ██╔════╝██╔══██╗██║   ██║    ██║████╗  ██║██╔════╝██╔═══██╗
 //  ██║     ██████╔╝██║   ██║    ██║██╔██╗ ██║█████╗  ██║   ██║

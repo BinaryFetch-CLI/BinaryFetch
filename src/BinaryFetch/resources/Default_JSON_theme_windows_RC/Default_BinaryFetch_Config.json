@@ -1096,7 +1096,8 @@
 },
 "dummy_network_info": {
   "enabled": false,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["name", "type", "local_ip", "read_speed", "write_speed"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1176,7 +1177,8 @@
 },
 "detailed_operating_system": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["name", "build", "architecture", "kernel", "uptime", "install_date", "serial"],
   "header": {
     "show": true,
     "prefix": "#- ",
