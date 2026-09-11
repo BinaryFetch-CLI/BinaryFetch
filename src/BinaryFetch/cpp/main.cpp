@@ -113,6 +113,32 @@ std::string makeVisualizer(float percentage, const ConfigManager& config,
 }
 
 
+
+
+// Runs field lambdas from `fields` in the order specified by `order`.
+// Each order entry is trimmed of trailing spaces to find the matching
+// field key; any trailing spaces present in the raw JSON entry are
+// re-appended to `ss` after the field runs, letting the JSON "order"
+// array control inter-field spacing directly (e.g. "name " adds one
+// space after the name field, "name  " adds two, "name" adds none).
+void runOrderedFields(const std::vector<std::string>& order,
+                       const std::map<std::string, std::function<void()>>& fields,
+                       std::ostringstream& ss)
+{
+    for (const auto& rawKey : order) {
+        size_t endPos = rawKey.find_last_not_of(' ');
+        std::string key = (endPos == std::string::npos) ? "" : rawKey.substr(0, endPos + 1);
+        std::string trailingSpaces = (endPos == std::string::npos) ? rawKey : rawKey.substr(endPos + 1);
+
+        auto it = fields.find(key);
+        if (it != fields.end()) {
+            it->second();
+            if (!trailingSpaces.empty()) ss << trailingSpaces;
+        }
+    }
+}
+
+
 int main(){
 
     
@@ -217,7 +243,6 @@ sections["header_settings"] = [&]() {
 //                       C O M P A C T   M O D U L E S
 
 
-
 // ==================== COMPACT TIME ====================
 sections["compact_date_and_time"] = [&]() {
     if (!config.isEnabled("compact_date_and_time")) return;
@@ -234,12 +259,19 @@ sections["compact_date_and_time"] = [&]() {
            << config.getPrefix("compact_date_and_time", "prefixes.prefix", "") << r;
     }
 
+    // ---- Register each orderable subsection as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
     // ---------- TIME SECTION ----------
-    if (config.isNestedEnabled("compact_date_and_time", "time", "enabled")) {
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "") << "(" << r;
+    fields["time"] = [&]() {
+        if (!config.isNestedEnabled("compact_date_and_time", "time", "enabled")) return;
+
+        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "time.open", "(") << r;
 
         if (config.isNestedEnabled("compact_date_and_time", "time", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "time", "label", "") << "Time: " << r;
+            ss << config.getNestedColor("compact_date_and_time", "time", "label", "")
+               << config.getNestedString("compact_date_and_time", "time.label_text", "Time: ") << r;
         }
 
         bool wrote = false;
@@ -251,27 +283,34 @@ sections["compact_date_and_time"] = [&]() {
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "time", "show_minute")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "") << ":" << r;
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
+                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
             ss << config.getNestedColor("compact_date_and_time", "time", "minute", "")
                << setw(2) << setfill('0') << time.getMinute() << r;
             wrote = true;
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "time", "show_second")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "") << ":" << r;
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
+                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
             ss << config.getNestedColor("compact_date_and_time", "time", "second", "")
                << setw(2) << setfill('0') << time.getSecond() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "") << ") " << r;
-    }
+        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "time.close", ")") << r;
+    };
 
     // ---------- DATE SECTION ----------
-    if (config.isNestedEnabled("compact_date_and_time", "date", "enabled")) {
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "") << "(" << r;
+    fields["date"] = [&]() {
+        if (!config.isNestedEnabled("compact_date_and_time", "date", "enabled")) return;
+
+        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "date.open", "(") << r;
 
         if (config.isNestedEnabled("compact_date_and_time", "date", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "date", "label", "") << "Date: " << r;
+            ss << config.getNestedColor("compact_date_and_time", "date", "label", "")
+               << config.getNestedString("compact_date_and_time", "date.label_text", "Date: ") << r;
         }
 
         bool wrote = false;
@@ -283,34 +322,42 @@ sections["compact_date_and_time"] = [&]() {
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "") << " : " << r;
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
+                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
             ss << config.getNestedColor("compact_date_and_time", "date", "month_name", "")
                << time.getMonthName() << r;
             wrote = true;
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_num")) {
-            if (wrote) ss << " ";
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "num_sep_color", "")
+                          << config.getNestedString("compact_date_and_time", "date.num_sep_text", " ") << r;
             ss << config.getNestedColor("compact_date_and_time", "date", "month_num", "")
                << setw(2) << setfill('0') << time.getMonthNumber() << r;
             wrote = true;
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "date", "show_year")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "") << " : " << r;
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
+                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
             ss << config.getNestedColor("compact_date_and_time", "date", "year", "")
                << time.getYearNumber() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "") << ") " << r;
-    }
+        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "date.close", ")") << r;
+    };
 
     // ---------- WEEK SECTION ----------
-    if (config.isNestedEnabled("compact_date_and_time", "week", "enabled")) {
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "") << "(" << r;
+    fields["week"] = [&]() {
+        if (!config.isNestedEnabled("compact_date_and_time", "week", "enabled")) return;
+
+        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "week.open", "(") << r;
 
         if (config.isNestedEnabled("compact_date_and_time", "week", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "week", "label", "") << "Week: " << r;
+            ss << config.getNestedColor("compact_date_and_time", "week", "label", "")
+               << config.getNestedString("compact_date_and_time", "week.label_text", "Week: ") << r;
         }
 
         bool wrote = false;
@@ -322,20 +369,26 @@ sections["compact_date_and_time"] = [&]() {
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "week", "show_day_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "week", "sep", "") << " - " << r;
+            if (wrote) ss << config.getNestedColor("compact_date_and_time", "week", "sep", "")
+                          << config.getNestedString("compact_date_and_time", "week.sep_text", " - ") << r;
             ss << config.getNestedColor("compact_date_and_time", "week", "day_name", "")
                << time.getDayName() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "") << ") " << r;
-    }
+        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "week.close", ")") << r;
+    };
 
     // ---------- LEAP YEAR SECTION ----------
-    if (config.isNestedEnabled("compact_date_and_time", "leap_year", "enabled")) {
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "") << "(" << r;
+    fields["leap_year"] = [&]() {
+        if (!config.isNestedEnabled("compact_date_and_time", "leap_year", "enabled")) return;
+
+        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "leap_year.open", "(") << r;
 
         if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "leap_year", "label", "") << "Leap Year: " << r;
+            ss << config.getNestedColor("compact_date_and_time", "leap_year", "label", "")
+               << config.getNestedString("compact_date_and_time", "leap_year.label_text", "Leap Year: ") << r;
         }
 
         if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_val")) {
@@ -343,23 +396,29 @@ sections["compact_date_and_time"] = [&]() {
                << time.getLeapYear() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "") << ") " << r;
-    }
+        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "leap_year.close", ")") << r;
+    };
+
+    // ---- Run subsections in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"time ", "date ", "week ", "leap_year"};
+    auto order = config.getStringArray("compact_date_and_time", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
+
 
 // ==================== COMPACT OPERATING SYSTEM ====================
 sections["compact_operating_system"] = [&]() {
     if (!config.isEnabled("compact_operating_system")) return;
     ostringstream ss;
 
-
     // line spacing
     int spacing = config.getNestedInt("compact_operating_system","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
-
-
 
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_operating_system", "prefixes.show")) {
@@ -375,100 +434,129 @@ sections["compact_operating_system"] = [&]() {
     ss << config.getColor("compact_operating_system", "separator.color", "")
        << config.getPrefix("compact_operating_system", "separator.text", ":") << " " << r;
 
-    // Name field
-    if (config.isFieldEnabled("compact_operating_system", "fields.name.show")) {
-        ss << config.getColor("compact_operating_system", "fields.name.value_color", "")
-           << c_os.getOSName() << r << " ";
-    }
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
 
-    // Build field
-    if (config.isFieldEnabled("compact_operating_system", "fields.build.show")) {
+    fields["name"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.name.show")) return;
+        ss << config.getColor("compact_operating_system", "fields.name.value_color", "")
+           << c_os.getOSName() << r;
+    };
+
+    fields["build"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.build.show")) return;
         ss << config.getColor("compact_operating_system", "fields.build.value_color", "")
            << c_os.getOSBuild() << r;
-    }
+    };
 
-    // Architecture (with brackets)
-    if (config.isFieldEnabled("compact_operating_system", "fields.arch.show")) {
-        ss << config.getColor("compact_operating_system", "brackets.color", "") << "(" << r
+    fields["arch"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.arch.show")) return;
+        ss << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
            << config.getColor("compact_operating_system", "fields.arch.value_color", "")
            << c_os.getArchitecture() << r
-           << config.getColor("compact_operating_system", "brackets.color", "") << ")" << r;
-    }
+           << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+    };
 
-    // Uptime (with brackets)
-    if (config.isFieldEnabled("compact_operating_system", "fields.uptime.show")) {
-        ss << config.getColor("compact_operating_system", "brackets.color", "") << "(" << r
-           << config.getColor("compact_operating_system", "fields.uptime.label_color", "") << "uptime: " << r
+    fields["uptime"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.uptime.show")) return;
+        ss << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
+           << config.getColor("compact_operating_system", "fields.uptime.label_color", "")
+           << config.getLabel("compact_operating_system", "fields.uptime.label", "uptime: ") << r
            << config.getColor("compact_operating_system", "fields.uptime.value_color", "")
            << c_os.getUptime() << r
-           << config.getColor("compact_operating_system", "brackets.color", "") << ")" << r;
-    }
+           << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+    };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"name ", "build", "arch ", "uptime"};
+    auto order = config.getStringArray("compact_operating_system", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
 
-// ==================== COMPACT CPU ====================
+// -------------compact processor------------
 sections["compact_processor"] = [&]() {
     if (!config.isEnabled("compact_processor")) return;
     ostringstream ss;
 
-    // line spacing json driven
     int spacing = config.getNestedInt("compact_processor","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_processor", "prefixes.show")) {
         ss << config.getColor("compact_processor", "prefixes.prefix_color", "")
            << config.getPrefix("compact_processor", "prefixes.prefix", "") << r;
     }
 
-    // Label
     ss << config.getColor("compact_processor", "label.color", "")
        << config.getLabel("compact_processor", "label.text", "CPU") << r;
 
-    // Separator
     ss << config.getColor("compact_processor", "separator.color", "")
        << config.getPrefix("compact_processor", "separator.text", ":") << " " << r;
 
-    // Name field
-    if (config.isFieldEnabled("compact_processor", "fields.name.show")) {
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["name"] = [&]() {
+        if (!config.isFieldEnabled("compact_processor", "fields.name.show")) return;
         ss << config.getColor("compact_processor", "fields.name.value_color", "")
            << c_cpu.getCPUName() << r;
-    }
+        // no trailing space here anymore — "order" controls it now
+    };
 
-    // Cores and Threads (with brackets)
-    if (config.isFieldEnabled("compact_processor", "fields.cores.show") ||
-        config.isFieldEnabled("compact_processor", "fields.threads.show")) {
-        ss << config.getColor("compact_processor", "brackets.color", "") << "(" << r;
+    fields["cores_threads"] = [&]() {
+        bool showCores = config.isFieldEnabled("compact_processor", "fields.cores.show");
+        bool showThreads = config.isFieldEnabled("compact_processor", "fields.threads.show");
+        if (!showCores && !showThreads) return;
 
-        if (config.isFieldEnabled("compact_processor", "fields.cores.show")) {
+        ss << config.getColor("compact_processor", "brackets.color", "")
+           << config.getPrefix("compact_processor", "brackets.open", "(") << r;
+
+        if (showCores) {
             ss << config.getColor("compact_processor", "fields.cores.value_color", "")
                << c_cpu.getCPUCores() << r
-               << config.getColor("compact_processor", "text_color", "") << "C" << r;
+               << config.getColor("compact_processor", "fields.cores.value_suffix_color", "")
+               << config.getLabel("compact_processor", "fields.cores.value_suffix", "C") << r;
         }
 
-      if (config.isFieldEnabled("compact_processor", "fields.cores.show") &&
-         config.isFieldEnabled("compact_processor", "fields.threads.show")) {
-         ss << config.getColor("compact_processor", "separator.divider_color", "")
-            << config.getPrefix("compact_processor", "separator.divider", "/") << r;
-}
+        if (showCores && showThreads) {
+            ss << config.getColor("compact_processor", "separator.divider_color", "")
+               << config.getPrefix("compact_processor", "separator.divider", "/") << r;
+        }
 
-        if (config.isFieldEnabled("compact_processor", "fields.threads.show")) {
+        if (showThreads) {
             ss << config.getColor("compact_processor", "fields.threads.value_color", "")
                << c_cpu.getCPUThreads() << r
-               << config.getColor("compact_processor", "text_color", "") << "T" << r;
+               << config.getColor("compact_processor", "fields.threads.value_suffix_color", "")
+               << config.getLabel("compact_processor", "fields.threads.value_suffix", "T") << r;
         }
 
-        ss << config.getColor("compact_processor", "brackets.color", "") << ")" << r;
-    }
+        ss << config.getColor("compact_processor", "brackets.color", "")
+           << config.getPrefix("compact_processor", "brackets.close", ")") << r;
+        // no trailing space here anymore
+    };
 
-    // Clock speed
-    if (config.isFieldEnabled("compact_processor", "fields.clock.show")) {
+    fields["clock"] = [&]() {
+        if (!config.isFieldEnabled("compact_processor", "fields.clock.show")) return;
         ss << fixed << setprecision(2)
-           << config.getColor("compact_processor", "fields.clock.at_symbol_color", "") << "@" << r
+           << config.getColor("compact_processor", "fields.clock.at_symbol_color", "")
+           << config.getLabel("compact_processor", "fields.clock.at_symbol", "@") << r
            << config.getColor("compact_processor", "fields.clock.value_color", "") << " "
-           << c_cpu.getClockSpeed() << " GHz" << r;
-    }
+           << c_cpu.getClockSpeed()
+           << config.getColor("compact_processor", "fields.clock.unit_color", "")
+           << config.getLabel("compact_processor", "fields.clock.unit", " GHz") << r;
+    };
+
+    static const std::vector<std::string> defaultOrder =
+        {"cores_threads ", "name ", "clock"};
+    auto order = config.getStringArray("compact_processor", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
@@ -481,8 +569,6 @@ sections["compact_graphics_card"] = [&]() {
     // line spacing json driven
     int spacing = config.getNestedInt("compact_graphics_card","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
-
-
 
     // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_graphics_card", "prefixes.show")) {
@@ -498,36 +584,57 @@ sections["compact_graphics_card"] = [&]() {
     ss << config.getColor("compact_graphics_card", "separator.color", "")
        << config.getPrefix("compact_graphics_card", "separator.text", ":") << " " << r;
 
-    // Name field
-    if (config.isFieldEnabled("compact_graphics_card", "fields.name.show")) {
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["name"] = [&]() {
+        if (!config.isFieldEnabled("compact_graphics_card", "fields.name.show")) return;
         ss << config.getColor("compact_graphics_card", "fields.name.value_color", "")
            << c_gpu.getGPUName() << r;
-    }
+    };
 
-    // Usage (with brackets)
-    if (config.isFieldEnabled("compact_graphics_card", "fields.usage.show")) {
-        ss << config.getColor("compact_graphics_card", "brackets.color", "") << "(" << r
+    fields["usage"] = [&]() {
+        if (!config.isFieldEnabled("compact_graphics_card", "fields.usage.show")) return;
+        ss << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
            << config.getColor("compact_graphics_card", "fields.usage.value_color", "")
-           << c_gpu.getGPUUsagePercent() << "%" << r
-           << config.getColor("compact_graphics_card", "brackets.color", "") << ")" << r;
-    }
+           << c_gpu.getGPUUsagePercent()
+           << config.getColor("compact_graphics_card", "fields.usage.unit_color", "")
+           << config.getLabel("compact_graphics_card", "fields.usage.unit", "%") << r
+           << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+    };
 
-    // VRAM (with brackets)
-    if (config.isFieldEnabled("compact_graphics_card", "fields.vram.show")) {
-        ss << config.getColor("compact_graphics_card", "brackets.color", "") << "(" << r
+    fields["vram"] = [&]() {
+        if (!config.isFieldEnabled("compact_graphics_card", "fields.vram.show")) return;
+        ss << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
            << config.getColor("compact_graphics_card", "fields.vram.value_color", "")
-           << c_gpu.getVRAMGB() << " GB" << r
-           << config.getColor("compact_graphics_card", "brackets.color", "") << ")" << r;
-    }
+           << c_gpu.getVRAMGB()
+           << config.getColor("compact_graphics_card", "fields.vram.unit_color", "")
+           << config.getLabel("compact_graphics_card", "fields.vram.unit", " GB") << r
+           << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+    };
 
-    // Frequency (with brackets)
-    if (config.isFieldEnabled("compact_graphics_card", "fields.freq.show")) {
-        ss << config.getColor("compact_graphics_card", "brackets.color", "") << "(" << r
-           << config.getColor("compact_graphics_card", "fields.freq.at_symbol_color", "") << "@" << r
+    fields["freq"] = [&]() {
+        if (!config.isFieldEnabled("compact_graphics_card", "fields.freq.show")) return;
+        ss << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
+           << config.getColor("compact_graphics_card", "fields.freq.at_symbol_color", "")
+           << config.getLabel("compact_graphics_card", "fields.freq.at_symbol", "@") << r
            << config.getColor("compact_graphics_card", "fields.freq.value_color", "")
            << c_gpu.getGPUFrequency() << r
-           << config.getColor("compact_graphics_card", "brackets.color", "") << ") " << r;
-    }
+           << config.getColor("compact_graphics_card", "brackets.color", "")
+           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+    };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"name ", "usage ", "vram ", "freq"};
+    auto order = config.getStringArray("compact_graphics_card", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
@@ -549,71 +656,98 @@ sections["compact_display_monitor"] = [&]() {
            << config.getColor("compact_display_monitor", "header.separator_color", "")
            << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r
            << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-           << "No displays detected" << r;
+           << config.getLabel("compact_display_monitor", "no_displays_text", "No displays detected") << r;
         lp.push(ss.str());
-    } else {
-        for (size_t i = 0; i < screens.size(); ++i) {
-            const auto& screen = screens[i];
-            ostringstream ss;
+        return;
+    }
 
-            // Prefix - comes entirely from JSON
-            if (config.isFieldEnabled("compact_display_monitor", "prefixes.show")) {
-                ss << config.getColor("compact_display_monitor", "prefixes.prefix_color", "")
-                   << config.getPrefix("compact_display_monitor", "prefixes.prefix", "") << r;
-            }
+    for (size_t i = 0; i < screens.size(); ++i) {
+        const auto& screen = screens[i];
+        ostringstream ss;
 
-            // Header: Display N:
-            ss << config.getColor("compact_display_monitor", "header.text_color", "")
-               << config.getLabel("compact_display_monitor", "header.text", "Display") << " " << (i + 1) << r
-               << config.getColor("compact_display_monitor", "header.separator_color", "")
-               << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r;
-
-            // Display name
-            if (config.isFieldEnabled("compact_display_monitor", "fields.name.show")) {
-                ss << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-                   << screen.name << r << " ";
-            }
-
-            // Resolution: (3840 x 2160)
-            if (config.isFieldEnabled("compact_display_monitor", "fields.resolution.show")) {
-                ss << config.getColor("compact_display_monitor", "brackets.color", "") << "(" << r
-                   << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-                   << screen.native_width << r
-                   << config.getColor("compact_display_monitor", "fields.resolution.x_color", "") << " x " << r
-                   << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-                   << screen.native_height << r
-                   << config.getColor("compact_display_monitor", "brackets.color", "") << ") " << r;
-            }
-
-            // Scale: (Scale: 175%)
-            if (config.isFieldEnabled("compact_display_monitor", "fields.scale.show")) {
-                ss << config.getColor("compact_display_monitor", "brackets.color", "") << "(" << r
-                   << config.getColor("compact_display_monitor", "fields.scale.label_color", "") << "Scale: " << r
-                   << config.getColor("compact_display_monitor", "fields.scale.value_color", "")
-                   << screen.scale_percent << "%" << r
-                   << config.getColor("compact_display_monitor", "brackets.color", "") << ") " << r;
-            }
-
-            // Upscale: (upscale: 4x)
-            if (config.isFieldEnabled("compact_display_monitor", "fields.upscale.show")) {
-                ss << config.getColor("compact_display_monitor", "brackets.color", "") << "(" << r
-                   << config.getColor("compact_display_monitor", "fields.upscale.label_color", "") << "upscale: " << r
-                   << config.getColor("compact_display_monitor", "fields.upscale.value_color", "")
-                   << screen.upscale << r
-                   << config.getColor("compact_display_monitor", "brackets.color", "") << ") " << r;
-            }
-
-            // Refresh rate: (@60Hz)
-            if (config.isFieldEnabled("compact_display_monitor", "fields.refresh.show")) {
-                ss << config.getColor("compact_display_monitor", "brackets.color", "") << "(" << r
-                   << config.getColor("compact_display_monitor", "fields.refresh.at_symbol_color", "") << "@" << r
-                   << config.getColor("compact_display_monitor", "fields.refresh.value_color", "")
-                   << screen.refresh_rate << "Hz" << r
-                   << config.getColor("compact_display_monitor", "brackets.color", "") << ")" << r;
-            }
-
-            lp.push(ss.str());
+        // Prefix - comes entirely from JSON
+        if (config.isFieldEnabled("compact_display_monitor", "prefixes.show")) {
+            ss << config.getColor("compact_display_monitor", "prefixes.prefix_color", "")
+               << config.getPrefix("compact_display_monitor", "prefixes.prefix", "") << r;
         }
+
+        // Header: Display N:
+        ss << config.getColor("compact_display_monitor", "header.text_color", "")
+           << config.getLabel("compact_display_monitor", "header.text", "Display") << " " << (i + 1) << r
+           << config.getColor("compact_display_monitor", "header.separator_color", "")
+           << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r;
+
+        // ---- Register each orderable field as a named lambda ----
+        std::map<std::string, std::function<void()>> fields;
+
+        fields["name"] = [&]() {
+            if (!config.isFieldEnabled("compact_display_monitor", "fields.name.show")) return;
+            ss << config.getColor("compact_display_monitor", "fields.name.value_color", "")
+               << screen.name << r;
+        };
+
+        fields["resolution"] = [&]() {
+            if (!config.isFieldEnabled("compact_display_monitor", "fields.resolution.show")) return;
+            ss << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
+               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
+               << screen.native_width << r
+               << config.getColor("compact_display_monitor", "fields.resolution.x_color", "")
+               << config.getLabel("compact_display_monitor", "fields.resolution.x_symbol", " x ") << r
+               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
+               << screen.native_height << r
+               << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        };
+
+        fields["scale"] = [&]() {
+            if (!config.isFieldEnabled("compact_display_monitor", "fields.scale.show")) return;
+            ss << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
+               << config.getColor("compact_display_monitor", "fields.scale.label_color", "")
+               << config.getLabel("compact_display_monitor", "fields.scale.label", "Scale: ") << r
+               << config.getColor("compact_display_monitor", "fields.scale.value_color", "")
+               << screen.scale_percent
+               << config.getColor("compact_display_monitor", "fields.scale.unit_color", "")
+               << config.getLabel("compact_display_monitor", "fields.scale.unit", "%") << r
+               << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        };
+
+        fields["upscale"] = [&]() {
+            if (!config.isFieldEnabled("compact_display_monitor", "fields.upscale.show")) return;
+            ss << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
+               << config.getColor("compact_display_monitor", "fields.upscale.label_color", "")
+               << config.getLabel("compact_display_monitor", "fields.upscale.label", "upscale: ") << r
+               << config.getColor("compact_display_monitor", "fields.upscale.value_color", "")
+               << screen.upscale << r
+               << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        };
+
+        fields["refresh"] = [&]() {
+            if (!config.isFieldEnabled("compact_display_monitor", "fields.refresh.show")) return;
+            ss << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
+               << config.getColor("compact_display_monitor", "fields.refresh.at_symbol_color", "")
+               << config.getLabel("compact_display_monitor", "fields.refresh.at_symbol", "@") << r
+               << config.getColor("compact_display_monitor", "fields.refresh.value_color", "")
+               << screen.refresh_rate
+               << config.getColor("compact_display_monitor", "fields.refresh.unit_color", "")
+               << config.getLabel("compact_display_monitor", "fields.refresh.unit", "Hz") << r
+               << config.getColor("compact_display_monitor", "brackets.color", "")
+               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        };
+
+        // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+        static const std::vector<std::string> defaultOrder =
+            {"name ", "resolution ", "scale ", "upscale ", "refresh"};
+        auto order = config.getStringArray("compact_display_monitor", "order", defaultOrder);
+
+        runOrderedFields(order, fields, ss);
+
+        lp.push(ss.str());
     }
 };
 
@@ -640,31 +774,55 @@ sections["compact_system_memory"] = [&]() {
     ss << config.getColor("compact_system_memory", "separator.color", "")
        << config.getPrefix("compact_system_memory", "separator.text", ":") << " " << r;
 
-    // Total memory (with brackets)
-    if (config.isFieldEnabled("compact_system_memory", "fields.total.show")) {
-        ss << config.getColor("compact_system_memory", "brackets.color", "") << "(" << r
-           << config.getColor("compact_system_memory", "fields.total.label_color", "") << "total: " << r
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["total"] = [&]() {
+        if (!config.isFieldEnabled("compact_system_memory", "fields.total.show")) return;
+        ss << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
+           << config.getColor("compact_system_memory", "fields.total.label_color", "")
+           << config.getLabel("compact_system_memory", "fields.total.label", "total: ") << r
            << config.getColor("compact_system_memory", "fields.total.value_color", "")
-           << c_memory.get_total_memory() << " GB" << r
-           << config.getColor("compact_system_memory", "brackets.color", "") << ")" << r;
-    }
+           << c_memory.get_total_memory()
+           << config.getColor("compact_system_memory", "fields.total.unit_color", "")
+           << config.getLabel("compact_system_memory", "fields.total.unit", " GB") << r
+           << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+    };
 
-    // Free memory (with brackets)
-    if (config.isFieldEnabled("compact_system_memory", "fields.free.show")) {
-        ss << " " << config.getColor("compact_system_memory", "brackets.color", "") << "(" << r
-           << config.getColor("compact_system_memory", "fields.total.label_color", "") << "free: " << r
+    fields["free"] = [&]() {
+        if (!config.isFieldEnabled("compact_system_memory", "fields.free.show")) return;
+        ss << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
+           << config.getColor("compact_system_memory", "fields.free.label_color", "")
+           << config.getLabel("compact_system_memory", "fields.free.label", "free: ") << r
            << config.getColor("compact_system_memory", "fields.free.value_color", "")
-           << c_memory.get_free_memory() << " GB" << r
-           << config.getColor("compact_system_memory", "brackets.color", "") << ")" << r;
-    }
+           << c_memory.get_free_memory()
+           << config.getColor("compact_system_memory", "fields.free.unit_color", "")
+           << config.getLabel("compact_system_memory", "fields.free.unit", " GB") << r
+           << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+    };
 
-    // Used percentage (with brackets)
-    if (config.isFieldEnabled("compact_system_memory", "fields.percent.show")) {
-        ss << " " << config.getColor("compact_system_memory", "brackets.color", "") << "(" << r
+    fields["percent"] = [&]() {
+        if (!config.isFieldEnabled("compact_system_memory", "fields.percent.show")) return;
+        ss << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
            << config.getColor("compact_system_memory", "fields.percent.value_color", "")
-           << c_memory.get_used_memory_percent() << "%" << r
-           << config.getColor("compact_system_memory", "brackets.color", "") << ")" << r;
-    }
+           << c_memory.get_used_memory_percent()
+           << config.getColor("compact_system_memory", "fields.percent.unit_color", "")
+           << config.getLabel("compact_system_memory", "fields.percent.unit", "%") << r
+           << config.getColor("compact_system_memory", "brackets.color", "")
+           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+    };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"total ", "free ", "percent"};
+    auto order = config.getStringArray("compact_system_memory", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
@@ -672,13 +830,17 @@ sections["compact_system_memory"] = [&]() {
 // ==================== COMPACT AUDIO ====================
 sections["compact_audio_devices"] = [&]() {
     if (!config.isEnabled("compact_audio_devices")) return;
-    // Input device
-    if (config.isFieldEnabled("compact_audio_devices", "input.show")) {
+
+    // ---- Register each orderable device-line as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["input"] = [&]() {
+        if (!config.isFieldEnabled("compact_audio_devices", "input.show")) return;
         ostringstream ss;
 
-         // line spacing json driven
-         int spacing = config.getNestedInt("compact_audio_devices","input.top_line_spacing",0);
-         for (int n = 0; n < spacing; n++) {lp.push("");}
+        // line spacing json driven
+        int spacing = config.getNestedInt("compact_audio_devices","input.top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Input prefix - from JSON
         if (config.isFieldEnabled("compact_audio_devices", "input.prefixes.show")) {
@@ -699,21 +861,23 @@ sections["compact_audio_devices"] = [&]() {
            << c_audio.active_audio_input() << r << " ";
 
         // Input status
-        ss << config.getColor("compact_audio_devices", "brackets.color", "") << "[" << r
+        ss << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
+           << config.getNestedString("compact_audio_devices", "input.status_bracket_open", "[") << r
            << config.getColor("compact_audio_devices", "input.status_color", "")
            << c_audio.active_audio_input_status() << r
-           << config.getColor("compact_audio_devices", "brackets.color", "") << "]" << r;
+           << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
+           << config.getNestedString("compact_audio_devices", "input.status_bracket_close", "]") << r;
 
         lp.push(ss.str());
-    }
+    };
 
-    // Output device
-    if (config.isFieldEnabled("compact_audio_devices", "output.show")) {
+    fields["output"] = [&]() {
+        if (!config.isFieldEnabled("compact_audio_devices", "output.show")) return;
         ostringstream ss;
 
-         // line spacing json driven
-         int spacing = config.getNestedInt("compact_audio_devices","output.top_line_spacing",0);
-         for (int n = 0; n < spacing; n++) {lp.push("");}
+        // line spacing json driven
+        int spacing = config.getNestedInt("compact_audio_devices","output.top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Output prefix - from JSON
         if (config.isFieldEnabled("compact_audio_devices", "output.prefixes.show")) {
@@ -734,12 +898,24 @@ sections["compact_audio_devices"] = [&]() {
            << c_audio.active_audio_output() << r << " ";
 
         // Output status
-        ss << config.getColor("compact_audio_devices", "brackets.color", "") << "[" << r
+        ss << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
+           << config.getNestedString("compact_audio_devices", "output.status_bracket_open", "[") << r
            << config.getColor("compact_audio_devices", "output.status_color", "")
            << c_audio.active_audio_output_status() << r
-           << config.getColor("compact_audio_devices", "brackets.color", "") << "]" << r;
+           << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
+           << config.getNestedString("compact_audio_devices", "output.status_bracket_close", "]") << r;
 
         lp.push(ss.str());
+    };
+
+    // ---- Run device-lines in the order JSON specifies ----
+    static const std::vector<std::string> defaultOrder =
+        {"input", "output"};
+    auto order = config.getStringArray("compact_audio_devices", "order", defaultOrder);
+
+    for (const auto& key : order) {
+        auto it = fields.find(key);
+        if (it != fields.end()) it->second();
     }
 };
 
@@ -764,24 +940,47 @@ sections["compact_resource_usage"] = [&]() {
 
     // Separator
     ss << config.getColor("compact_resource_usage", "separator.color", "")
-       << config.getPrefix("compact_resource_usage", "separator.text", ":") << " " << r;
+       << config.getPrefix("compact_resource_usage", "separator.text", ":") << r
+       << config.getColor("compact_resource_usage", "separator.suffix_color", "")
+       << config.getPrefix("compact_resource_usage", "separator.suffix", " ") << r;
 
-    // Helper lambda for adding performance stats
-    auto addPerf = [&](const string& field, const string& label, const string& colorKey, auto val) {
-        if (config.isFieldEnabled("compact_resource_usage", "fields." + field + ".show")) {
-            ss << config.getColor("compact_resource_usage", "brackets.color", "") << "(" << r
-               << config.getColor("compact_resource_usage", "fields." + field + ".label_color", "")
-               << label << ": " << r
-               << config.getColor("compact_resource_usage", "fields." + field + ".value_color", "")
-               << val << "%" << r
-               << config.getColor("compact_resource_usage", "brackets.color", "") << ") " << r;
-        }
+    // Generic helper: prints one bracketed "(Label: value%)" stat block, fully JSON-driven per field
+    auto addPerf = [&](const string& field, auto val) {
+        if (!config.isFieldEnabled("compact_resource_usage", "fields." + field + ".show")) return;
+
+        ss << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
+           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_open", "(") << r
+
+           << config.getColor("compact_resource_usage", "fields." + field + ".label_color", "")
+           << config.getLabel("compact_resource_usage", "fields." + field + ".label", field) << r
+
+           << config.getColor("compact_resource_usage", "fields." + field + ".label_suffix_color", "")
+           << config.getPrefix("compact_resource_usage", "fields." + field + ".label_suffix", ": ") << r
+
+           << config.getColor("compact_resource_usage", "fields." + field + ".value_color", "")
+           << val << r
+
+           << config.getColor("compact_resource_usage", "fields." + field + ".unit_color", "")
+           << config.getLabel("compact_resource_usage", "fields." + field + ".unit", "%") << r
+
+           << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
+           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_close", ")") << r;
     };
 
-    addPerf("cpu", "CPU", "cpu_color", c_perf.getCPUUsage());
-    addPerf("gpu", "GPU", "gpu_color", c_perf.getGPUUsage());
-    addPerf("ram", "RAM", "ram_color", c_perf.getRAMUsage());
-    addPerf("disk", "Disk", "disk_color", c_perf.getDiskUsage());
+    // ---- Register each orderable stat as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["cpu"]  = [&]() { addPerf("cpu",  c_perf.getCPUUsage()); };
+    fields["gpu"]  = [&]() { addPerf("gpu",  c_perf.getGPUUsage()); };
+    fields["ram"]  = [&]() { addPerf("ram",  c_perf.getRAMUsage()); };
+    fields["disk"] = [&]() { addPerf("disk", c_perf.getDiskUsage()); };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"cpu ", "gpu ", "ram ", "disk"};
+    auto order = config.getStringArray("compact_resource_usage", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
@@ -809,29 +1008,43 @@ sections["compact_user_account"] = [&]() {
     ss << config.getColor("compact_user_account", "separator.color", "")
        << config.getPrefix("compact_user_account", "separator.text", ":") << " " << r;
 
-    // Username
-    if (config.isFieldEnabled("compact_user_account", "fields.username.show")) {
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["username"] = [&]() {
+        if (!config.isFieldEnabled("compact_user_account", "fields.username.show")) return;
         ss << config.getColor("compact_user_account", "fields.username.value_color", "")
            << "@" << c_user.getUsername() << r;
-    }
+    };
 
-    // Domain (with brackets)
-    if (config.isFieldEnabled("compact_user_account", "fields.domain.show")) {
-        ss << " " << config.getColor("compact_user_account", "brackets.color", "") << "(" << r
+    fields["domain"] = [&]() {
+        if (!config.isFieldEnabled("compact_user_account", "fields.domain.show")) return;
+        ss << config.getColor("compact_user_account", "brackets.color", "")
+           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
            << config.getColor("compact_user_account", "label_color", "") << "Domain: " << r
            << config.getColor("compact_user_account", "fields.domain.value_color", "")
            << c_user.getDomain() << r
-           << config.getColor("compact_user_account", "brackets.color", "") << ")" << r;
-    }
+           << config.getColor("compact_user_account", "brackets.color", "")
+           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+    };
 
-    // Type (with brackets)
-    if (config.isFieldEnabled("compact_user_account", "fields.type.show")) {
-        ss << " " << config.getColor("compact_user_account", "brackets.color", "") << "(" << r
+    fields["type"] = [&]() {
+        if (!config.isFieldEnabled("compact_user_account", "fields.type.show")) return;
+        ss << config.getColor("compact_user_account", "brackets.color", "")
+           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
            << config.getColor("compact_user_account", "label_color", "") << "Type: " << r
            << config.getColor("compact_user_account", "fields.type.value_color", "")
            << c_user.isAdmin() << r
-           << config.getColor("compact_user_account", "brackets.color", "") << ")" << r;
-    }
+           << config.getColor("compact_user_account", "brackets.color", "")
+           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+    };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"username ", "domain ", "type"};
+    auto order = config.getStringArray("compact_user_account", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
@@ -844,67 +1057,72 @@ sections["compact_network_connection"] = [&]() {
     int spacing = config.getNestedInt("compact_network_connection","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
-    if (config.isFieldEnabled("compact_network_connection", "fields.name.show") ||
-        config.isFieldEnabled("compact_network_connection", "fields.type.show") ||
-        config.isFieldEnabled("compact_network_connection", "fields.ip.show")) {
-        ostringstream ss;
+    ostringstream ss;
 
-        // Prefix - from JSON
-        if (config.isFieldEnabled("compact_network_connection", "prefixes.show")) {
-            ss << config.getColor("compact_network_connection", "prefixes.prefix_color", "")
-               << config.getPrefix("compact_network_connection", "prefixes.prefix", "") << r;
-        }
-
-        // Label
-        ss << config.getColor("compact_network_connection", "label.color", "")
-           << config.getLabel("compact_network_connection", "label.text", "Network") << r;
-
-        // Separator
-        ss << config.getColor("compact_network_connection", "separator.color", "")
-           << config.getPrefix("compact_network_connection", "separator.text", ":") << " " << r;
-
-        // Network Name (with brackets)
-        if (config.isFieldEnabled("compact_network_connection", "fields.name.show")) {
-            ss << config.getColor("compact_network_connection", "brackets.color", "") << "(" << r
-               << config.getColor("compact_network_connection", "label_color", "") << "Name: " << r
-               << config.getColor("compact_network_connection", "fields.name.value_color", "")
-               << c_net.get_network_name() << r
-               << config.getColor("compact_network_connection", "brackets.color", "") << ") " << r;
-        }
-
-        // Network Type (with brackets)
-        if (config.isFieldEnabled("compact_network_connection", "fields.type.show")) {
-            ss << config.getColor("compact_network_connection", "brackets.color", "") << "(" << r
-               << config.getColor("compact_network_connection", "label_color", "") << "Type: " << r
-               << config.getColor("compact_network_connection", "fields.type.value_color", "")
-               << c_net.get_network_type() << r
-               << config.getColor("compact_network_connection", "brackets.color", "") << ") " << r;
-        }
-
-        // IP Address (with brackets)
-        if (config.isFieldEnabled("compact_network_connection", "fields.ip.show")) {
-            ss << config.getColor("compact_network_connection", "brackets.color", "") << "(" << r
-               << config.getColor("compact_network_connection", "label_color", "") << "ip: " << r
-               << config.getColor("compact_network_connection", "fields.ip.value_color", "")
-               << c_net.get_network_ip() << r
-               << config.getColor("compact_network_connection", "brackets.color", "") << ")" << r;
-        }
-
-        lp.push(ss.str());
+    // Prefix - from JSON
+    if (config.isFieldEnabled("compact_network_connection", "prefixes.show")) {
+        ss << config.getColor("compact_network_connection", "prefixes.prefix_color", "")
+           << config.getPrefix("compact_network_connection", "prefixes.prefix", "") << r;
     }
+
+    // Label
+    ss << config.getColor("compact_network_connection", "label.color", "")
+       << config.getLabel("compact_network_connection", "label.text", "Network") << r;
+
+    // Separator
+    ss << config.getColor("compact_network_connection", "separator.color", "")
+       << config.getPrefix("compact_network_connection", "separator.text", ":") << " " << r;
+
+    // Generic helper: prints one bracketed "(Label: value)" block, fully JSON-driven per field
+    auto addNetField = [&](const string& field, const string& value) {
+        if (!config.isFieldEnabled("compact_network_connection", "fields." + field + ".show")) return;
+
+        ss << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
+           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_open", "(")
+           << r
+           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_color", "")
+           << config.getNestedString("compact_network_connection", "fields." + field + ".label", "")
+           << r
+           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_suffix_color", "")
+           << config.getNestedString("compact_network_connection", "fields." + field + ".label_suffix", "")
+           << r
+           << config.getColor("compact_network_connection", "fields." + field + ".value_color", "")
+           << value
+           << r
+           << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
+           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_close", ")")
+           << r;
+    };
+
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["name"] = [&]() { addNetField("name", c_net.get_network_name()); };
+    fields["type"] = [&]() { addNetField("type", c_net.get_network_type()); };
+    fields["ip"]   = [&]() { addNetField("ip",   c_net.get_network_ip()); };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"name ", "type ", "ip"};
+    auto order = config.getStringArray("compact_network_connection", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
+
+    lp.push(ss.str());
 };
 
 // ==================== COMPACT DISK ====================
 sections["compact_disk_storage"] = [&]() {
     if (!config.isEnabled("compact_disk_storage")) return;
-    // Disk Usage
+
+    // ---------- DISK USAGE ----------
     if (config.isFieldEnabled("compact_disk_storage", "usage.show")) {
         auto disks = disk.getAllDiskUsage();
         ostringstream ss;
 
-            // line spacing json driven
-            int spacing = config.getNestedInt("compact_disk_storage","top_line_spacing",0);
-            for (int n = 0; n < spacing; n++) {lp.push("");}
+        // line spacing json driven
+        int spacing = config.getNestedInt("compact_disk_storage","top_line_spacing",0);
+        for (int n = 0; n < spacing; n++) {lp.push("");}
 
         // Usage prefix - from JSON
         if (config.isFieldEnabled("compact_disk_storage", "usage.prefixes.show")) {
@@ -918,20 +1136,39 @@ sections["compact_disk_storage"] = [&]() {
 
         // Usage separator
         ss << config.getColor("compact_disk_storage", "usage.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "usage.separator.text", ":") << " " << r;
+           << config.getPrefix("compact_disk_storage", "usage.separator.text", ":") << r
+           << config.getColor("compact_disk_storage", "usage.separator.suffix_color", "")
+           << config.getPrefix("compact_disk_storage", "usage.separator.suffix", " ") << r;
 
+        // Per-disk entry, fully JSON-driven
         for (const auto& d : disks) {
-            ss << config.getColor("compact_disk_storage", "brackets.color", "") << "(" << r
-               << config.getColor("compact_disk_storage", "fields.letter_color", "")
-               << d.first[0] << ":" << r << " "
-               << config.getColor("compact_disk_storage", "fields.percent_color", "")
-               << fixed << setprecision(1) << d.second << "%" << r
-               << config.getColor("compact_disk_storage", "brackets.color", "") << ") " << r;
+            ss << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
+               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_open", "(") << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.letter_color", "")
+               << d.first[0] << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
+               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix", ":") << r
+               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
+               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix_space", " ") << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.value_color", "")
+               << fixed << setprecision(1) << d.second << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.unit_color", "")
+               << config.getLabel("compact_disk_storage", "usage.entry.unit", "%") << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
+               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_close", ")") << r
+
+               << config.getColor("compact_disk_storage", "usage.entry.suffix_color", "")
+               << config.getPrefix("compact_disk_storage", "usage.entry.suffix", " ") << r;
         }
         lp.push(ss.str());
     }
 
-    // Disk Capacity
+    // ---------- DISK CAPACITY ----------
     if (config.isFieldEnabled("compact_disk_storage", "capacity.show")) {
         auto caps = disk.getDiskCapacity();
         ostringstream sc;
@@ -952,23 +1189,36 @@ sections["compact_disk_storage"] = [&]() {
 
         // Capacity separator
         sc << config.getColor("compact_disk_storage", "capacity.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "capacity.separator.text", ":") << " " << r;
+           << config.getPrefix("compact_disk_storage", "capacity.separator.text", ":") << r
+           << config.getColor("compact_disk_storage", "capacity.separator.suffix_color", "")
+           << config.getPrefix("compact_disk_storage", "capacity.separator.suffix", " ") << r;
 
+        // Per-disk entry, fully JSON-driven
         for (const auto& c : caps) {
-            sc << config.getColor("compact_disk_storage", "brackets.color", "") << "(" << r
-               << config.getColor("compact_disk_storage", "fields.letter_color", "")
+            sc << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
+               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_open", "(") << r
+
+               << config.getColor("compact_disk_storage", "capacity.entry.letter_color", "")
                << c.first[0] << r
-               << config.getColor("compact_disk_storage", "fields.separator_color", "") << "-" << r
-               << config.getColor("compact_disk_storage", "fields.capacity_color", "")
-               << c.second << "GB" << r
-               << config.getColor("compact_disk_storage", "brackets.color", "") << ")" << r;
+
+               << config.getColor("compact_disk_storage", "capacity.entry.separator_color", "")
+               << config.getPrefix("compact_disk_storage", "capacity.entry.separator", "-") << r
+
+               << config.getColor("compact_disk_storage", "capacity.entry.value_color", "")
+               << c.second << r
+
+               << config.getColor("compact_disk_storage", "capacity.entry.unit_color", "")
+               << config.getLabel("compact_disk_storage", "capacity.entry.unit", "GB") << r
+
+               << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
+               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_close", ")") << r
+
+               << config.getColor("compact_disk_storage", "capacity.entry.suffix_color", "")
+               << config.getPrefix("compact_disk_storage", "capacity.entry.suffix", " ") << r;
         }
         lp.push(sc.str());
     }
 };
-
-
-
 
 //  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ███╗   ███╗███████╗███╗   ███╗ ██████╗ ██████╗ ██╗   ██╗
 //  ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██║██║     ██╔════╝██╔══██╗    ████╗ ████║██╔════╝████╗ ████║██╔═══██╗██╔══██╗╚██╗ ██╔╝
