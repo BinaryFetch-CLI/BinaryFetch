@@ -1239,13 +1239,13 @@ sections["compact_disk_storage"] = [&]() {
 
 sections["detailed_system_memory"] = [&]() {
     if (!config.isEnabled("detailed_system_memory")) return;
-    
+
     // line spacing json driven
     int spacing = config.getNestedInt("detailed_system_memory","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // ---------- HEADER ----------
-    if (config.isSectionEnabled("detailed_system_memory", "header")) {
+    if (config.getNestedBool("detailed_system_memory", "sections.header", true)) {
         ostringstream ss;
         ss << config.getColor("detailed_system_memory", "header.prefix_color", "")
            << config.getPrefix("detailed_system_memory", "header.prefix", "") << r
@@ -1256,93 +1256,136 @@ sections["detailed_system_memory"] = [&]() {
         lp.push(ss.str());
     }
 
-    // ---------- SUMMARY (TOTAL, FREE, USED) ----------
-    if (config.isSectionEnabled("detailed_system_memory", "total") ||
-        config.isSectionEnabled("detailed_system_memory", "free") ||
-        config.isSectionEnabled("detailed_system_memory", "used_percentage")) {
+    // ---------- SUMMARY (TOTAL, FREE + bar, USED% + bar) ----------
+    if (config.getNestedBool("detailed_system_memory", "sections.total", true) ||
+        config.getNestedBool("detailed_system_memory", "sections.free", true) ||
+        config.getNestedBool("detailed_system_memory", "sections.used_percentage", true)) {
+
         ostringstream ss;
 
-        // ---------- TOTAL ----------
-        if (config.isSectionEnabled("detailed_system_memory", "total")) {
-            ss << config.getColor("detailed_system_memory", "values.total_prefix_color", "")
-               << config.getPrefix("detailed_system_memory", "values.total_prefix", "") << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << "(" << r
-               << config.getColor("detailed_system_memory", "labels.total.color", "")
-               << config.getLabel("detailed_system_memory", "labels.total.text", "Total: ") << r
-               << config.getColor("detailed_system_memory", "values.total_color", "")
-               << ram.getTotal() << " GB" << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << ") " << r;
-        }
+        float usedPercent = ram.getUsedPercentage();
+        float freePercent = 100.0f - usedPercent;
 
-        // ---------- FREE ----------
-        if (config.isSectionEnabled("detailed_system_memory", "free")) {
-            ss << config.getColor("detailed_system_memory", "values.free_prefix_color", "")
-               << config.getPrefix("detailed_system_memory", "values.free_prefix", "") << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << "(" << r
-               << config.getColor("detailed_system_memory", "labels.free.color", "")
-               << config.getLabel("detailed_system_memory", "labels.free.text", "Free: ") << r
-               << config.getColor("detailed_system_memory", "values.free_color", "")
-               << ram.getFree() << " GB" << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << ") " << r;
-        }
+        // Generic helper: prints one bracketed "(Label [bar] value unit)" block, fully JSON-driven per field
+        auto addMemField = [&](const string& field, auto val, bool hasVisual, float percent) {
+            if (!config.getNestedBool("detailed_system_memory", "sections." + field, true)) return;
 
-        // ---------- USED PERCENTAGE ----------
-        if (config.isSectionEnabled("detailed_system_memory", "used_percentage")) {
-            ss << config.getColor("detailed_system_memory", "values.used_prefix_color", "")
-               << config.getPrefix("detailed_system_memory", "values.used_prefix", "") << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << "(" << r
-               << config.getColor("detailed_system_memory", "labels.used.color", "")
-               << config.getLabel("detailed_system_memory", "labels.used.text", "Used: ") << r
-               << config.getColor("detailed_system_memory", "values.used_color", "")
-               << ram.getUsedPercentage() << "%" << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << ")" << r;
-        }
+            ss << config.getColor("detailed_system_memory", "fields." + field + ".prefix_color", "")
+               << config.getPrefix("detailed_system_memory", "fields." + field + ".prefix", "") << r
+
+               << config.getColor("detailed_system_memory", "fields." + field + ".bracket_color", "")
+               << config.getPrefix("detailed_system_memory", "fields." + field + ".bracket_open", "(") << r
+
+               << config.getColor("detailed_system_memory", "fields." + field + ".label_color", "")
+               << config.getLabel("detailed_system_memory", "fields." + field + ".label", "") << r;
+
+            if (hasVisual) {
+                std::string bar = makeVisualizer(percent, config, "detailed_system_memory", field);
+                if (!bar.empty()) ss << bar << " ";
+            }
+
+            ss << config.getColor("detailed_system_memory", "fields." + field + ".value_color", "")
+               << val << r
+
+               << config.getColor("detailed_system_memory", "fields." + field + ".unit_color", "")
+               << config.getLabel("detailed_system_memory", "fields." + field + ".unit", "") << r
+
+               << config.getColor("detailed_system_memory", "fields." + field + ".bracket_color", "")
+               << config.getPrefix("detailed_system_memory", "fields." + field + ".bracket_close", ")") << r;
+        };
+
+        // ---- Register each orderable field as a named lambda ----
+        std::map<std::string, std::function<void()>> fields;
+
+        fields["total"] = [&]() {
+            addMemField("total", ram.getTotal(), false, 0.0f);
+        };
+
+        fields["free"] = [&]() {
+            addMemField("free", ram.getFree(), true, freePercent);
+        };
+
+        fields["used_percentage"] = [&]() {
+            addMemField("used_percentage", static_cast<int>(usedPercent), true, usedPercent);
+        };
+
+        // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+        static const std::vector<std::string> defaultOrder =
+            {"total ", "free ", "used_percentage"};
+        auto order = config.getStringArray("detailed_system_memory", "order", defaultOrder);
+
+        runOrderedFields(order, fields, ss);
 
         lp.push(ss.str());
     }
 
-    // ---------- MODULES ----------
-    if (config.isSectionEnabled("detailed_system_memory", "modules")) {
+    // ---------- MODULES (each module line is separately orderable) ----------
+    if (config.getNestedBool("detailed_system_memory", "sections.modules", true)) {
         const auto& modules = ram.getModules();
+
         for (size_t i = 0; i < modules.size(); ++i) {
             string cap = modules[i].capacity;
             int num = 0;
             try { num = stoi(cap); }
             catch (...) { num = 0; }
-            ostringstream capOut;
-            capOut << setw(2) << setfill('0') << num << "GB";
+            ostringstream capNum;
+            capNum << setw(2) << setfill('0') << num;
 
             ostringstream ss;
-            // Memory 0
-            ss << config.getColor("detailed_system_memory", "modules.prefix_color", "")
-               << config.getPrefix("detailed_system_memory", "modules.prefix", "") << "" << r
-               << config.getColor("detailed_system_memory", "modules.label_color", "")
-               << config.getLabel("detailed_system_memory", "modules.label", "Memory ") << i << r
-               << config.getColor("detailed_system_memory", "modules.separator_color", "")
-               << config.getPrefix("detailed_system_memory", "modules.separator", " : ") << r;
 
-            ss << config.getColor("detailed_system_memory", "brackets.color", "") << "(" << r
-               << config.getColor("detailed_system_memory", "labels.used.color", "")
-               << config.getLabel("detailed_system_memory", "labels.used.text", "Used: ") << r
-               << config.getColor("detailed_system_memory", "values.used_color", "")
-               << ram.getUsedPercentage() << "%" << r
-               << config.getColor("detailed_system_memory", "brackets.color", "") << ") " << r;
+            // ---- Register each orderable module sub-field as a named lambda ----
+            std::map<std::string, std::function<void()>> moduleFields;
 
-            ss << config.getColor("detailed_system_memory", "modules.capacity_color", "")
-               << capOut.str() << r << " "
-               << config.getColor("detailed_system_memory", "modules.type_color", "")
-               << modules[i].type << r << " "
-               << config.getColor("detailed_system_memory", "modules.speed_color", "")
-               << modules[i].speed << r;
+            moduleFields["label"] = [&]() {
+                ss << config.getColor("detailed_system_memory", "modules.fields.label.prefix_color", "")
+                   << config.getPrefix("detailed_system_memory", "modules.fields.label.prefix", "") << r
+                   << config.getColor("detailed_system_memory", "modules.fields.label.text_color", "")
+                   << config.getLabel("detailed_system_memory", "modules.fields.label.text", "Memory ") << i << r
+                   << config.getColor("detailed_system_memory", "modules.fields.label.separator_color", "")
+                   << config.getPrefix("detailed_system_memory", "modules.fields.label.separator", " : ") << r;
+            };
+
+            moduleFields["used"] = [&]() {
+                ss << config.getColor("detailed_system_memory", "modules.fields.used.bracket_color", "")
+                   << config.getPrefix("detailed_system_memory", "modules.fields.used.bracket_open", "(") << r
+                   << config.getColor("detailed_system_memory", "modules.fields.used.label_color", "")
+                   << config.getLabel("detailed_system_memory", "modules.fields.used.label", "Used: ") << r
+                   << config.getColor("detailed_system_memory", "modules.fields.used.value_color", "")
+                   << ram.getUsedPercentage()
+                   << config.getColor("detailed_system_memory", "modules.fields.used.unit_color", "")
+                   << config.getLabel("detailed_system_memory", "modules.fields.used.unit", "%") << r
+                   << config.getColor("detailed_system_memory", "modules.fields.used.bracket_color", "")
+                   << config.getPrefix("detailed_system_memory", "modules.fields.used.bracket_close", ")") << r;
+            };
+
+            moduleFields["capacity"] = [&]() {
+                ss << config.getColor("detailed_system_memory", "modules.fields.capacity.value_color", "")
+                   << capNum.str() << r
+                   << config.getColor("detailed_system_memory", "modules.fields.capacity.unit_color", "")
+                   << config.getLabel("detailed_system_memory", "modules.fields.capacity.unit", "GB") << r;
+            };
+
+            moduleFields["type"] = [&]() {
+                ss << config.getColor("detailed_system_memory", "modules.fields.type.value_color", "")
+                   << modules[i].type << r;
+            };
+
+            moduleFields["speed"] = [&]() {
+                ss << config.getColor("detailed_system_memory", "modules.fields.speed.value_color", "")
+                   << modules[i].speed << r;
+            };
+
+            // ---- Run module sub-fields in the order JSON specifies (independent order, separate from the summary line) ----
+            static const std::vector<std::string> defaultModuleOrder =
+                {"label", "used ", "capacity ", "type ", "speed"};
+            auto moduleOrder = config.getStringArray("detailed_system_memory", "modules.order", defaultModuleOrder);
+
+            runOrderedFields(moduleOrder, moduleFields, ss);
 
             lp.push(ss.str());
         }
     }
 };
-    
-
- 
-
 
 
 //  ██████╗ ███████╗████████╗ █████╗ ██╗██╗     ███████╗██████╗     ██████╗ ██╗███████╗██╗  ██╗
@@ -1374,1138 +1417,220 @@ sections["detailed_system_memory"] = [&]() {
 sections["detailed_disk_storage"] = [&]() {
     if (!config.isEnabled("detailed_disk_storage")) return;
 
-
-    // Format storage values
-    auto fmt_storage = [](const string& value) -> string {
-        ostringstream oss;
-        double number = 0.0;
-
-        try {
-            number = stod(value);
-        }
-        catch (...) {
-            number = 0.0;
-        }
-
-        oss << fixed
-            << setprecision(2)
-            << setw(7)
-            << right
-            << setfill(' ')
-            << number;
-
-        return oss.str();
+    auto fmt_storage = [](const string& v) -> string {
+        ostringstream o; double n = 0.0;
+        try { n = stod(v); } catch (...) { n = 0.0; }
+        o << fixed << setprecision(2) << setw(7) << right << setfill(' ') << n;
+        return o.str();
     };
 
-    // Format speed values
-    auto fmt_speed = [](const string& value) -> string {
-        ostringstream oss;
-        double number = 0.0;
-
-        try {
-            number = stod(value);
-        }
-        catch (...) {
-            number = 0.0;
-        }
-
-        oss << fixed
-            << setprecision(2)
-            << number;
-
-        string result = oss.str();
-
-        int padding =
-            7 - static_cast<int>(result.size());
-
-        if (padding < 0)
-            padding = 0;
-
-        return string(padding, ' ') + result;
+    auto fmt_speed = [](const string& v) -> string {
+        ostringstream o; double n = 0.0;
+        try { n = stod(v); } catch (...) { n = 0.0; }
+        o << fixed << setprecision(2) << n;
+        string s = o.str();
+        int pad = 7 - static_cast<int>(s.size());
+        if (pad < 0) pad = 0;
+        return string(pad, ' ') + s;
     };
 
-    // Format percentage
-    auto fmt_percentage = [](int percentage) -> string {
-        ostringstream oss;
+    auto fmt_percentage = [](int p) -> string {
+        ostringstream o; o << right << setw(4) << p << "%";
+        return o.str();
+    };
 
-        oss << right
-            << setw(4)
-            << percentage
-            << "%";
-
-        return oss.str();
+    // zero-padded percentage for the used/free visualizer bars (e.g. 08 instead of 8)
+    auto fmt_pct2 = [](float p) -> string {
+        ostringstream o; o << setw(2) << setfill('0') << static_cast<int>(p);
+        return o.str();
     };
 
     vector<storage_data> all_disks_captured;
 
-
     //  STORAGE SUMMARY 
+    if (config.getNestedBool("detailed_disk_storage", "sections.storage_summary", true)) {
+        int spacing = config.getNestedInt("detailed_disk_storage", "storage_summary.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) lp.push("");
 
-    if (config.getNestedBool(
-            "detailed_disk_storage",
-            "sections.storage_summary",
-            true))
-    {
-     // line spacing json driven
-     int spacing = config.getNestedInt("detailed_disk_storage","storage_summary.top_line_spacing",0);
-     for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Header
-        if (config.getNestedBool(
-                "detailed_disk_storage",
-                "storage_summary.header.show",
-                true))
-        {
+        if (config.getNestedBool("detailed_disk_storage", "storage_summary.header.show", true)) {
             ostringstream ss;
-
-            ss << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "storage_summary.header.prefix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "storage_summary.header.prefix",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "storage_summary.header.text_color",
-                    "")
-               << config.getLabel(
-                    "detailed_disk_storage",
-                    "storage_summary.header.text",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "storage_summary.header.suffix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "storage_summary.header.suffix",
-                    "")
-               << r;
-
+            ss << config.getNestedColor("detailed_disk_storage", "storage_summary.header.prefix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.header.prefix", "") << r
+               << config.getNestedColor("detailed_disk_storage", "storage_summary.header.text_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.header.text", "") << r
+               << config.getNestedColor("detailed_disk_storage", "storage_summary.header.suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.header.suffix", "") << r;
             lp.push(ss.str());
         }
 
+        storage.process_storage_info([&](const storage_data& d) {
+            all_disks_captured.push_back(d);
+            ostringstream ss;
+            std::map<std::string, std::function<void()>> fields;
 
-        // Collect disk information
-        storage.process_storage_info(
-            [&](const storage_data& d)
-            {
-                all_disks_captured.push_back(d);
+            fields["storage_type"] = [&]() {
+                if (!config.getNestedBool("detailed_disk_storage", "storage_summary.fields.storage_type.show", true)) return;
+                ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.storage_type.value_color", "") << d.storage_type << r;
+            };
 
-                ostringstream ss;
+            fields["drive_letter"] = [&]() {
+                if (!config.getNestedBool("detailed_disk_storage", "storage_summary.fields.drive_letter.show", true)) return;
+                ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.drive_letter.label_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.drive_letter.label", "Disk") << r
+                   << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.drive_letter.letter_prefix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.drive_letter.letter_prefix", "(") << r
+                   << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.drive_letter.letter_color", "") << d.drive_letter << r
+                   << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.drive_letter.letter_suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.drive_letter.letter_suffix", ")") << r;
+            };
 
+            fields["usage_block"] = [&]() {
+                ss << config.getNestedColor("detailed_disk_storage", "storage_summary.brackets.square_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.brackets.square_open", "[") << r;
 
-                // Storage type
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.storage_type.show",
-                        true))
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.storage_type.value_color",
-                            "")
-                       << d.storage_type
-                       << r
-                       << " ";
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.used_label.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_label.prefix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.used_label.prefix", " ") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.brackets.round_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.brackets.round_open", "(") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_label.value_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.used_label.text", "") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.brackets.round_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.brackets.round_close", ")") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_label.suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.used_label.suffix", " ") << r;
                 }
 
-
-                // Drive label and drive letter
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.drive_letter.show",
-                        true))
-                {
-                    // Label
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.label_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.label",
-                            "Disk")
-                       << r;
-
-                    // Opening parenthesis
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.letter_prefix_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.letter_prefix",
-                            "(")
-                       << r;
-
-                    // Actual drive letter
-                    // The letter still comes from storage_data
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.letter_color",
-                            "")
-                       << d.drive_letter
-                       << r;
-
-                    // Closing parenthesis
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.letter_suffix_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.drive_letter.letter_suffix",
-                            ")")
-                       << r
-                       << " ";
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.used_space.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_space.value_color", "") << fmt_storage(d.used_space) << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_space.unit_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.used_space.unit", "") << r;
                 }
 
-
-                // Opening square bracket
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "storage_summary.brackets.square_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "storage_summary.brackets.square_open",
-                        "[")
-                   << r;
-
-
-                // Used label
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.used_label.show",
-                        true))
-                {
-                    ss << " "
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.brackets.round_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.brackets.round_open",
-                            "(")
-                       << r
-
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_label.value_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_label.text",
-                            "")
-                       << r
-
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.brackets.round_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.brackets.round_close",
-                            ")")
-                       << r
-
-                       << " ";
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.separator.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.separator.color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.separator.text", "") << r;
                 }
 
-
-                // Used space
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.used_space.show",
-                        true))
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_space.value_color",
-                            "")
-                       << fmt_storage(d.used_space)
-                       << r
-
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_space.unit_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_space.unit",
-                            "")
-                       << r;
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.total_space.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.total_space.value_color", "") << fmt_storage(d.total_space) << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.total_space.unit_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.total_space.unit", "") << r;
                 }
 
-
-                // Separator
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.separator.show",
-                        true))
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.separator.color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.separator.text",
-                            "")
-                       << r;
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.used_percentage.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_percentage.spacer_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.used_percentage.spacer", " ") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_percentage.prefix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.used_percentage.prefix", "") << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_percentage.value_color", "") << fmt_percentage(d.used_percentage) << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.used_percentage.suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.used_percentage.suffix", "") << r;
                 }
 
+                ss << config.getNestedColor("detailed_disk_storage", "storage_summary.dash.color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.dash.text", "") << r
+                   << config.getNestedColor("detailed_disk_storage", "storage_summary.dash.suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.dash.suffix", " ") << r;
 
-                // Total space
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.total_space.show",
-                        true))
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.total_space.value_color",
-                            "")
-                       << fmt_storage(d.total_space)
-                       << r
-
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.total_space.unit_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.total_space.unit",
-                            "")
-                       << r;
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.file_system.show", true)) {
+                    ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.file_system.value_color", "") << d.file_system << r
+                       << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.file_system.suffix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.fields.file_system.suffix", " ") << r;
                 }
 
-
-                // Used percentage
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.used_percentage.show",
-                        true))
-                {
-                    ss << " ";
-
-                    // Percentage prefix
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_percentage.prefix_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_percentage.prefix",
-                            "")
-                       << r;
-
-                    // Percentage value
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_percentage.value_color",
-                            "")
-                       << fmt_percentage(d.used_percentage)
-                       << r;
-
-                    // Percentage suffix
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_percentage.suffix_color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.used_percentage.suffix",
-                            "")
-                       << r;
-                }
-
-
-                // Dash separator
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "storage_summary.dash.color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "storage_summary.dash.text",
-                        "")
-                   << r
-                   << " ";
-
-
-                // File system
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.file_system.show",
-                        true))
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "storage_summary.fields.file_system.value_color",
-                            "")
-                       << d.file_system
-                       << r
-                       << " ";
-                }
-
-
-                // External or internal status
-                if (config.getNestedBool(
-                        "detailed_disk_storage",
-                        "storage_summary.fields.external_status.show",
-                        true))
-                {
+                if (config.getNestedBool("detailed_disk_storage", "storage_summary.fields.external_status.show", true)) {
                     if (d.is_external)
-                    {
-                        ss << config.getNestedColor(
-                                "detailed_disk_storage",
-                                "storage_summary.fields.external_status.external_color",
-                                "")
-                           << config.getLabel(
-                                "detailed_disk_storage",
-                                "storage_summary.fields.external_status.external_text",
-                                "")
-                           << r;
-                    }
+                        ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.external_status.external_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.external_status.external_text", "") << r;
                     else
-                    {
-                        ss << config.getNestedColor(
-                                "detailed_disk_storage",
-                                "storage_summary.fields.external_status.internal_color",
-                                "")
-                           << config.getLabel(
-                                "detailed_disk_storage",
-                                "storage_summary.fields.external_status.internal_text",
-                                "")
-                           << r;
-                    }
+                        ss << config.getNestedColor("detailed_disk_storage", "storage_summary.fields.external_status.internal_color", "") << config.getLabel("detailed_disk_storage", "storage_summary.fields.external_status.internal_text", "") << r;
                 }
 
+                ss << config.getNestedColor("detailed_disk_storage", "storage_summary.brackets.square_close_prefix_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.brackets.square_close_prefix", " ") << r
+                   << config.getNestedColor("detailed_disk_storage", "storage_summary.brackets.square_color", "") << config.getPrefix("detailed_disk_storage", "storage_summary.brackets.square_close", "]") << r;
+            };
 
-                // Closing square bracket
-                ss << " "
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "storage_summary.brackets.square_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "storage_summary.brackets.square_close",
-                        "]")
-                   << r;
+            auto addUsageVisualizer = [&](const string& field, float percent) {
+                if (!config.getNestedBool("detailed_disk_storage", "fields." + field + ".show", true)) return;
 
-                lp.push(ss.str());
-            }
-        );
+                ss << config.getNestedColor("detailed_disk_storage", "fields." + field + ".prefix_color", "") << config.getPrefix("detailed_disk_storage", "fields." + field + ".prefix", "") << r
+                   << config.getNestedColor("detailed_disk_storage", "fields." + field + ".label_color", "") << config.getLabel("detailed_disk_storage", "fields." + field + ".label", "") << r;
+
+                std::string bar = makeVisualizer(percent, config, "detailed_disk_storage", field);
+                if (!bar.empty()) {
+                    ss << bar << config.getNestedColor("detailed_disk_storage", "fields." + field + ".bar_gap_color", "") << config.getPrefix("detailed_disk_storage", "fields." + field + ".bar_gap", " ") << r;
+                }
+
+                ss << config.getNestedColor("detailed_disk_storage", "fields." + field + ".value_color", "") << fmt_pct2(percent) << r
+                   << config.getNestedColor("detailed_disk_storage", "fields." + field + ".unit_color", "") << config.getLabel("detailed_disk_storage", "fields." + field + ".unit", "%") << r
+                   << config.getNestedColor("detailed_disk_storage", "fields." + field + ".suffix_color", "") << config.getPrefix("detailed_disk_storage", "fields." + field + ".suffix", "") << r;
+            };
+
+            fields["used_visualizer"] = [&]() { addUsageVisualizer("used_visualizer", static_cast<float>(d.used_percentage)); };
+            fields["free_visualizer"] = [&]() { addUsageVisualizer("free_visualizer", 100.0f - static_cast<float>(d.used_percentage)); };
+
+            static const std::vector<std::string> defaultOrder = {"storage_type ", "drive_letter ", "usage_block ", "used_visualizer ", "free_visualizer"};
+            auto order = config.getStringArray("detailed_disk_storage", "storage_summary.order", defaultOrder);
+            runOrderedFields(order, fields, ss);
+
+            lp.push(ss.str());
+        });
     }
-
 
     //  DISK PERFORMANCE 
+    if (!all_disks_captured.empty() && config.getNestedBool("detailed_disk_storage", "sections.disk_performance", true)) {
+        int spacing = config.getNestedInt("detailed_disk_storage", "disk_performance.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) lp.push("");
 
-    if (!all_disks_captured.empty() &&
-        config.getNestedBool(
-            "detailed_disk_storage",
-            "sections.disk_performance",
-            true))
-    {
-
-
-         // line spacing json driven
-         int spacing = config.getNestedInt("detailed_disk_storage","disk_performance.top_line_spacing",0);
-         for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Header
-        if (config.getNestedBool(
-                "detailed_disk_storage",
-                "disk_performance.header.show",
-                true))
-        {
+        if (config.getNestedBool("detailed_disk_storage", "disk_performance.header.show", true)) {
             ostringstream ss;
-
-            ss << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance.header.prefix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance.header.prefix",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance.header.text_color",
-                    "")
-               << config.getLabel(
-                    "detailed_disk_storage",
-                    "disk_performance.header.text",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance.header.suffix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance.header.suffix",
-                    "")
-               << r;
-
+            ss << config.getNestedColor("detailed_disk_storage", "disk_performance.header.prefix_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.header.prefix", "") << r
+               << config.getNestedColor("detailed_disk_storage", "disk_performance.header.text_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.header.text", "") << r
+               << config.getNestedColor("detailed_disk_storage", "disk_performance.header.suffix_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.header.suffix", "") << r;
             lp.push(ss.str());
         }
 
-
-        // Print each disk
-        for (const auto& d : all_disks_captured)
-        {
+        for (const auto& d : all_disks_captured) {
             ostringstream ss;
 
-
-            // Drive label and drive letter
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.fields.drive_letter.show",
-                    true))
-            {
-                // Label
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.label",
-                        "Disk")
-                   << r;
-
-                // Opening parenthesis
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.letter_prefix_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.letter_prefix",
-                        "(")
-                   << r;
-
-                // Actual drive letter
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.letter_color",
-                        "")
-                   << d.drive_letter
-                   << r;
-
-                // Closing parenthesis
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.letter_suffix_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.drive_letter.letter_suffix",
-                        ")")
-                   << r
+            if (config.getNestedBool("detailed_disk_storage", "disk_performance.fields.drive_letter.show", true)) {
+                ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.drive_letter.label_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.drive_letter.label", "Disk") << r
+                   << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.drive_letter.letter_prefix_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.fields.drive_letter.letter_prefix", "(") << r
+                   << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.drive_letter.letter_color", "") << d.drive_letter << r
+                   << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.drive_letter.letter_suffix_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.fields.drive_letter.letter_suffix", ")") << r
                    << " ";
             }
 
+            ss << config.getNestedColor("detailed_disk_storage", "disk_performance.brackets.square_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.brackets.square_open", "[") << r << " ";
 
-            // Opening square bracket
-            ss << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance.brackets.square_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance.brackets.square_open",
-                    "[")
-               << r
-               << " ";
-
-
-            // Read speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.fields.read_speed.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.read_speed.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.read_speed.label",
-                        "")
-                   << r
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.read_speed.value_color",
-                        "")
-                   << fmt_speed(d.read_speed)
-                   << r
-
-                   << " "
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.read_speed.unit_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.read_speed.unit",
-                        "")
-                   << r;
+            if (config.getNestedBool("detailed_disk_storage", "disk_performance.fields.read_speed.show", true)) {
+                ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.read_speed.label_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.read_speed.label", "") << r
+                   << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.read_speed.value_color", "") << fmt_speed(d.read_speed) << r
+                   << " " << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.read_speed.unit_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.read_speed.unit", "") << r;
             }
 
+            bool wantsWrite = config.getNestedBool("detailed_disk_storage", "disk_performance.fields.write_speed.show", true);
+            bool wantsSerial = config.getNestedBool("detailed_disk_storage", "disk_performance.fields.serial_number.show", true);
+            bool wantsStatus = config.getNestedBool("detailed_disk_storage", "disk_performance.fields.external_status.show", true);
+            bool pipeEnabled = config.getNestedBool("detailed_disk_storage", "disk_performance.pipe.show", true);
 
-            // Pipe before write speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.pipe.show",
-                    true))
-            {
-                bool has_following_field =
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.serial_number.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.external_status.show",
-                        true);
-
-                if (has_following_field)
-                {
-                    ss << " "
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance.pipe.color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "disk_performance.pipe.text",
-                            "|")
-                       << r
-                       << " ";
-                }
+            if (pipeEnabled && (wantsWrite || wantsSerial || wantsStatus)) {
+                ss << " " << config.getNestedColor("detailed_disk_storage", "disk_performance.pipe.color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.pipe.text", "|") << r << " ";
             }
 
-
-            // Write speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.fields.write_speed.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.label",
-                        "")
-                   << r
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.value_color",
-                        "")
-                   << fmt_speed(d.write_speed)
-                   << r
-
-                   << " "
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.unit_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.write_speed.unit",
-                        "")
-                   << r;
+            if (wantsWrite) {
+                ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.write_speed.label_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.write_speed.label", "") << r
+                   << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.write_speed.value_color", "") << fmt_speed(d.write_speed) << r
+                   << " " << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.write_speed.unit_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.write_speed.unit", "") << r;
             }
 
-
-            // Pipe before serial number or status
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.pipe.show",
-                    true))
-            {
-                bool has_following_field =
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.serial_number.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.external_status.show",
-                        true);
-
-                if (has_following_field)
-                {
-                    ss << " "
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance.pipe.color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "disk_performance.pipe.text",
-                            "|")
-                       << r
-                       << " ";
-                }
+            if (pipeEnabled && (wantsSerial || wantsStatus)) {
+                ss << " " << config.getNestedColor("detailed_disk_storage", "disk_performance.pipe.color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.pipe.text", "|") << r << " ";
             }
 
-
-            // Serial number
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.fields.serial_number.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.serial_number.value_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance.fields.serial_number.prefix",
-                        "")
-                   << d.serial_number
-                   << r;
+            if (wantsSerial) {
+                ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.serial_number.value_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.fields.serial_number.prefix", "") << d.serial_number << r;
             }
 
-
-            // External or internal status
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance.fields.external_status.show",
-                    true))
-            {
+            if (wantsStatus) {
                 ss << " ";
-
                 if (d.is_external)
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance.fields.external_status.external_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "disk_performance.fields.external_status.external_text",
-                            "")
-                       << r;
-                }
+                    ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.external_status.external_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.external_status.external_text", "") << r;
                 else
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance.fields.external_status.internal_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "disk_performance.fields.external_status.internal_text",
-                            "")
-                       << r;
-                }
+                    ss << config.getNestedColor("detailed_disk_storage", "disk_performance.fields.external_status.internal_color", "") << config.getLabel("detailed_disk_storage", "disk_performance.fields.external_status.internal_text", "") << r;
             }
 
-
-            // Closing square bracket
-            ss << " "
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance.brackets.square_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance.brackets.square_close",
-                    "]")
-               << r;
+            ss << " " << config.getNestedColor("detailed_disk_storage", "disk_performance.brackets.square_color", "") << config.getPrefix("detailed_disk_storage", "disk_performance.brackets.square_close", "]") << r;
 
             lp.push(ss.str());
         }
     }
 
-
-    // ----------------- PREDICTED DISK PERFORMANCE -----------------
-
-    if (!all_disks_captured.empty() &&
-        config.getNestedBool(
-            "detailed_disk_storage",
-            "sections.disk_performance_predicted",
-            true))
-    {
-        // line spacing json driven
-        int spacing = config.getNestedInt("detailed_disk_storage","disk_performance_predicted.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Header
-        if (config.getNestedBool(
-                "detailed_disk_storage",
-                "disk_performance_predicted.header.show",
-                false))
-        {
-            ostringstream ss;
-
-            ss << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.prefix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.prefix",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.text_color",
-                    "")
-               << config.getLabel(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.text",
-                    "")
-               << r
-
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.suffix_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.header.suffix",
-                    "")
-               << r;
-
-            lp.push(ss.str());
-        }
-
-
-        // Print predicted values
-        for (const auto& d : all_disks_captured)
-        {
-            ostringstream ss;
-
-
-            // Drive label and drive letter
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.fields.drive_letter.show",
-                    true))
-            {
-                // Label
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.label",
-                        "Disk")
-                   << r;
-
-                // Opening parenthesis
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.letter_prefix_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.letter_prefix",
-                        "(")
-                   << r;
-
-                // Actual drive letter
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.letter_color",
-                        "")
-                   << d.drive_letter
-                   << r;
-
-                // Closing parenthesis
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.letter_suffix_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.drive_letter.letter_suffix",
-                        ")")
-                   << r
-                   << " ";
-            }
-
-
-            // Opening square bracket
-            ss << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.brackets.square_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.brackets.square_open",
-                    "[")
-               << r
-               << " ";
-
-
-            // Predicted read speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.fields.read_speed.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.read_speed.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.read_speed.label",
-                        "")
-                   << r
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.read_speed.value_color",
-                        "")
-                   << fmt_speed(d.predicted_read_speed)
-                   << r
-
-                   << " "
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.read_speed.unit_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.read_speed.unit",
-                        "")
-                   << r;
-            }
-
-
-            // Pipe before write speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.pipe.show",
-                    true))
-            {
-                bool has_following_field =
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.serial_number.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.external_status.show",
-                        true);
-
-                if (has_following_field)
-                {
-                    ss << " "
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.pipe.color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.pipe.text",
-                            "|")
-                       << r
-                       << " ";
-                }
-            }
-
-
-            // Predicted write speed
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.fields.write_speed.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.label_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.label",
-                        "")
-                   << r
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.value_color",
-                        "")
-                   << fmt_speed(d.predicted_write_speed)
-                   << r
-
-                   << " "
-
-                   << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.unit_color",
-                        "")
-                   << config.getLabel(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.write_speed.unit",
-                        "")
-                   << r;
-            }
-
-
-            // Pipe before serial number or status
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.pipe.show",
-                    true))
-            {
-                bool has_following_field =
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.serial_number.show",
-                        true)
-                    ||
-                    config.getNestedBool(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.external_status.show",
-                        true);
-
-                if (has_following_field)
-                {
-                    ss << " "
-                       << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.pipe.color",
-                            "")
-                       << config.getPrefix(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.pipe.text",
-                            "|")
-                       << r
-                       << " ";
-                }
-            }
-
-
-            // Serial number
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.fields.serial_number.show",
-                    true))
-            {
-                ss << config.getNestedColor(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.serial_number.value_color",
-                        "")
-                   << config.getPrefix(
-                        "detailed_disk_storage",
-                        "disk_performance_predicted.fields.serial_number.prefix",
-                        "")
-                   << d.serial_number
-                   << r;
-            }
-
-
-            // External or internal status
-            if (config.getNestedBool(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.fields.external_status.show",
-                    true))
-            {
-                ss << " ";
-
-                if (d.is_external)
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.fields.external_status.external_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.fields.external_status.external_text",
-                            "")
-                       << r;
-                }
-                else
-                {
-                    ss << config.getNestedColor(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.fields.external_status.internal_color",
-                            "")
-                       << config.getLabel(
-                            "detailed_disk_storage",
-                            "disk_performance_predicted.fields.external_status.internal_text",
-                            "")
-                       << r;
-                }
-            }
-
-
-            // Closing square bracket
-            ss << " "
-               << config.getNestedColor(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.brackets.square_color",
-                    "")
-               << config.getPrefix(
-                    "detailed_disk_storage",
-                    "disk_performance_predicted.brackets.square_close",
-                    "]")
-               << r;
-
-            lp.push(ss.str());
-        }
-    }
-
-
-    // No drives were found
-    if (all_disks_captured.empty())
-    {
-        lp.push(
-            config.getLabel(
-                "detailed_disk_storage",
-                "no_drives",
-                "")
-        );
+    if (all_disks_captured.empty()) {
+        lp.push(config.getLabel("detailed_disk_storage", "no_drives", ""));
     }
 };
 
-// ----------------- END DETAILED STORAGE SECTION -----------------
+
 
 //  ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗
 //  ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝
@@ -2574,14 +1699,29 @@ sections["detailed_network_connection"] = [&]() {
         lp.push(ss.str());
     };
 
-    field("name",      "name",      net.get_network_name());
-    field("type",      "type",      c_net.get_network_type());
-    field("local_ip",  "local_ip",  net.get_local_ip());
-    field("public_ip", "public_ip", net.get_public_ip());
-    field("locale",    "locale",    net.get_locale());
-    field("mac",       "mac",       net.get_mac_address());
-    field("upload",    "upload",    net.get_network_upload_speed());
-    field("download",  "download",  net.get_network_download_speed());
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["name"]      = [&]() { field("name",      "name",      net.get_network_name()); };
+    fields["type"]      = [&]() { field("type",      "type",      c_net.get_network_type()); };
+    fields["local_ip"]  = [&]() { field("local_ip",  "local_ip",  net.get_local_ip()); };
+    fields["public_ip"] = [&]() { field("public_ip", "public_ip", net.get_public_ip()); };
+    fields["locale"]    = [&]() { field("locale",    "locale",    net.get_locale()); };
+    fields["mac"]       = [&]() { field("mac",       "mac",       net.get_mac_address()); };
+    fields["upload"]    = [&]() { field("upload",    "upload",    net.get_network_upload_speed()); };
+    fields["download"]  = [&]() { field("download",  "download",  net.get_network_download_speed()); };
+
+    // ---- Run fields in the order JSON specifies ----
+    // Each field prints its own line (unlike the compact sections), so no
+    // trailing-space spacing trick is needed here — just sequence control.
+    static const std::vector<std::string> defaultOrder =
+        {"name", "type", "local_ip", "public_ip", "locale", "mac", "upload", "download"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
+
+    for (const auto& key : order) {
+        auto it = fields.find(key);
+        if (it != fields.end()) it->second();
+    }
 };
 
 //  ██████╗ ██╗   ██╗███╗   ███╗███╗   ███╗██╗   ██╗
