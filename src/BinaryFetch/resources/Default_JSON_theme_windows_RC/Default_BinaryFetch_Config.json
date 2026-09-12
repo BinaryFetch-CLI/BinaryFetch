@@ -1,4 +1,29 @@
 {
+  "section_order": [
+  "header_settings",
+  "compact_date_and_time",
+  "compact_operating_system",
+  "compact_processor",
+  "compact_graphics_card",
+  "compact_display_monitor",
+  "compact_system_memory",
+  "compact_audio_devices",
+  "compact_resource_usage",
+  "compact_user_account",
+  "compact_network_connection",
+  "compact_disk_storage",
+  "detailed_system_memory",
+  "detailed_disk_storage",
+  "detailed_resource_usage",
+  "detailed_operating_system",
+  "detailed_processor",
+  "detailed_graphics_card",
+  "detailed_display_monitor",
+  "detailed_bios_and_motherboard",
+  "detailed_user_account",
+  "detailed_network_connection",
+  "detailed_audio_and_power"
+],
   "header_settings": {
     "enabled": true,
     "header_prefix": "~>>",
@@ -8,11 +33,12 @@
     "header_suffix": "",
     "header_suffix_color": "bright_blue"
   },
-  "compact_date_and_time": {
+"compact_date_and_time": {
     "enabled": true,
     "show_emoji": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
     "emoji_color": "bright_cyan",
+    "order": ["time", "date", "week", "leap_year"],
     "prefixes": {
       "prefix": "╭📅 ",
       "prefix_color": "red"
@@ -23,6 +49,10 @@
       "show_hour": true,
       "show_minute": true,
       "show_second": true,
+      "open": "(",
+      "close": ")",
+      "label_text": "Time: ",
+      "sep_text": ":",
       "colors": {
         "bracket": "blue",
         "label": "cyan",
@@ -39,6 +69,11 @@
       "show_month_name": true,
       "show_month_num": true,
       "show_year": true,
+      "open": "(",
+      "close": ")",
+      "label_text": "Date: ",
+      "sep_text": " : ",
+      "num_sep_text": " ",
       "colors": {
         "bracket": "blue",
         "label": "bright_cyan",
@@ -46,7 +81,8 @@
         "month_name": "cyan",
         "month_num": "cyan",
         "year": "cyan",
-        "sep": "bright_blue"
+        "sep": "bright_blue",
+        "num_sep_color": "bright_blue"
       }
     },
     "week": {
@@ -54,6 +90,10 @@
       "show_label": true,
       "show_num": true,
       "show_day_name": true,
+      "open": "(",
+      "close": ")",
+      "label_text": "Week: ",
+      "sep_text": " - ",
       "colors": {
         "bracket": "cyan",
         "label": "blue",
@@ -66,16 +106,20 @@
       "enabled": false,
       "show_label": true,
       "show_val": true,
+      "open": "(",
+      "close": ")",
+      "label_text": "Leap Year: ",
       "colors": {
         "bracket": "cyan",
         "label": "blue",
         "val": "bright_blue"
       }
     }
-  },
-  "compact_operating_system": {
+},
+"compact_operating_system": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["name", "build", "arch", "uptime"],
     "prefixes": {
       "prefix": "│🎯 ",
       "prefix_color": "red"
@@ -109,14 +153,16 @@
       },
       "uptime": {
         "show": true,
+        "label": "uptime: ",
         "label_color": "cyan",
         "value_color": "bright_cyan"
       }
     }
-  },
-  "compact_processor": {
+},
+"compact_processor": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["cores_threads", "name", "clock"],
     "prefixes": {
       "prefix": "│⚙️  ",
       "prefix_color": "red"
@@ -130,7 +176,7 @@
       "text": ":",
       "color": "red",
       "divider": "/",
-      "divider_color":"cyan"
+      "divider_color": "cyan"
     },
     "brackets": {
       "open": "(",
@@ -144,23 +190,30 @@
       },
       "cores": {
         "show": true,
-        "value_color": "cyan"
+        "value_color": "cyan",
+        "value_suffix": "C",
+        "value_suffix_color": "cyan"
       },
       "threads": {
         "show": true,
-        "value_color": "cyan"
+        "value_color": "cyan",
+        "value_suffix": "t",
+        "value_suffix_color": "cyan"
       },
       "clock": {
         "show": true,
         "value_color": "cyan",
-        "at_symbol_color": "cyan"
-      }
-    },
-    "text_color": "cyan"
-  },
-  "compact_graphics_card": {
+        "at_symbol": "@",
+        "at_symbol_color": "cyan",
+        "unit": " GHz",
+        "unit_color": "cyan"
+       }
+     }
+   },
+"compact_graphics_card": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["name", "usage", "vram", "freq"],
     "prefixes": {
       "prefix": "│🧿 ",
       "prefix_color": "red"
@@ -186,22 +239,29 @@
       },
       "usage": {
         "show": true,
-        "value_color": "bright_cyan"
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       },
       "vram": {
         "show": true,
-        "value_color": "blue"
+        "value_color": "blue",
+        "unit": " GB",
+        "unit_color": "blue"
       },
       "freq": {
         "show": true,
         "value_color": "cyan",
+        "at_symbol": "@",
         "at_symbol_color": "blue"
       }
     }
-  },
-  "compact_display_monitor": {
+},
+"compact_display_monitor": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["name", "resolution", "scale", "upscale", "refresh"],
+    "no_displays_text": "No displays detected",
     "prefixes": {
       "prefix": "│🖥️  ",
       "prefix_color": "red"
@@ -227,28 +287,37 @@
       "resolution": {
         "show": true,
         "value_color": "cyan",
+        "x_symbol": " x ",
         "x_color": "bright_blue"
       },
       "scale": {
         "show": true,
+        "label": "Scale: ",
         "label_color": "cyan",
-        "value_color": "blue"
+        "value_color": "blue",
+        "unit": "%",
+        "unit_color": "blue"
       },
       "upscale": {
         "show": false,
+        "label": "upscale: ",
         "label_color": "cyan",
         "value_color": "cyan"
       },
       "refresh": {
         "show": true,
         "value_color": "blue",
-        "at_symbol_color": "cyan"
+        "at_symbol": "@",
+        "at_symbol_color": "cyan",
+        "unit": "Hz",
+        "unit_color": "blue"
       }
     }
-  },
-  "compact_system_memory": {
+},
+"compact_system_memory": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["total", "free", "percent"],
     "prefixes": {
       "prefix": "│📟 ",
       "prefix_color": "red"
@@ -270,24 +339,34 @@
     "fields": {
       "total": {
         "show": true,
+        "label": "total: ",
         "label_color": "bright_cyan",
-        "value_color": "bright_cyan"
+        "value_color": "bright_cyan",
+        "unit": " GB",
+        "unit_color": "bright_cyan"
       },
       "free": {
         "show": true,
-        "value_color": "bright_cyan"
+        "label": "free: ",
+        "label_color": "bright_cyan",
+        "value_color": "bright_cyan",
+        "unit": " GB",
+        "unit_color": "bright_cyan"
       },
       "percent": {
         "show": true,
-        "value_color": "bright_cyan"
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       }
     }
-  },
-  "compact_audio_devices": {
+},
+ "compact_audio_devices": {
     "enabled": true,
+    "order": ["input", "output"],
     "input": {
       "show": true,
-      "top_line_spacing":0,
+      "top_line_spacing": 0,
       "prefixes": {
         "prefix": "│🎙️  ",
         "prefix_color": "red"
@@ -301,11 +380,14 @@
         "color": "cyan"
       },
       "device_color": "blue",
-      "status_color": "blue"
+      "status_color": "blue",
+      "status_bracket_open": "[",
+      "status_bracket_close": "]",
+      "status_brackets_color": "bright_cyan"
     },
     "output": {
       "show": true,
-      "top_line_spacing":0,
+      "top_line_spacing": 0,
       "prefixes": {
         "prefix": "│🔉 ",
         "prefix_color": "red"
@@ -319,21 +401,20 @@
         "color": "cyan"
       },
       "device_color": "blue",
-      "status_color": "blue"
-    },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "bright_cyan"
+      "status_color": "blue",
+      "status_bracket_open": "[",
+      "status_bracket_close": "]",
+      "status_brackets_color": "bright_cyan"
     },
     "arrow": {
       "text": "->",
       "color": "bright_cyan"
     }
-  },
-  "compact_resource_usage": {
+},
+"compact_resource_usage": {
     "enabled": true,
-    "top_line_spacing":0,
+    "top_line_spacing": 0,
+    "order": ["cpu", "gpu", "ram", "disk"],
     "prefixes": {
       "prefix": "│📊 ",
       "prefix_color": "red"
@@ -345,228 +426,358 @@
     },
     "separator": {
       "text": ":",
-      "color": "red"
-    },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "cyan"
+      "color": "red",
+      "suffix": " ",
+      "suffix_color": "red"
     },
     "fields": {
       "cpu": {
         "show": true,
+        "bracket_open": "(",
+        "bracket_close": ")",
+        "bracket_color": "cyan",
+        "label": "CPU",
         "label_color": "bright_cyan",
-        "value_color": "bright_cyan"
+        "label_suffix": ": ",
+        "label_suffix_color": "bright_cyan",
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       },
       "gpu": {
         "show": true,
+        "bracket_open": "(",
+        "bracket_close": ")",
+        "bracket_color": "cyan",
+        "label": "GPU",
         "label_color": "bright_cyan",
-        "value_color": "bright_cyan"
+        "label_suffix": ": ",
+        "label_suffix_color": "bright_cyan",
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       },
       "ram": {
         "show": true,
+        "bracket_open": "(",
+        "bracket_close": ")",
+        "bracket_color": "cyan",
+        "label": "RAM",
         "label_color": "bright_cyan",
-        "value_color": "bright_cyan"
+        "label_suffix": ": ",
+        "label_suffix_color": "bright_cyan",
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       },
       "disk": {
         "show": true,
+        "bracket_open": "(",
+        "bracket_close": ")",
+        "bracket_color": "cyan",
+        "label": "Disk",
         "label_color": "bright_cyan",
-        "value_color": "bright_cyan"
+        "label_suffix": ": ",
+        "label_suffix_color": "bright_cyan",
+        "value_color": "bright_cyan",
+        "unit": "%",
+        "unit_color": "bright_cyan"
       }
     }
+},
+"compact_user_account": {
+  "enabled": true,
+  "top_line_spacing": 0,
+  "order": ["username", "domain", "type"],
+  "prefixes": {
+    "prefix": "│👾 ",
+    "prefix_color": "red"
   },
-  "compact_user_account": {
-    "enabled": true,
-    "top_line_spacing":0,
+  "label": {
+    "show": true,
+    "text": "User",
+    "color": "red"
+  },
+  "separator": {
+    "text": ":",
+    "color": "bright_blue"
+  },
+  "brackets": {
+    "open": "(",
+    "close": ")",
+    "color": "cyan"
+  },
+  "fields": {
+    "username": {
+      "show": true,
+      "prefix": "@",
+      "prefix_color": "cyan",
+      "value_color": "cyan"
+    },
+    "domain": {
+      "show": true,
+      "label": "Domain: ",
+      "label_color": "blue",
+      "value_color": "blue"
+    },
+    "type": {
+      "show": true,
+      "label": "Type: ",
+      "label_color": "blue",
+      "value_color": "bright_blue"
+    }
+  }
+},
+"compact_network_connection": {
+  "enabled": true,
+  "top_line_spacing": 0,
+  "order": ["name", "type", "ip"],
+  "prefixes": {
+    "prefix": "│🛜  ",
+    "prefix_color": "red"
+  },
+  "label": {
+    "show": true,
+    "text": "Network",
+    "color": "red"
+  },
+  "separator": {
+    "text": ":",
+    "color": "bright_cyan"
+  },
+  "fields": {
+    "name": {
+      "show": false,
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "Name",
+      "label_color": "bright_cyan",
+      "label_suffix": ": ",
+      "label_suffix_color": "bright_cyan",
+      "value_color": "bright_cyan"
+    },
+    "type": {
+      "show": true,
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "Type",
+      "label_color": "bright_cyan",
+      "label_suffix": ": ",
+      "label_suffix_color": "bright_cyan",
+      "value_color": "bright_cyan"
+    },
+    "ip": {
+      "show": true,
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "ip",
+      "label_color": "bright_cyan",
+      "label_suffix": ": ",
+      "label_suffix_color": "bright_cyan",
+      "value_color": "bright_cyan"
+    }
+  },
+  "label_color": "bright_cyan"
+},
+"compact_disk_storage": {
+  "enabled": true,
+  "top_line_spacing": 0,
+  "usage": {
+    "show": true,
+    "top_line_spacing": 0,
     "prefixes": {
-      "prefix": "│👾 ",
+      "show": true,
+      "prefix": "│📀 ",
       "prefix_color": "red"
     },
     "label": {
-      "show": true,
-      "text": "User",
+      "text": "Disk Usage",
       "color": "red"
     },
     "separator": {
       "text": ":",
-      "color": "bright_blue"
+      "color": "red",
+      "suffix": " ",
+      "suffix_color": "red"
     },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "cyan"
-    },
-    "fields": {
-      "username": {
-        "show": true,
-        "value_color": "cyan"
-      },
-      "domain": {
-        "show": true,
-        "value_color": "blue"
-      },
-      "type": {
-        "show": true,
-        "value_color": "bright_blue"
-      }
-    },
-    "label_color": "blue"
-  },
-  "compact_network_connection": {
-    "enabled": false,
-    "top_line_spacing":0,
-    "prefixes": {
-      "prefix": "│🛜  ",
-      "prefix_color": "red"
-    },
-    "label": {
-      "show": true,
-      "text": "Network",
-      "color": "red"
-    },
-    "separator": {
-      "text": ":",
-      "color": "bright_cyan"
-    },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "cyan"
-    },
-    "fields": {
-      "name": {
-        "show": false,
-        "value_color": "bright_cyan"
-      },
-      "type": {
-        "show": true,
-        "value_color": "bright_cyan"
-      },
-      "ip": {
-        "show": true,
-        "value_color": "bright_cyan"
-      }
-    },
-    "label_color": "bright_cyan"
-  },
-  "compact_disk_storage": {
-    "enabled": true,
-    "top_line_spacing":0,
-    "usage": {
-      "show": true,
-      "prefixes": {
-        "prefix": "│📀 ",
-        "prefix_color": "red"
-      },
-      "label": {
-        "text": "Disk Usage",
-        "color": "red"
-      },
-      "separator": {
-        "text": ":",
-        "color": "red"
-      }
-    },
-    "capacity": {
-      "show": true,
-      "top_line_spacing":0,
-      "prefixes": {
-        "prefix": "╰💾 ",
-        "prefix_color": "red"
-      },
-      "label": {
-        "text": "Disk Cap",
-        "color": "red"
-      },
-      "separator": {
-        "text": ":",
-        "color": "red"
-      }
-    },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "cyan"
-    },
-    "arrow": {
-      "text": "->",
-      "color": "bright_cyan"
-    },
-    "fields": {
+    "entry": {
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
       "letter_color": "bright_cyan",
-      "percent_color": "bright_cyan",
-      "separator_color": "bright_cyan",
-      "capacity_color": "bright_cyan"
+      "letter_suffix": ":",
+      "letter_suffix_space": " ",
+      "letter_suffix_color": "bright_cyan",
+      "value_color": "bright_cyan",
+      "unit": "%",
+      "unit_color": "bright_cyan",
+      "suffix": " ",
+      "suffix_color": "bright_cyan"
     }
   },
-  "detailed_system_memory": {
-    "enabled": true,
-    "top_line_spacing":1,
-    "sections": {
-      "header": true,
-      "total": true,
-      "free": true,
-      "used_percentage": true,
-      "modules": true
+  "capacity": {
+    "show": true,
+    "top_line_spacing": 0,
+    "prefixes": {
+      "show": true,
+      "prefix": "╰💾 ",
+      "prefix_color": "red"
     },
-    "header": {
-      "prefix": "~>> ",
-      "prefix_color": "blue",
-      "text": "Memory Info",
-      "text_color": "red",
-      "suffix": " --------------------------",
-      "suffix_color": "blue"
+    "label": {
+      "text": "Disk Cap",
+      "color": "red"
     },
-    "labels": {
-      "total": {
-        "text": "Total: ",
-        "color": "bright_blue"
-      },
-      "free": {
-        "text": "Free: ",
-        "color": "bright_cyan"
+    "separator": {
+      "text": ":",
+      "color": "red",
+      "suffix": " ",
+      "suffix_color": "red"
+    },
+    "entry": {
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "letter_color": "bright_cyan",
+      "separator": "-",
+      "separator_color": "bright_cyan",
+      "value_color": "bright_cyan",
+      "unit": "GB",
+      "unit_color": "bright_cyan",
+      "suffix": " ",
+      "suffix_color": "bright_cyan"
+    }
+  }
+},
+"detailed_system_memory": {
+  "enabled": true,
+  "top_line_spacing": 1,
+  "sections": {
+    "header": true,
+    "total": true,
+    "free": true,
+    "used_percentage": true,
+    "modules": true
+  },
+  "header": {
+    "prefix": "~>> ",
+    "prefix_color": "blue",
+    "text": "Memory Info",
+    "text_color": "red",
+    "suffix": " -------------------------",
+    "suffix_color": "blue"
+  },
+  "order": ["total"," ", "free"," ", "used_percentage"],
+  "fields": {
+    "total": {
+      "prefix": "",
+      "prefix_color": "bright_cyan",
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "Total: ",
+      "label_color": "bright_blue",
+      "value_color": "bright_blue",
+      "unit": "GB",
+      "unit_color": "bright_blue"
+    },
+    "free": {
+      "prefix": "",
+      "prefix_color": "bright_cyan",
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "Free: ",
+      "label_color": "bright_cyan",
+      "value_color": "bright_cyan",
+      "unit": " GB",
+      "unit_color": "bright_cyan",
+      "visualizer": {
+        "enabled": false,
+        "width": 20,
+        "filled": "█",
+        "filled_color": "bright_green",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "cyan",
+        "right": "]",
+        "right_color": "cyan"
+      }
+    },
+    "used_percentage": {
+      "prefix": "",
+      "prefix_color": "bright_cyan",
+      "bracket_open": "(",
+      "bracket_close": ")",
+      "bracket_color": "cyan",
+      "label": "Used: ",
+      "label_color": "red",
+      "value_color": "blue",
+      "unit": "%",
+      "unit_color": "blue",
+      "visualizer": {
+        "enabled": false,
+        "width": 20,
+        "filled": "█",
+        "filled_color": "bright_green",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "cyan",
+        "right": "]",
+        "right_color": "cyan"
+      }
+    }
+  },
+  "modules": {
+   "order": ["label", "used", " ", "capacity", " ", "type"," ", "speed"],
+    "fields": {
+      "label": {
+        "prefix": "",
+        "prefix_color": "bright_cyan",
+        "text": "Memory ",
+        "text_color": "bright_blue",
+        "separator": " : ",
+        "separator_color": "cyan"
       },
       "used": {
-        "text": "Used: ",
-        "color": "red"
+        "bracket_open": "(",
+        "bracket_close": ")",
+        "bracket_color": "cyan",
+        "label": "Used: ",
+        "label_color": "red",
+        "value_color": "blue",
+        "unit": "%",
+        "unit_color": "blue"
+      },
+      "capacity": {
+        "value_color": "bright_cyan",
+        "unit": "GB",
+        "unit_color": "bright_cyan"
+      },
+      "type": {
+        "value_color": "red"
+      },
+      "speed": {
+        "value_color": "bright_blue"
       }
-    },
-    "values": {
-      "total_color": "bright_blue",
-      "free_color": "bright_cyan",
-      "used_color": "blue",
-      "total_prefix": "",
-      "total_prefix_color": "bright_cyan",
-      "free_prefix": "",
-      "free_prefix_color": "bright_cyan",
-      "used_prefix": " ",
-      "used_prefix_color": "bright_cyan"
-    },
-    "brackets": {
-      "color": "cyan"
-    },
-    "modules": {
-      "label_color": "bright_blue",
-      "separator": " : ",
-      "separator_color": "cyan",
-      "capacity_color": "bright_cyan",
-      "type_color": "red",
-      "speed_color": "bright_blue",
-      "prefix": "",
-      "prefix_color": "bright_cyan"
     }
-  },
+  }
+},
 "detailed_disk_storage": {
     "enabled": true,
     "sections": {
         "storage_summary": true,
-        "disk_performance": true,
-        "disk_performance_predicted": false
+        "disk_performance": true
     },
     "no_drives": "No drives detected.",
     "storage_summary": {
         "enabled": true,
-        "top_line_spacing":1,
+        "top_line_spacing": 1,
+        "order": ["storage_type"," ", "drive_letter", " ","usage_block", "used_visualizer", "free_visualizer"],
         "header": {
             "show": true,
             "prefix": "------------------------- ",
@@ -582,19 +793,23 @@
                 "value_color": "bright_cyan"
             },
             "drive_letter": {
-              "show": true,
-              "label":"Disk",
-              "label_color":"red",
-              "letter_prefix":"(",
-              "letter_prefix_color":"blue",
-              "letter_suffix":")",
-              "letter_suffix_color":"blue",
-              "letter_color": "red"
-          },
+                "show": true,
+                "label": "Disk",
+                "label_color": "red",
+                "letter_prefix": "(",
+                "letter_prefix_color": "blue",
+                "letter_suffix": ")",
+                "letter_suffix_color": "blue",
+                "letter_color": "red"
+            },
             "used_label": {
                 "show": true,
+                "prefix": " ",
+                "prefix_color": "cyan",
                 "text": "Used",
-                "value_color": "red"
+                "value_color": "red",
+                "suffix": " ",
+                "suffix_color": "cyan"
             },
             "used_space": {
                 "show": true,
@@ -610,15 +825,19 @@
             },
             "used_percentage": {
                 "show": true,
+                "spacer": " ",
+                "spacer_color": "cyan",
+                "prefix": "",
+                "prefix_color": "red",
                 "value_color": "bright_blue",
                 "suffix": "",
-                "suffix_color":"red",
-                "prefix": "",
-                "puffix_color":"red"
+                "suffix_color": "red"
             },
             "file_system": {
                 "show": true,
-                "value_color": "red"
+                "value_color": "red",
+                "suffix": " ",
+                "suffix_color": "cyan"
             },
             "external_status": {
                 "show": true,
@@ -632,22 +851,81 @@
             "square_open": " [",
             "square_close": "]",
             "square_color": "cyan",
+            "square_close_prefix": " ",
+            "square_close_prefix_color": "cyan",
             "round_open": "(",
             "round_close": ")",
             "round_color": "bright_cyan"
         },
         "separator": {
+            "show": true,
             "text": " /",
             "color": "cyan"
         },
         "dash": {
             "text": " - ",
-            "color": "bright_cyan"
+            "color": "bright_cyan",
+            "suffix": " ",
+            "suffix_color": "bright_cyan"
+        }
+    },
+    "fields": {
+        "used_visualizer": {
+            "show": true,
+            "prefix": " ",
+            "prefix_color": "cyan",
+            "label": "Used: ",
+            "label_color": "red",
+            "bar_gap": " ",
+            "bar_gap_color": "cyan",
+            "value_color": "bright_blue",
+            "unit": "%",
+            "unit_color": "blue",
+            "suffix": " ",
+            "suffix_color": "cyan",
+            "visualizer": {
+                "enabled": true,
+                "width": 20,
+                "filled": "█",
+                "filled_color": "bright_green",
+                "empty": "░",
+                "empty_color": "white",
+                "left": "[",
+                "left_color": "cyan",
+                "right": "]",
+                "right_color": "cyan"
+            }
+        },
+        "free_visualizer": {
+            "show": true,
+            "prefix": " ",
+            "prefix_color": "cyan",
+            "label": "Free: ",
+            "label_color": "bright_cyan",
+            "bar_gap": " ",
+            "bar_gap_color": "cyan",
+            "value_color": "bright_cyan",
+            "unit": "%",
+            "unit_color": "cyan",
+            "suffix": "",
+            "suffix_color": "cyan",
+            "visualizer": {
+                "enabled": true,
+                "width": 20,
+                "filled": "█",
+                "filled_color": "bright_green",
+                "empty": "░",
+                "empty_color": "white",
+                "left": "[",
+                "left_color": "cyan",
+                "right": "]",
+                "right_color": "cyan"
+            }
         }
     },
     "disk_performance": {
         "enabled": true,
-        "top_line_spacing":0,
+        "top_line_spacing": 0,
         "header": {
             "show": true,
             "prefix": "-------------------- ",
@@ -658,77 +936,14 @@
             "suffix_color": "blue"
         },
         "fields": {
-          "drive_letter": {
-            "show": true,
-            "label":"Disk",
-            "label_color":"red",
-            "letter_prefix":"(",
-            "letter_prefix_color":"blue",
-            "letter_suffix":")",
-            "letter_suffix_color":"blue",
-            "letter_color": "red"
-        },
-            "read_speed": {
-                "show": true,
-                "label": "Read: ",
-                "label_color": "bright_cyan",
-                "value_color": "red",
-                "unit": "MB/s",
-                "unit_color": "bright_cyan"
-            },
-            "write_speed": {
-                "show": true,
-                "label": "Write: ",
-                "label_color": "bright_cyan",
-                "value_color": "red",
-                "unit": "MB/s",
-                "unit_color": "bright_cyan"
-            },
-            "serial_number": {
-                "show": true,
-                "prefix": "SN-",
-                "value_color": "red"
-            },
-            "external_status": {
-              "show": true,
-              "external_text": "Ext",
-              "external_color": "blue",
-              "internal_text": "Int",
-              "internal_color": "bright_cyan"
-          }
-        },
-        "speed_unit_color": "bright_cyan",
-        "brackets": {
-            "square_open": " [",
-            "square_close": "]",
-            "square_color": "cyan"
-        },
-        "pipe": {
-            "text": "|",
-            "color": "blue"
-        }
-    },
-    "disk_performance_predicted": {
-        "enabled": true,
-        "top_line_spacing":0,
-        "header": {
-            "show": true,
-            "prefix": "---------------- ",
-            "prefix_color": "bright_cyan",
-            "text": "DISK PERFORMANCE & DETAILS (Predicted)",
-            "text_color": "bright_cyan",
-            "suffix": " ------------",
-            "suffix_color": "bright_cyan"
-        },
-        "fields": {
             "drive_letter": {
                 "show": true,
-                "label":"Disk",
-                "label_color":"red",
-                "letter_prefix":"(",
-                "letter_prefix_color":"blue",
-                "letter_suffix":")",
-                "letter_suffix_color":"blue",
+                "label": "Disk",
+                "label_color": "red",
+                "letter_prefix": "(",
+                "letter_prefix_color": "blue",
+                "letter_suffix": ")",
+                "letter_suffix_color": "blue",
                 "letter_color": "red"
             },
             "read_speed": {
@@ -745,24 +960,24 @@
                 "label_color": "bright_cyan",
                 "value_color": "red",
                 "unit": "MB/s",
-                "unit_color": "red"
+                "unit_color": "bright_cyan"
             },
             "serial_number": {
                 "show": true,
                 "prefix": "SN-",
-                "value_color": "bright_cyan"
+                "value_color": "red"
             },
             "external_status": {
-              "show": true,
-              "external_text": "Ext",
-              "external_color": "blue",
-              "internal_text": "Int",
-              "internal_color": "bright_cyan"
-          }
+                "show": true,
+                "external_text": "Ext",
+                "external_color": "blue",
+                "internal_text": "Int",
+                "internal_color": "bright_cyan"
+            }
         },
         "speed_unit_color": "bright_cyan",
         "brackets": {
-            "square_open": "[",
+            "square_open": " [",
             "square_close": "]",
             "square_color": "cyan"
         },
@@ -774,7 +989,8 @@
 },
 "detailed_network_connection": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": [ "type", "local_ip", "public_ip", "locale", "mac", "upload", "download"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -885,7 +1101,8 @@
 },
 "dummy_network_info": {
   "enabled": false,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["name", "type", "local_ip", "read_speed", "write_speed"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -965,7 +1182,8 @@
 },
 "detailed_operating_system": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["name", "build", "architecture", "kernel", "uptime", "install_date", "serial"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1064,7 +1282,8 @@
 },
 "detailed_processor": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["brand", "utilization", "speed", "base_speed", "cores", "logical_processors", "sockets", "virtualization", "l1_cache", "l2_cache", "l3_cache"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1215,7 +1434,11 @@
 },
 "detailed_graphics_card": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "show_gpu_list": true,
+  "show_primary_gpu": false,
+  "order": ["name", "memory", "usage", "vendor", "driver", "temperature", "cores"],
+  "primary_order": ["name", "vram", "freq"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1374,6 +1597,7 @@
 "detailed_display_monitor": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["name", "applied_resolution", "native_resolution", "aspect_ratio", "scaling", "upscale", "dsr"],
   "banner": {
     "show": true,
     "prefix": "#- ",
@@ -1489,6 +1713,7 @@
 "detailed_bios_and_motherboard": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["mb_model", "mb_manufacturer","bios_vendor", "bios_version", "bios_date" ],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1564,6 +1789,7 @@
 "detailed_user_account": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["username", "computer_name", "domain"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1615,6 +1841,7 @@
 "detailed_resource_usage": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["uptime", "cpu_usage", "ram_usage", "gpu_usage", "disk_usage"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1650,7 +1877,7 @@
       "value_suffix_color": "red",
       "visualizer": {
        "enabled": true,
-       "width": 20,
+       "width": 30,
        "filled": "█",
        "filled_color": "bright_green",
        "empty": "░",
@@ -1674,7 +1901,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1698,7 +1925,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1722,7 +1949,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1738,6 +1965,7 @@
 "detailed_audio_and_power": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["output", "input", "power"],
   "output": {
     "show": true,
     "header": {

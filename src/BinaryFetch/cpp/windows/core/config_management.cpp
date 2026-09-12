@@ -452,6 +452,94 @@ std::string ConfigManager::getNestedString(
 }
 
 
+// nested string array, read array of strings from json (used for "layout" / "order")
+std::vector<std::string> ConfigManager::getStringArray(
+    const std::string& rawModule,
+    const std::string& path,
+    const std::vector<std::string>& fallback) const
+{
+    if (!m_loaded)
+        return fallback;
+
+    nlohmann::json current;
+
+    if (rawModule.empty()) {
+        // Root-level lookup (used by getLayoutOrder for top-level "layout")
+        current = m_config;
+    } else {
+        std::string module = resolveSectionKey(rawModule);
+        if (!m_config.contains(module))
+            return fallback;
+        current = m_config[module];
+    }
+
+    std::vector<std::string> keys;
+    std::stringstream ss(path);
+    std::string key;
+
+    while (std::getline(ss, key, '.'))
+        keys.push_back(key);
+
+    if (!rawModule.empty() && !keys.empty())
+        keys[0] = resolveSubsectionKey(resolveSectionKey(rawModule), keys[0]);
+
+    for (const auto& k : keys)
+    {
+        if (!current.contains(k))
+            return fallback;
+
+        current = current[k];
+    }
+
+    if (!current.is_array() || current.empty())
+        return fallback;
+
+    std::vector<std::string> result;
+    result.reserve(current.size());
+    for (const auto& item : current) {
+        if (item.is_string()) {
+            result.push_back(item.get<std::string>());
+        }
+        // non-string entries are silently skipped, per §6.2 of the ordering spec
+    }
+
+    return result.empty() ? fallback : result;
+}
+
+// convenience wrapper for the top-level "layout" key
+std::vector<std::string> ConfigManager::getLayoutOrder() const
+{
+    static const std::vector<std::string> defaultLayout = {
+        "header_settings",
+        "compact_date_and_time",
+        "compact_operating_system",
+        "compact_processor",
+        "compact_graphics_card",
+        "compact_display_monitor",
+        "compact_system_memory",
+        "compact_audio_devices",
+        "compact_resource_usage",
+        "compact_user_account",
+        "compact_network_connection",
+        "compact_disk_storage",
+        "detailed_system_memory",
+        "detailed_disk_storage",
+        "detailed_network_connection",
+        "detailed_operating_system",
+        "detailed_processor",
+        "detailed_graphics_card",
+        "detailed_display_monitor",
+        "detailed_bios_and_motherboard",
+        "detailed_user_account",
+        "detailed_resource_usage",
+        "detailed_audio_and_power"
+    };
+
+    return getStringArray("", "section_order", defaultLayout);
+}
+
+
+
 // ===================== LABEL RESOLUTION =====================
 std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string section = resolveSectionKey(rawSection);
