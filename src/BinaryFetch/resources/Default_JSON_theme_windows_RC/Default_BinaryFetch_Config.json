@@ -1277,7 +1277,8 @@
 },
 "detailed_processor": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "order": ["brand", "utilization", "speed", "base_speed", "cores", "logical_processors", "sockets", "virtualization", "l1_cache", "l2_cache", "l3_cache"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1428,7 +1429,11 @@
 },
 "detailed_graphics_card": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
+  "show_gpu_list": true,
+  "show_primary_gpu": false,
+  "order": ["name", "memory", "usage", "vendor", "driver", "temperature", "cores"],
+  "primary_order": ["name", "vram", "freq"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1587,6 +1592,7 @@
 "detailed_display_monitor": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["name", "applied_resolution", "native_resolution", "aspect_ratio", "scaling", "upscale", "dsr"],
   "banner": {
     "show": true,
     "prefix": "#- ",
@@ -1702,6 +1708,7 @@
 "detailed_bios_and_motherboard": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["mb_model", "mb_manufacturer","bios_vendor", "bios_version", "bios_date" ],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1777,6 +1784,7 @@
 "detailed_user_account": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["username", "computer_name", "domain"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1828,6 +1836,7 @@
 "detailed_resource_usage": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["uptime", "cpu_usage", "ram_usage", "gpu_usage", "disk_usage"],
   "header": {
     "show": true,
     "prefix": "#- ",
@@ -1863,7 +1872,7 @@
       "value_suffix_color": "red",
       "visualizer": {
        "enabled": true,
-       "width": 20,
+       "width": 30,
        "filled": "█",
        "filled_color": "bright_green",
        "empty": "░",
@@ -1887,7 +1896,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1911,7 +1920,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1935,7 +1944,7 @@
       "value_suffix_color": "red",
       "visualizer": {
         "enabled": true,
-        "width": 20,
+        "width": 30,
         "filled": "█",
         "filled_color": "bright_green",
         "empty": "░",
@@ -1951,6 +1960,7 @@
 "detailed_audio_and_power": {
   "enabled": true,
   "top_line_spacing":0,
+  "order": ["output", "input", "power"],
   "output": {
     "show": true,
     "header": {
