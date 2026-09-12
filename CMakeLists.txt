@@ -108,6 +108,7 @@ set(BINARYFETCH_HEADERS
     "${BINARYFETCH_INCLUDE}/core/json.hpp"
     "${BINARYFETCH_INCLUDE}/core/resource.h"
     "${BINARYFETCH_INCLUDE}/core/config_management.h"
+    "${BINARYFETCH_INCLUDE}/core/Image.h"
 
     # --------------------------------------------------------
     # Compact
@@ -170,6 +171,7 @@ if(WIN32)
 
         "${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp"
         "${BINARYFETCH_CPP}/windows/core/config_management.cpp"
+        "${BINARYFETCH_CPP}/windows/core/Image.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
