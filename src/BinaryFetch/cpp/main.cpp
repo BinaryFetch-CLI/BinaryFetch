@@ -992,7 +992,7 @@ sections["compact_user_account"] = [&]() {
 
     // line spacing json driven
     int spacing = config.getNestedInt("compact_user_account","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");} 
+    for (int n = 0; n < spacing; n++) {lp.push("");}
 
     // Prefix - from JSON
     if (config.isFieldEnabled("compact_user_account", "prefixes.show")) {
@@ -1013,15 +1013,18 @@ sections["compact_user_account"] = [&]() {
 
     fields["username"] = [&]() {
         if (!config.isFieldEnabled("compact_user_account", "fields.username.show")) return;
-        ss << config.getColor("compact_user_account", "fields.username.value_color", "")
-           << "@" << c_user.getUsername() << r;
+        ss << config.getColor("compact_user_account", "fields.username.prefix_color", "")
+           << config.getPrefix("compact_user_account", "fields.username.prefix", "@") << r
+           << config.getColor("compact_user_account", "fields.username.value_color", "")
+           << c_user.getUsername() << r;
     };
 
     fields["domain"] = [&]() {
         if (!config.isFieldEnabled("compact_user_account", "fields.domain.show")) return;
         ss << config.getColor("compact_user_account", "brackets.color", "")
            << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "label_color", "") << "Domain: " << r
+           << config.getColor("compact_user_account", "fields.domain.label_color", "")
+           << config.getLabel("compact_user_account", "fields.domain.label", "Domain: ") << r
            << config.getColor("compact_user_account", "fields.domain.value_color", "")
            << c_user.getDomain() << r
            << config.getColor("compact_user_account", "brackets.color", "")
@@ -1032,7 +1035,8 @@ sections["compact_user_account"] = [&]() {
         if (!config.isFieldEnabled("compact_user_account", "fields.type.show")) return;
         ss << config.getColor("compact_user_account", "brackets.color", "")
            << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "label_color", "") << "Type: " << r
+           << config.getColor("compact_user_account", "fields.type.label_color", "")
+           << config.getLabel("compact_user_account", "fields.type.label", "Type: ") << r
            << config.getColor("compact_user_account", "fields.type.value_color", "")
            << c_user.isAdmin() << r
            << config.getColor("compact_user_account", "brackets.color", "")
@@ -1826,7 +1830,7 @@ sections["dummy_network_info"] = [&]() {
 //  6. Install Date  - OS installation date
 //  7. Serial        - OS serial number
 //  All labels, values, colors, prefixes, and toggles are fully JSON-driven
-//  via the "detailed_operating_system" config block (aliased as "os_info").
+//  via the "detailed_operating_system" config block (aliased as "detailed_operating_system").
 //
 //  Output Example:
 //  #- Operating System -----------------------------------------#
@@ -1841,10 +1845,10 @@ sections["detailed_operating_system"] = [&]() {
     if (!config.isEnabled("detailed_operating_system")) return;
         
         // line spacing json driven
-        int spacing = config.getNestedInt("os_info","top_line_spacing",0);
+        int spacing = config.getNestedInt("detailed_operating_system","top_line_spacing",0);
         for (int n = 0; n < spacing; n++) {lp.push("");}
 
-        const string sec = "os_info";
+        const string sec = "detailed_operating_system";
 
         // Header
         if (config.getNestedBool(sec, "header.show", true)) {

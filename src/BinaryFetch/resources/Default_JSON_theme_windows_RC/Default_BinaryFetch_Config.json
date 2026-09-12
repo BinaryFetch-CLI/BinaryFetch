@@ -510,18 +510,23 @@
   "fields": {
     "username": {
       "show": true,
+      "prefix": "@",
+      "prefix_color": "cyan",
       "value_color": "cyan"
     },
     "domain": {
       "show": true,
+      "label": "Domain: ",
+      "label_color": "blue",
       "value_color": "blue"
     },
     "type": {
       "show": true,
+      "label": "Type: ",
+      "label_color": "blue",
       "value_color": "bright_blue"
     }
-  },
-  "label_color": "blue"
+  }
 },
 "compact_network_connection": {
   "enabled": true,
