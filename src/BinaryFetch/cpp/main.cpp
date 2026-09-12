@@ -116,28 +116,40 @@ std::string makeVisualizer(float percentage, const ConfigManager& config,
 
 
 // Runs field lambdas from `fields` in the order specified by `order`.
-// Each order entry is trimmed of trailing spaces to find the matching
-// field key; any trailing spaces present in the raw JSON entry are
-// re-appended to `ss` after the field runs, letting the JSON "order"
-// array control inter-field spacing directly (e.g. "name " adds one
-// space after the name field, "name  " adds two, "name" adds none).
+// Each entry in `order` is either:
+//   - a field key, matched literally against `fields` (no trimming),
+//   - or an entry made up entirely of whitespace, which is treated as
+//     a literal spacer and appended to `ss` as-is, with no field lookup.
+//
+// Inter-field spacing is controlled by adding explicit spacer entries,
+// e.g.:
+//   ["time", " ", "date", " ", "week", " ", "leap_year"]
+// Field names themselves are no longer allowed to carry trailing
+// spaces for spacing purposes (the old "name " convention is removed);
+// a field key must match a registered field name exactly.
 void runOrderedFields(const std::vector<std::string>& order,
                        const std::map<std::string, std::function<void()>>& fields,
                        std::ostringstream& ss)
 {
     for (const auto& rawKey : order) {
-        size_t endPos = rawKey.find_last_not_of(' ');
-        std::string key = (endPos == std::string::npos) ? "" : rawKey.substr(0, endPos + 1);
-        std::string trailingSpaces = (endPos == std::string::npos) ? rawKey : rawKey.substr(endPos + 1);
+        // Entirely whitespace (or empty) -> literal spacer, not a field.
+        if (rawKey.find_first_not_of(' ') == std::string::npos) {
+            ss << rawKey;
+            continue;
+        }
 
-        auto it = fields.find(key);
+        auto it = fields.find(rawKey);
         if (it != fields.end()) {
             it->second();
-            if (!trailingSpaces.empty()) ss << trailingSpaces;
         }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: order entry '" << rawKey
+                       << "' does not match any registered field.\n";
+        }
+#endif
     }
 }
-
 
 int main(){
 
@@ -2510,105 +2522,48 @@ sections["detailed_bios_and_motherboard"] = [&]() {
     int spacing = config.getNestedInt("detailed_bios_and_motherboard","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
+    const string sec = "detailed_bios_and_motherboard";
+
     // ---------- HEADER (stays outside the order) ----------
-    if (config.getNestedBool("detailed_bios_and_motherboard", "header.show", true)) {
+    if (config.getNestedBool(sec, "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "header.prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "header.prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "header.text_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "header.text", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "header.suffix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "header.suffix", "") << r;
+        ss << config.getNestedColor(sec, "header.prefix_color", "") << config.getPrefix(sec, "header.prefix", "") << r
+           << config.getNestedColor(sec, "header.text_color", "")   << config.getLabel(sec, "header.text", "")     << r
+           << config.getNestedColor(sec, "header.suffix_color", "") << config.getPrefix(sec, "header.suffix", "")  << r;
         lp.push(ss.str());
     }
+
+    // Generic field printer: fields.<key>.{<key>_prefix, label, label_suffix, value_suffix} + colors
+    auto field = [&](const string& key, const string& value) {
+        if (!config.getNestedBool(sec, "fields." + key + ".show", true)) return;
+
+        ostringstream ss;
+        ss << config.getNestedColor(sec, "fields." + key + "." + key + "_prefix_color", "")
+           << config.getPrefix(sec, "fields." + key + "." + key + "_prefix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_color", "")
+           << config.getLabel(sec, "fields." + key + ".label", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".label_suffix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_color", "")
+           << value << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".value_suffix", "") << r;
+
+        lp.push(ss.str());
+    };
 
     // ---- Register each orderable field as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    // ---------- BIOS VENDOR ----------
-    fields["bios_vendor"] = [&]() {
-        if (!config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_vendor.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.bios_vendor_prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_vendor.bios_vendor_prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.label_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.label", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.label_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.label_suffix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.value_color", "")
-           << sys.get_bios_vendor() << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_vendor.value_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_vendor.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- BIOS VERSION ----------
-    fields["bios_version"] = [&]() {
-        if (!config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_version.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.bios_version_prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_version.bios_version_prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.label_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.label", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.label_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.label_suffix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.value_color", "")
-           << sys.get_bios_version() << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_version.value_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_version.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- BIOS DATE ----------
-    fields["bios_date"] = [&]() {
-        if (!config.getNestedBool("detailed_bios_and_motherboard", "fields.bios_date.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.bios_date_prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "fields.bios_date.bios_date_prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.label_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.label", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.label_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.label_suffix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.value_color", "")
-           << sys.get_bios_date() << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.bios_date.value_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.bios_date.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- MOTHERBOARD MODEL ----------
-    fields["mb_model"] = [&]() {
-        if (!config.getNestedBool("detailed_bios_and_motherboard", "fields.mb_model.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.mb_model_prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "fields.mb_model.mb_model_prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.label_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.label", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.label_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.label_suffix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.value_color", "")
-           << sys.get_motherboard_model() << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_model.value_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_model.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- MOTHERBOARD MANUFACTURER ----------
-    fields["mb_manufacturer"] = [&]() {
-        if (!config.getNestedBool("detailed_bios_and_motherboard", "fields.mb_manufacturer.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.mb_manufacturer_prefix_color", "")
-           << config.getPrefix("detailed_bios_and_motherboard", "fields.mb_manufacturer.mb_manufacturer_prefix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.label", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.label_suffix", "") << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_color", "")
-           << sys.get_motherboard_manufacturer() << r
-           << config.getNestedColor("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_suffix_color", "")
-           << config.getLabel("detailed_bios_and_motherboard", "fields.mb_manufacturer.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
+    fields["bios_vendor"]     = [&]() { field("bios_vendor",     sys.get_bios_vendor()); };
+    fields["bios_version"]    = [&]() { field("bios_version",    sys.get_bios_version()); };
+    fields["bios_date"]       = [&]() { field("bios_date",       sys.get_bios_date()); };
+    fields["mb_model"]        = [&]() { field("mb_model",        sys.get_motherboard_model()); };
+    fields["mb_manufacturer"] = [&]() { field("mb_manufacturer", sys.get_motherboard_manufacturer()); };
 
     // ---- Run fields in the order JSON specifies ----
     // Each field prints its own line via lp.push(...), so this only
@@ -2616,7 +2571,7 @@ sections["detailed_bios_and_motherboard"] = [&]() {
     // detailed_processor, detailed_operating_system, etc.
     static const std::vector<std::string> defaultOrder =
         {"bios_vendor", "bios_version", "bios_date", "mb_model", "mb_manufacturer"};
-    auto order = config.getStringArray("detailed_bios_and_motherboard", "order", defaultOrder);
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     for (const auto& key : order) {
         auto it = fields.find(key);
@@ -2646,84 +2601,56 @@ sections["detailed_bios_and_motherboard"] = [&]() {
 
 sections["detailed_user_account"] = [&]() {
     if (!config.isEnabled("detailed_user_account")) return;
-    
+
     // line spacing json driven
     int spacing = config.getNestedInt("detailed_user_account","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
+    const string sec = "detailed_user_account";
+
     // ---------- HEADER (stays outside the order) ----------
-    if (config.getNestedBool("detailed_user_account", "header.show", true)) {
+    if (config.getNestedBool(sec, "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("detailed_user_account", "header.prefix_color", "")
-           << config.getPrefix("detailed_user_account", "header.prefix", "") << r
-           << config.getNestedColor("detailed_user_account", "header.text_color", "")
-           << config.getLabel("detailed_user_account", "header.text", "") << r
-           << config.getNestedColor("detailed_user_account", "header.suffix_color", "")
-           << config.getPrefix("detailed_user_account", "header.suffix", "") << r;
+        ss << config.getNestedColor(sec, "header.prefix_color", "") << config.getPrefix(sec, "header.prefix", "") << r
+           << config.getNestedColor(sec, "header.text_color", "")   << config.getLabel(sec, "header.text", "")     << r
+           << config.getNestedColor(sec, "header.suffix_color", "") << config.getPrefix(sec, "header.suffix", "")  << r;
         lp.push(ss.str());
     }
+
+    // Generic field printer: fields.<key>.{<pfxKey>_prefix, label, label_suffix, value_suffix} + colors
+    auto field = [&](const string& key, const string& pfxKey, const string& value) {
+        if (!config.getNestedBool(sec, "fields." + key + ".show", true)) return;
+
+        ostringstream ss;
+        ss << config.getNestedColor(sec, "fields." + key + "." + pfxKey + "_prefix_color", "")
+           << config.getPrefix(sec, "fields." + key + "." + pfxKey + "_prefix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_color", "")
+           << config.getLabel(sec, "fields." + key + ".label", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_suffix_color", "")
+           << config.getPrefix(sec, "fields." + key + ".label_suffix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_color", "")
+           << value << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_suffix_color", "")
+           << config.getPrefix(sec, "fields." + key + ".value_suffix", "") << r;
+
+        lp.push(ss.str());
+    };
 
     // ---- Register each orderable field as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    // ---------- USERNAME ----------
-    fields["username"] = [&]() {
-        if (!config.getNestedBool("detailed_user_account", "fields.username.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_user_account", "fields.username.username_prefix_color", "")
-           << config.getPrefix("detailed_user_account", "fields.username.username_prefix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.username.label_color", "")
-           << config.getLabel("detailed_user_account", "fields.username.label", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.username.label_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.username.label_suffix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.username.value_color", "")
-           << user.get_username() << r
-           << config.getNestedColor("detailed_user_account", "fields.username.value_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.username.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- COMPUTER NAME ----------
-    fields["computer_name"] = [&]() {
-        if (!config.getNestedBool("detailed_user_account", "fields.computer_name.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_user_account", "fields.computer_name.computer_name_prefix_color", "")
-           << config.getPrefix("detailed_user_account", "fields.computer_name.computer_name_prefix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.computer_name.label_color", "")
-           << config.getLabel("detailed_user_account", "fields.computer_name.label", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.computer_name.label_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.computer_name.label_suffix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.computer_name.value_color", "")
-           << user.get_computer_name() << r
-           << config.getNestedColor("detailed_user_account", "fields.computer_name.value_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.computer_name.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- DOMAIN ----------
-    fields["domain"] = [&]() {
-        if (!config.getNestedBool("detailed_user_account", "fields.domain.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_user_account", "fields.domain.domain_prefix_color", "")
-           << config.getPrefix("detailed_user_account", "fields.domain.domain_prefix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.domain.label_color", "")
-           << config.getLabel("detailed_user_account", "fields.domain.label", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.domain.label_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.domain.label_suffix", "") << r
-           << config.getNestedColor("detailed_user_account", "fields.domain.value_color", "")
-           << user.get_domain_name() << r
-           << config.getNestedColor("detailed_user_account", "fields.domain.value_suffix_color", "")
-           << config.getLabel("detailed_user_account", "fields.domain.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
+    fields["username"]      = [&]() { field("username",      "username",      user.get_username()); };
+    fields["computer_name"] = [&]() { field("computer_name", "computer_name", user.get_computer_name()); };
+    fields["domain"]        = [&]() { field("domain",        "domain",        user.get_domain_name()); };
 
     // ---- Run fields in the order JSON specifies ----
-    // Each field prints its own line via lp.push(...), so this only
-    // controls sequence — matching the pattern used by
-    // detailed_processor, detailed_operating_system, etc.
     static const std::vector<std::string> defaultOrder =
         {"username", "computer_name", "domain"};
-    auto order = config.getStringArray("detailed_user_account", "order", defaultOrder);
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     for (const auto& key : order) {
         auto it = fields.find(key);
@@ -2757,176 +2684,87 @@ sections["detailed_user_account"] = [&]() {
 // Performance Info (JSON Driven)
 sections["detailed_resource_usage"] = [&]() {
     if (!config.isEnabled("detailed_resource_usage")) return;
-    
+
     // line spacing json driven
     int spacing = config.getNestedInt("detailed_resource_usage","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
+    const string sec = "detailed_resource_usage";
+
     // ---------- HEADER (stays outside the order) ----------
-    if (config.getNestedBool("detailed_resource_usage", "header.show", true)) {
+    if (config.getNestedBool(sec, "header.show", true)) {
         ostringstream ss;
-        ss << config.getNestedColor("detailed_resource_usage", "header.prefix_color", "")
-           << config.getLabel("detailed_resource_usage", "header.prefix", "") << r
-           << config.getNestedColor("detailed_resource_usage", "header.text_color", "")
-           << config.getLabel("detailed_resource_usage", "header.text", "") << r
-           << config.getNestedColor("detailed_resource_usage", "header.suffix_color", "")
-           << config.getLabel("detailed_resource_usage", "header.suffix", "") << r;
+        ss << config.getNestedColor(sec, "header.prefix_color", "") << config.getLabel(sec, "header.prefix", "") << r
+           << config.getNestedColor(sec, "header.text_color", "")   << config.getLabel(sec, "header.text", "")   << r
+           << config.getNestedColor(sec, "header.suffix_color", "") << config.getLabel(sec, "header.suffix", "") << r;
         lp.push(ss.str());
     }
+
+    // Generic plain field: fields.<key>.{<key>_prefix, label, label_suffix, value_suffix} + colors
+    // (used by fields with no visualizer bar, e.g. uptime)
+    auto field = [&](const string& key, const string& value) {
+        if (!config.getNestedBool(sec, "fields." + key + ".show", true)) return;
+
+        ostringstream ss;
+        ss << config.getNestedColor(sec, "fields." + key + "." + key + "_prefix_color", "")
+           << config.getLabel(sec, "fields." + key + "." + key + "_prefix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_color", "")
+           << config.getLabel(sec, "fields." + key + ".label", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".label_suffix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_color", "")
+           << value << r
+
+           << config.getNestedColor(sec, "fields." + key + ".value_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".value_suffix", "") << r;
+
+        lp.push(ss.str());
+    };
+
+    // Generic usage field: same shape as field(), but inserts a visualizer bar
+    // before the value, and zero-pads the value to 2 digits (e.g. 8 -> "08").
+    auto usageField = [&](const string& key, float percent) {
+        if (!config.getNestedBool(sec, "fields." + key + ".show", true)) return;
+
+        std::string bar = makeVisualizer(percent, config, sec, key);
+
+        ostringstream ss;
+        ss << config.getNestedColor(sec, "fields." + key + "." + key + "_prefix_color", "")
+           << config.getLabel(sec, "fields." + key + "." + key + "_prefix", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_color", "")
+           << config.getLabel(sec, "fields." + key + ".label", "") << r
+
+           << config.getNestedColor(sec, "fields." + key + ".label_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".label_suffix", "") << r;
+
+        if (!bar.empty())
+            ss << bar << " ";
+
+        ss << config.getNestedColor(sec, "fields." + key + ".value_color", "")
+           << setw(2) << setfill(' ') << static_cast<int>(percent)
+           << config.getNestedColor(sec, "fields." + key + ".value_suffix_color", "")
+           << config.getLabel(sec, "fields." + key + ".value_suffix", "") << r;
+
+        lp.push(ss.str());
+    };
 
     // ---- Register each orderable field as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    // ---------- SYSTEM UPTIME ----------
-    fields["uptime"] = [&]() {
-        if (!config.getNestedBool("detailed_resource_usage", "fields.uptime.show", true)) return;
-        ostringstream ss;
-        ss << config.getNestedColor("detailed_resource_usage", "fields.uptime.uptime_prefix_color", "")
-           << config.getLabel("detailed_resource_usage", "fields.uptime.uptime_prefix", "") << r
-           << config.getNestedColor("detailed_resource_usage", "fields.uptime.label_color", "")
-           << config.getLabel("detailed_resource_usage", "fields.uptime.label", "") << r
-           << config.getNestedColor("detailed_resource_usage", "fields.uptime.label_suffix_color", "")
-           << config.getLabel("detailed_resource_usage", "fields.uptime.label_suffix", "") << r
-           << config.getNestedColor("detailed_resource_usage", "fields.uptime.value_color", "")
-           << perf.get_system_uptime() << r
-           << config.getNestedColor("detailed_resource_usage", "fields.uptime.value_suffix_color", "")
-           << config.getLabel("detailed_resource_usage", "fields.uptime.value_suffix", "") << r;
-        lp.push(ss.str());
-    };
-
-    // ---------- CPU USAGE ----------
-    fields["cpu_usage"] = [&]() {
-        if (!config.getNestedBool("detailed_resource_usage", "fields.cpu_usage.show", true)) return;
-
-        float cpu = perf.get_cpu_usage_percent();
-
-        // call the visualizer funtion
-        std::string cpuVisualizer = makeVisualizer(cpu,config,"detailed_resource_usage","cpu_usage");
-
-        ostringstream cpuSs;
-
-        cpuSs << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.cpu_usage_prefix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.cpu_usage.cpu_usage_prefix", "") << r
-
-              << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.label_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.cpu_usage.label", "") << r
-
-              << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.label_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.cpu_usage.label_suffix", "") << r;
-
-        // Add the visualizer.
-        if (!cpuVisualizer.empty())
-            cpuSs << cpuVisualizer << " ";
-
-        // Apply the normal value color again after the visualizer reset.
-        cpuSs << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.value_color", "")
-              << static_cast<int>(cpu)
-              << config.getNestedColor("detailed_resource_usage", "fields.cpu_usage.value_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.cpu_usage.value_suffix", "") << r;
-
-        lp.push(cpuSs.str());
-    };
-
-    // ---------- RAM USAGE ----------
-    fields["ram_usage"] = [&]() {
-        if (!config.getNestedBool("detailed_resource_usage", "fields.ram_usage.show", true)) return;
-
-        float ram = perf.get_ram_usage_percent();
-
-        // call the visualizer function
-        std::string ramVisualizer = makeVisualizer(ram,config,"detailed_resource_usage","ram_usage");
-
-        ostringstream ramSs;
-
-        ramSs << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.ram_usage_prefix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.ram_usage.ram_usage_prefix", "") << r
-              << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.label_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.ram_usage.label", "") << r
-              << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.label_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.ram_usage.label_suffix", "") << r;
-
-        // Add the visualizer.
-        if (!ramVisualizer.empty())
-            ramSs << ramVisualizer << " ";
-
-        // Apply the normal value color again after the visualizer reset.
-        ramSs << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.value_color", "")
-              << static_cast<int>(ram)
-              << config.getNestedColor("detailed_resource_usage", "fields.ram_usage.value_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.ram_usage.value_suffix", "") << r;
-
-        lp.push(ramSs.str());
-    };
-
-    // ---------- DISK USAGE ----------
-    fields["disk_usage"] = [&]() {
-        if (!config.getNestedBool("detailed_resource_usage", "fields.disk_usage.show", true)) return;
-
-        float disk = perf.get_disk_usage_percent();
-
-        // call the visualizer function
-        std::string diskVisualizer = makeVisualizer(disk,config,"detailed_resource_usage","disk_usage");
-
-        ostringstream diskSs;
-
-        diskSs << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.disk_usage_prefix_color", "")
-               << config.getLabel("detailed_resource_usage", "fields.disk_usage.disk_usage_prefix", "") << r
-               << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.label_color", "")
-               << config.getLabel("detailed_resource_usage", "fields.disk_usage.label", "") << r
-               << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.label_suffix_color", "")
-               << config.getLabel("detailed_resource_usage", "fields.disk_usage.label_suffix", "") << r;
-
-        // Add the visualizer.
-        if (!diskVisualizer.empty())
-            diskSs << diskVisualizer << " ";
-
-        // Apply the normal value color again after the visualizer reset.
-        diskSs << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.value_color", "")
-               << static_cast<int>(disk)
-               << config.getNestedColor("detailed_resource_usage", "fields.disk_usage.value_suffix_color", "")
-               << config.getLabel("detailed_resource_usage", "fields.disk_usage.value_suffix", "") << r;
-
-        lp.push(diskSs.str());
-    };
-
-    // ---------- GPU USAGE ----------
-    fields["gpu_usage"] = [&]() {
-        if (!config.getNestedBool("detailed_resource_usage", "fields.gpu_usage.show", true)) return;
-
-        float gpu = perf.get_gpu_usage_percent();
-
-        // call the visualizer function
-        std::string gpuVisualizer = makeVisualizer(gpu,config,"detailed_resource_usage","gpu_usage");
-
-        ostringstream gpuSs;
-
-        gpuSs << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.gpu_usage_prefix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.gpu_usage.gpu_usage_prefix", "") << r
-              << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.label_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.gpu_usage.label", "") << r
-              << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.label_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.gpu_usage.label_suffix", "") << r;
-
-        // Add the visualizer.
-        if (!gpuVisualizer.empty())
-            gpuSs << gpuVisualizer << " ";
-
-        // Apply the normal value color again after the visualizer reset.
-        gpuSs << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.value_color", "")
-              << static_cast<int>(gpu)
-              << config.getNestedColor("detailed_resource_usage", "fields.gpu_usage.value_suffix_color", "")
-              << config.getLabel("detailed_resource_usage", "fields.gpu_usage.value_suffix", "") << r;
-
-        lp.push(gpuSs.str());
-    };
+    fields["uptime"]     = [&]() { field("uptime", perf.get_system_uptime()); };
+    fields["cpu_usage"]  = [&]() { usageField("cpu_usage",  perf.get_cpu_usage_percent()); };
+    fields["ram_usage"]  = [&]() { usageField("ram_usage",  perf.get_ram_usage_percent()); };
+    fields["disk_usage"] = [&]() { usageField("disk_usage", perf.get_disk_usage_percent()); };
+    fields["gpu_usage"]  = [&]() { usageField("gpu_usage",  perf.get_gpu_usage_percent()); };
 
     // ---- Run fields in the order JSON specifies ----
-    // Each field prints its own line via lp.push(...), so this only
-    // controls sequence — matching the pattern used by
-    // detailed_processor, detailed_operating_system, etc.
     static const std::vector<std::string> defaultOrder =
         {"uptime", "cpu_usage", "ram_usage", "disk_usage", "gpu_usage"};
-    auto order = config.getStringArray("detailed_resource_usage", "order", defaultOrder);
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     for (const auto& key : order) {
         auto it = fields.find(key);

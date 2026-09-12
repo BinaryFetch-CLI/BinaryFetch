@@ -38,7 +38,7 @@
     "show_emoji": true,
     "top_line_spacing": 0,
     "emoji_color": "bright_cyan",
-    "order": ["time ", "date ", "week ", "leap_year"],
+    "order": ["time", "date", "week", "leap_year"],
     "prefixes": {
       "prefix": "╭📅 ",
       "prefix_color": "red"
@@ -260,7 +260,7 @@
 "compact_display_monitor": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["name ", "resolution ", "scale ", "upscale ", "refresh"],
+    "order": ["name", "resolution", "scale", "upscale", "refresh"],
     "no_displays_text": "No displays detected",
     "prefixes": {
       "prefix": "│🖥️  ",
@@ -317,7 +317,7 @@
 "compact_system_memory": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["total ", "free ", "percent"],
+    "order": ["total", "free", "percent"],
     "prefixes": {
       "prefix": "│📟 ",
       "prefix_color": "red"
@@ -414,7 +414,7 @@
 "compact_resource_usage": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["cpu ", "gpu ", "ram ", "disk"],
+    "order": ["cpu", "gpu", "ram", "disk"],
     "prefixes": {
       "prefix": "│📊 ",
       "prefix_color": "red"
@@ -488,7 +488,7 @@
 "compact_user_account": {
   "enabled": true,
   "top_line_spacing": 0,
-  "order": ["username ", "domain ", "type"],
+  "order": ["username", "domain", "type"],
   "prefixes": {
     "prefix": "│👾 ",
     "prefix_color": "red"
@@ -531,7 +531,7 @@
 "compact_network_connection": {
   "enabled": true,
   "top_line_spacing": 0,
-  "order": ["name ", "type ", "ip"],
+  "order": ["name", "type", "ip"],
   "prefixes": {
     "prefix": "│🛜  ",
     "prefix_color": "red"
@@ -666,10 +666,10 @@
     "prefix_color": "blue",
     "text": "Memory Info",
     "text_color": "red",
-    "suffix": " --------------------------",
+    "suffix": " -------------------------",
     "suffix_color": "blue"
   },
-  "order": ["total ", "free ", "used_percentage"],
+  "order": ["total"," ", "free"," ", "used_percentage"],
   "fields": {
     "total": {
       "prefix": "",
@@ -680,7 +680,7 @@
       "label": "Total: ",
       "label_color": "bright_blue",
       "value_color": "bright_blue",
-      "unit": " GB",
+      "unit": "GB",
       "unit_color": "bright_blue"
     },
     "free": {
@@ -708,7 +708,7 @@
       }
     },
     "used_percentage": {
-      "prefix": " ",
+      "prefix": "",
       "prefix_color": "bright_cyan",
       "bracket_open": "(",
       "bracket_close": ")",
@@ -733,7 +733,7 @@
     }
   },
   "modules": {
-    "order": ["label", "used ", "capacity ", "type ", "speed"],
+   "order": ["label", "used", " ", "capacity", " ", "type"," ", "speed"],
     "fields": {
       "label": {
         "prefix": "",
@@ -777,7 +777,7 @@
     "storage_summary": {
         "enabled": true,
         "top_line_spacing": 1,
-        "order": ["storage_type ", "drive_letter ", "usage_block ", "used_visualizer ", "free_visualizer"],
+        "order": ["storage_type"," ", "drive_letter", " ","usage_block", "used_visualizer", "free_visualizer"],
         "header": {
             "show": true,
             "prefix": "------------------------- ",
