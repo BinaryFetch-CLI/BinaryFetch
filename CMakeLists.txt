@@ -72,6 +72,15 @@ set(BINARYFETCH_NVML_INCLUDE
     "${BINARYFETCH_DEPENDENCIES}/Linux/NVML/usr/include"
 )
 
+
+# ------------------------------------------------------------
+# stb_image (Windows) — PNG/JPG/BMP decoding for Image.cpp
+# ------------------------------------------------------------
+
+set(BINARYFETCH_STB_IMAGE
+    "${BINARYFETCH_DEPENDENCIES}/Windows/stb_image"
+)
+
 # ============================================================
 # Platform Detection
 # ============================================================
@@ -108,6 +117,8 @@ set(BINARYFETCH_HEADERS
     "${BINARYFETCH_INCLUDE}/core/json.hpp"
     "${BINARYFETCH_INCLUDE}/core/resource.h"
     "${BINARYFETCH_INCLUDE}/core/config_management.h"
+    "${BINARYFETCH_INCLUDE}/core/Image.h"
+    "${BINARYFETCH_STB_IMAGE}/stb_image.h"
 
     # --------------------------------------------------------
     # Compact
@@ -156,6 +167,30 @@ if(WIN32)
 
     message(STATUS "Configuring BinaryFetch for Windows")
 
+    # ========================================================
+    # stb_image Header
+    # ========================================================
+
+    if(EXISTS "${BINARYFETCH_STB_IMAGE}/stb_image.h")
+
+        message(STATUS "stb_image header found:")
+        message(STATUS "  ${BINARYFETCH_STB_IMAGE}")
+
+        target_include_directories(BinaryFetch
+            PRIVATE
+                "${BINARYFETCH_STB_IMAGE}"
+        )
+
+    else()
+
+        message(FATAL_ERROR
+            "stb_image header was not found:\n"
+            "  ${BINARYFETCH_STB_IMAGE}/stb_image.h"
+        )
+
+    endif()
+
+
     set(BINARYFETCH_SOURCES
 
         # ----------------------------------------------------
@@ -170,6 +205,7 @@ if(WIN32)
 
         "${BINARYFETCH_CPP}/windows/core/AsciiArt.cpp"
         "${BINARYFETCH_CPP}/windows/core/config_management.cpp"
+        "${BINARYFETCH_CPP}/windows/core/Image.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------
@@ -250,6 +286,7 @@ elseif(UNIX AND NOT APPLE)
 
         "${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp"
         "${BINARYFETCH_CPP}/Linux/core/config_management.cpp"
+        "${BINARYFETCH_CPP}/Linux/core/Image.cpp"
 
         # ----------------------------------------------------
         # Detailed Information
