@@ -33,6 +33,10 @@
     },
     "Image": {
         "enabled": true,
+        // Windows paths need DOUBLE backslashes ("\\") because a single
+        // backslash is a JSON escape character. Forward slashes ("/")
+        // also work and don't need escaping, e.g. "G:/screenshot/sky.jpg"
+        // make sure the path looks like this: "G:\\screenshot\\sky.jpg"
         "image_path":"G:\\screenshot\\1c5ed0745a8d02ecedacecb8f6b13ea9.jpg",
         "image_size_percentage": 47,
         "padding_up": 0,
