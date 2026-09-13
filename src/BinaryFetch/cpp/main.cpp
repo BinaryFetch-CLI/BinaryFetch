@@ -22,9 +22,10 @@
      #include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
 #endif 
 
-// ASCII Art functionality
-#include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+// ASCII Art & image functionality
+#include "AsciiArt.h" 
 #include "core/config_management.h"
+#include "Image.h"  
 
 
 // ------------------ Full System Info Modules ------------------
@@ -151,6 +152,166 @@ void runOrderedFields(const std::vector<std::string>& order,
     }
 }
 
+
+
+enum class ArtMode { ASCII, IMAGE, NONE };
+
+class LivePrinter {
+public:
+    LivePrinter(const AsciiArt& artRef, const TerminalImage& imageRef, ArtMode m)
+        : art(artRef), image(imageRef), mode(m), index(0), imageDrawn(false) {}
+
+    void push(const std::string& infoLine) {
+        printAndPad();
+        if (!infoLine.empty()) std::cout << infoLine;
+        std::cout << "\033[K" << '\n';
+        index++;
+    }
+
+    void pushBlank() {
+        printAndPad();
+        std::cout << "\033[K" << '\n';
+        index++;
+    }
+
+    void finish() {
+        int h = artHeight();
+        while (index < h) {
+            printAndPad();
+            std::cout << "\033[K" << '\n';
+            index++;
+        }
+        if (mode == ArtMode::IMAGE) drawImageIfDue(); // safety net if info was shorter than the art
+    }
+
+private:
+    const AsciiArt& art;
+    const TerminalImage& image;
+    ArtMode mode;
+    int index;
+    bool imageDrawn;
+
+    int artHeight() const {
+        switch (mode) {
+            case ArtMode::ASCII: return art.getPaddingUp() + art.getHeight();
+            case ArtMode::IMAGE: return image.getPaddingUp() + image.getRowSpan();
+            default: return 0;
+        }
+    }
+
+    void printAndPad() {
+        if (mode == ArtMode::ASCII) printAsciiAndPad();
+        else if (mode == ArtMode::IMAGE) printImageAndPad();
+    }
+
+    void printAsciiAndPad() {
+        int upPad = art.getPaddingUp();
+        if (index < upPad) return;
+
+        int artIndex = index - upPad;
+        if (art.getPaddingLeft() > 0) std::cout << std::string(art.getPaddingLeft(), ' ');
+        int artH = art.getHeight();
+        int maxW = art.getMaxWidth();
+        int spacing = art.getSpacing();
+        if (artIndex < artH) {
+            std::cout << art.getLine(artIndex);
+            int curW = art.getLineWidth(artIndex);
+            if (curW < maxW) std::cout << std::string(maxW - curW, ' ');
+        } else if (maxW > 0) {
+            std::cout << std::string(maxW, ' ');
+        }
+        if (art.getPaddingRight() > 0) std::cout << std::string(art.getPaddingRight(), ' ');
+        if (spacing > 0) std::cout << std::string(spacing, ' ');
+    }
+
+     // Same mechanism as ASCII in every respect except one: no `spacing`
+    // term is added on top of the image's own width. ASCII adds a couple
+    // of spaces past `maxWidth` for aesthetic separation, because art is
+    // drawn from ordinary characters and its right edge is a glyph, not a
+    // boundary. An image is different: it is rasterised to an exact pixel
+    // width, and — because TerminalImage has already cropped away the
+    // transparent margins — its right edge IS the visible boundary. Any
+    // spacing added here would appear as unexplained gap between the
+    // image and the info column, with nothing on screen to justify it.
+    // So the reserved column width is exactly:
+    //
+    //     paddingLeft + colSpan + paddingRight
+    //
+    // With all three set to 0 in JSON, the info column begins at the very
+    // next terminal cell after the image's rightmost visible pixel.
+    //
+    // Unlike printAsciiAndPad(), this function does NOT return early while
+    // index < upPad. padding_up only controls when the image itself gets
+    // drawn — it pushes the picture down `upPad` rows before the block
+    // starts — it must never affect where the info column starts
+    // horizontally. gapWidth is the reserved column width for every row
+    // of the render, from line 0 onward, whether that row sits above the
+    // image, beside it, or below it. Returning early here used to skip
+    // printing the gap for the first `upPad` lines, leaving the header
+    // and top info lines flush against column 0 while every line after
+    // the image block was indented by gapWidth — a ragged left edge any
+    // time padding_up > 0.
+    //
+    // The image itself genuinely can't be threaded into the same
+    // character-by-character stream — a Sixel blob is one indivisible
+    // unit to the terminal's parser — so there's exactly one unavoidable
+    // departure from "just print forward": once the block we reserved is
+    // complete, hop up by image.getRowSpan() rows (a number WE already
+    // know, never queried from the terminal), draw into the space we just
+    // cleared, then hop back down by that same exact number. Two matched
+    // relative moves, nothing remembered or restored — that's the piece
+    // that was actually breaking (DECSC/DECRC save-and-restore doesn't
+    // reliably survive a large Sixel write on this terminal).
+    void printImageAndPad() {
+        int upPad    = image.getPaddingUp();
+        int rows     = image.getRowSpan();
+        int gapEnd   = upPad + rows;
+        int gapWidth = image.getPaddingLeft() + image.getColSpan()
+                     + image.getPaddingRight();
+
+        if (index >= gapEnd) {
+            // First call past the block triggers the actual Sixel draw.
+            drawImageIfDue();
+            // Fall through — we still reserve the column on every line
+            // after the block, exactly like the ASCII path reserves
+            // maxWidth spaces past the last art row. This is what keeps
+            // the info column pinned at the same X for the whole render.
+        }
+
+        if (gapWidth > 0) std::cout << std::string(gapWidth, ' ');
+    }
+
+    void drawImageIfDue() {
+        if (imageDrawn || !image.isLoaded()) return;
+        imageDrawn = true;
+
+        int rows = image.getRowSpan();
+        if (rows <= 0) return;
+
+        // We are currently at the bottom-left of the reserved block, i.e. the
+        // row where the *next* info line will be printed. Save that position
+        // now — before any Sixel bytes have been written — so it's guaranteed
+        // to be a sane, trustworthy cursor location.
+        std::cout << "\0337";                            // DECSC: save cursor
+
+        // Hop up to the top of the block and draw the Sixel there.
+        std::cout << "\033[" << rows << "A" << '\r';
+        int leftPad = image.getPaddingLeft();
+        if (leftPad > 0) std::cout << std::string(leftPad, ' ');
+        image.draw();                                    // raw Sixel payload
+
+        // Restore cursor with DECRC. This is the crucial change: we do NOT
+        // use a relative "down rows" move here. A Sixel payload is opaque to
+        // the terminal's cursor tracker (ConPTY may count its printable bytes
+        // as text and drift), so any relative move after the Sixel goes to
+        // the wrong row. DECRC unconditionally snaps us back to the exact
+        // position we saved, which is the one place we know is correct.
+        std::cout << "\0338";                            // DECRC: restore cursor
+        std::cout.flush();
+    }
+};
+
+
 int main(){
 
     
@@ -159,18 +320,7 @@ int main(){
    #endif
 
 
-        // SIMPLIFIED ASCII ART LOADING 
-        // Just call loadFromFile() - it handles everything automatically!
-        // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
-        //      or, ~/.config/BinaryFetch/BinaryArt.txt
-        // - If missing, create a new file named "BinaryArts.txt" then paste the 
-        // default ASCII art based on distro and loads from there.
-        // - User can modify their art anytime from their config folder
-    AsciiArt art;
-    if (!art.loadFromFile()) {
-        cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
-        // Program continues even if art fails to load
-    }
+
 
     // CONFIG MANAGEMENT 
     // DEV_MODE = true  → load default JSON directly from project folder (fast iteration 🧪)
@@ -185,8 +335,52 @@ int main(){
     // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
+ // ART / IMAGE LOADING
+    // Image mode is tried first (if enabled); ASCII is the fallback,
+    // both for a failed image load and for anyone who hasn't opted in.
+    AsciiArt art;
+    TerminalImage image;
+    ArtMode mode = ArtMode::NONE;
+
+    bool imageEnabled = config.getNestedBool("art", "Image.enabled", false);
+    bool asciiEnabled = config.getNestedBool("art", "Ascii_Art.enabled", true);
+
+    if (imageEnabled) {
+        image.setPadding(
+            config.getNestedInt("art", "Image.padding_up", 0),
+            config.getNestedInt("art", "Image.padding_left", 0),
+            config.getNestedInt("art", "Image.padding_right", 0));
+
+        image.setCellWidthPx(config.getNestedInt("art", "Image.cell_width_px", 0));
+        image.setCellHeightPx(config.getNestedInt("art", "Image.cell_height_px", 0));
+
+        bool ok = image.load(
+            config.getNestedString("art", "Image.image_path", ""),
+            config.getNestedInt("art", "Image.image_size_percentage", 100));
+
+        if (ok) {
+            mode = ArtMode::IMAGE;
+            //image.render();
+        } else {
+            cout << "Warning: image could not be loaded. Falling back to ASCII.\n";
+        }
+    }
+
+    if (mode == ArtMode::NONE && asciiEnabled) {
+        art.setPadding(
+            config.getNestedInt("art", "Ascii_Art.padding_up", 0),
+            config.getNestedInt("art", "Ascii_Art.padding_left", 0),
+            config.getNestedInt("art", "Ascii_Art.padding_right", 0));
+
+        if (art.loadFromFile()) {
+            mode = ArtMode::ASCII;
+        } else {
+            cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
+        }
+    }
+
     // Create LivePrinter
-    LivePrinter lp(art);
+    LivePrinter lp(art, image, mode);
 
 
     // create objects of all classes here 

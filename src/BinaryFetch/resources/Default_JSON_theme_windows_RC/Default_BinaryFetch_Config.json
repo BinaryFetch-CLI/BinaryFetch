@@ -24,6 +24,22 @@
   "detailed_network_connection",
   "detailed_audio_and_power"
 ],
+"art": {
+    "Ascii_Art": {
+        "enabled": false,
+        "padding_up": 0,
+        "padding_left": 0,
+        "padding_right": 0
+    },
+    "Image": {
+        "enabled": true,
+        "image_path":"G:\\screenshot\\2d25e0e4ea83a994680aa861a19a8f14.jpg",
+        "image_size_percentage": 50,
+        "padding_up": 1,
+        "padding_left": 0,
+        "padding_right": 1
+    }
+},
   "header_settings": {
     "enabled": true,
     "header_prefix": "~>>",
@@ -164,7 +180,7 @@
     "top_line_spacing": 0,
     "order": ["cores_threads", "name", "clock"],
     "prefixes": {
-      "prefix": "│⚙️  ",
+      "prefix": "│⚙️ ",
       "prefix_color": "red"
     },
     "label": {
@@ -263,7 +279,7 @@
     "order": ["name", "resolution", "scale", "upscale", "refresh"],
     "no_displays_text": "No displays detected",
     "prefixes": {
-      "prefix": "│🖥️  ",
+      "prefix": "│🖥️ ",
       "prefix_color": "red"
     },
     "header": {
@@ -368,7 +384,7 @@
       "show": true,
       "top_line_spacing": 0,
       "prefixes": {
-        "prefix": "│🎙️  ",
+        "prefix": "│🎙️ ",
         "prefix_color": "red"
       },
       "label": {
@@ -533,7 +549,7 @@
   "top_line_spacing": 0,
   "order": ["name", "type", "ip"],
   "prefixes": {
-    "prefix": "│🛜  ",
+    "prefix": "│🛜 ",
     "prefix_color": "red"
   },
   "label": {
@@ -871,7 +887,7 @@
     },
     "fields": {
         "used_visualizer": {
-            "show": true,
+            "show": false,
             "prefix": " ",
             "prefix_color": "cyan",
             "label": "Used: ",
@@ -897,7 +913,7 @@
             }
         },
         "free_visualizer": {
-            "show": true,
+            "show": false,
             "prefix": " ",
             "prefix_color": "cyan",
             "label": "Free: ",

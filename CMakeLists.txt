@@ -167,28 +167,7 @@ if(WIN32)
 
     message(STATUS "Configuring BinaryFetch for Windows")
 
-    # ========================================================
-    # stb_image Header
-    # ========================================================
-
-    if(EXISTS "${BINARYFETCH_STB_IMAGE}/stb_image.h")
-
-        message(STATUS "stb_image header found:")
-        message(STATUS "  ${BINARYFETCH_STB_IMAGE}")
-
-        target_include_directories(BinaryFetch
-            PRIVATE
-                "${BINARYFETCH_STB_IMAGE}"
-        )
-
-    else()
-
-        message(FATAL_ERROR
-            "stb_image header was not found:\n"
-            "  ${BINARYFETCH_STB_IMAGE}/stb_image.h"
-        )
-
-    endif()
+  
 
 
     set(BINARYFETCH_SOURCES
@@ -410,6 +389,30 @@ if(WIN32)
         message(FATAL_ERROR
             "NVAPI header was not found:\n"
             "  ${BINARYFETCH_NVAPI}/nvapi.h"
+        )
+
+    endif()
+
+
+    # ========================================================
+    # stb_image Header
+    # ========================================================
+
+    if(EXISTS "${BINARYFETCH_STB_IMAGE}/stb_image.h")
+
+        message(STATUS "stb_image header found:")
+        message(STATUS "  ${BINARYFETCH_STB_IMAGE}")
+
+        target_include_directories(BinaryFetch
+            PRIVATE
+                "${BINARYFETCH_STB_IMAGE}"
+        )
+
+    else()
+
+        message(FATAL_ERROR
+            "stb_image header was not found:\n"
+            "  ${BINARYFETCH_STB_IMAGE}/stb_image.h"
         )
 
     endif()

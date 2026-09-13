@@ -1,0 +1,484 @@
+Enter Path: "H:\programming\projects\BinaryFetch"
+
+BinaryFetch\
+|-->[.git]
+|    |-->COMMIT_EDITMSG
+|    |-->FETCH_HEAD
+|    |-->HEAD
+|    |-->ORIG_HEAD
+|    |-->config
+|    |-->description
+|    |-->[hooks]
+|    |    |-->applypatch-msg.sample
+|    |    |-->commit-msg.sample
+|    |    |-->fsmonitor-watchman.sample
+|    |    |-->post-update.sample
+|    |    |-->pre-applypatch.sample
+|    |    |-->pre-commit.sample
+|    |    |-->pre-merge-commit.sample
+|    |    |-->pre-push.sample
+|    |    |-->pre-rebase.sample
+|    |    |-->pre-receive.sample
+|    |    |-->prepare-commit-msg.sample
+|    |    |-->push-to-checkout.sample
+|    |    |-->sendemail-validate.sample
+|    |    #-->update.sample
+|    |-->index
+|    |-->[info]
+|    |    #-->exclude
+|    |-->[logs]
+|    |    |-->HEAD
+|    |    #-->[refs]
+|    |         |-->[heads]
+|    |         |    #-->main
+|    |         #-->[remotes]
+|    |              #-->[origin]
+|    |                   |-->HEAD
+|    |                   #-->main
+|    |-->ms-persist.xml
+|    |-->[objects]
+|    |    |-->[01]
+|    |    |    |-->26f8a0c35c9c2f74c6404e03ace9cf0978f679
+|    |    |    #-->a49f75c6bf95735004bf04524dac396bd468e8
+|    |    |-->[02]
+|    |    |    |-->70240372ab68977c607fd37e1f66a61e3507e8
+|    |    |    #-->7d50d94a64a0f1233f6f870811af5aad0cb591
+|    |    |-->[05]
+|    |    |    #-->acf22599a9ac4047726a2c848371bb5b0256f0
+|    |    |-->[07]
+|    |    |    #-->30ea3505c0811d9a7db10d68208275364b3a58
+|    |    |-->[08]
+|    |    |    #-->ae0b26928a2afa8a001a4f0864996b95e167c4
+|    |    |-->[0e]
+|    |    |    |-->1003601eb6b410e3466acd2d61790e3c9cb9da
+|    |    |    #-->10f903dd27cf0b2db168f0ac24d2eed0204a23
+|    |    |-->[10]
+|    |    |    #-->4559efd13725207cfc8ee31ff2480807057d02
+|    |    |-->[11]
+|    |    |    #-->c39e47ededf24a67892e09d9a0ff504ad81e65
+|    |    |-->[13]
+|    |    |    #-->98334fb9830e0a289a926f587358adeca49a5c
+|    |    |-->[15]
+|    |    |    #-->73b250c47dc7b87044dc6ef6180b9605e9693d
+|    |    |-->[19]
+|    |    |    #-->69c62f7a3cc064f8909ee903b622c3164a0505
+|    |    |-->[1c]
+|    |    |    #-->2fd35226a4346a4fdbc66d3c306f11c38533a8
+|    |    |-->[1e]
+|    |    |    #-->2b85bff0cbcdddae10784066a6d64144fed047
+|    |    |-->[25]
+|    |    |    #-->2e0d1de491f6ff1f561cc05c4ca93a3e086b98
+|    |    |-->[26]
+|    |    |    |-->9481272b6683f1bbc423fd9b444ee32683e72a
+|    |    |    #-->f0da7810056996b592a825afe9bd0f42a16f60
+|    |    |-->[27]
+|    |    |    |-->c8ae73c7ff15f47dd2ee939e63278392424667
+|    |    |    #-->ecc592c1df3889613e590d40f59ed35a872404
+|    |    |-->[2a]
+|    |    |    #-->0725e794c0ff7a4951c5d8c94b16a8fbacb5fa
+|    |    |-->[2e]
+|    |    |    #-->10b89c71bc09b442d763416344f701a277078f
+|    |    |-->[30]
+|    |    |    #-->3f45cf639fca96e52e32abca3a1628c4e6a131
+|    |    |-->[31]
+|    |    |    #-->c8079870c3a4dec6702a2229387194624b2970
+|    |    |-->[32]
+|    |    |    #-->13c5bd3b59acec416c5d5388bde00ddf4c1c9e
+|    |    |-->[33]
+|    |    |    #-->b70849fdb2be7cdae71733e168ae274deace77
+|    |    |-->[34]
+|    |    |    #-->6412aa3fcbbeb20f7b9d171897d27275a56074
+|    |    |-->[3e]
+|    |    |    #-->cc44b119b68ca95a23b948611c90752d1d6673
+|    |    |-->[40]
+|    |    |    #-->a4a724777286d35717f891623016c348c35bd4
+|    |    |-->[48]
+|    |    |    |-->00c69713d9ff77fb04eda4bddc5a29b6540735
+|    |    |    #-->076377eddd7c0c49c3fee1e895455e76d5e3c1
+|    |    |-->[49]
+|    |    |    #-->86397f51db00ebb3f05c3d4a25dc05c5548967
+|    |    |-->[4e]
+|    |    |    #-->ab21cb7b731437bd5afafc4fa02c7054818fdb
+|    |    |-->[4f]
+|    |    |    #-->31b7405e4f437f1e3996946b812c7e06755131
+|    |    |-->[50]
+|    |    |    |-->019eaceb24151c601d266e34940eee5bd7405e
+|    |    |    #-->429fd23cecd4bec848a180f12bc533c6dbeb1e
+|    |    |-->[51]
+|    |    |    #-->a553eb93bcf095ff9f4c4bfbfb30502f778457
+|    |    |-->[52]
+|    |    |    #-->1d5d9bf1c5ebb94876f7e869d3b665d88466ae
+|    |    |-->[53]
+|    |    |    #-->cb555ad16ad2c9ab2e214e8a5264ec1ca2b46d
+|    |    |-->[54]
+|    |    |    #-->3c17ee75fc68baab06abaa46c55dc55a593e0c
+|    |    |-->[56]
+|    |    |    #-->7a7c577230f98f2d4fac30bcbf7f2464baf953
+|    |    |-->[5a]
+|    |    |    #-->b72e94e1e1dcdb45211bca845788da74766759
+|    |    |-->[5b]
+|    |    |    #-->dbe6d3ab47f341382e3c3cfd02f5faa978a946
+|    |    |-->[5f]
+|    |    |    #-->479a84a59dadbd6a073b8cccc199c2feebd7b9
+|    |    |-->[60]
+|    |    |    #-->664c940b0f96fcc218090479d0d521c61db7d2
+|    |    |-->[62]
+|    |    |    #-->ccf4a9d08c7120e4d49ebf355dea82a5883c8b
+|    |    |-->[67]
+|    |    |    #-->82a72998ad81d331ec0437d16ec609fceebdcb
+|    |    |-->[69]
+|    |    |    #-->d785a0f972f84a2f007118a1620b1bde061ce6
+|    |    |-->[6b]
+|    |    |    #-->67572240d55a82d609ac25e1fada1556140d6e
+|    |    |-->[6c]
+|    |    |    #-->10424cb1c42581e45daed4bc01fbff6a96adff
+|    |    |-->[6d]
+|    |    |    #-->806afd97cfc4f867767bfab930a57c59a341e2
+|    |    |-->[6e]
+|    |    |    #-->ba6a573b7aff05895ea4b38cebea4b18c2bd11
+|    |    |-->[71]
+|    |    |    |-->a883196a1952b67bc9931a2f9aae0b9674fcb4
+|    |    |    #-->f2e566502629515d7ad9ca10ee75f9a744a311
+|    |    |-->[75]
+|    |    |    #-->bf39d707d0ddff4c209ee0b52088ab5446b1b5
+|    |    |-->[7c]
+|    |    |    |-->839bcf7f8f8a7dea6a0061c7a29718b01105cd
+|    |    |    #-->8da0accf8e5c17ff3ecc6c31b87e9e844926e9
+|    |    |-->[7d]
+|    |    |    #-->8924eba028458e25cf91679e9aa3cb70e44c6e
+|    |    |-->[85]
+|    |    |    #-->ee954e1407f371c8972fa1d9bb9b928dd7e3e3
+|    |    |-->[86]
+|    |    |    |-->9bc75a89fc840568efcfaf088b40e647aa2c98
+|    |    |    #-->eec0fc146eb633ba9ea69138bde1366b492445
+|    |    |-->[87]
+|    |    |    #-->ecd4d79920822915683d126402097aa5653868
+|    |    |-->[8d]
+|    |    |    #-->bbeaee01efd79a2d8cd8614663718a2fef28ee
+|    |    |-->[8e]
+|    |    |    #-->272c4321a90ddcf0bf19c6c8ada0c151f2e3d1
+|    |    |-->[8f]
+|    |    |    #-->129d70c7a85673e13957a4bc31ad9ab083a699
+|    |    |-->[92]
+|    |    |    #-->ee5fb81a7f1e1357a1d3d06c4a41095ed293d5
+|    |    |-->[94]
+|    |    |    #-->278b5a44649dbb7b58add7c15eab83436aa983
+|    |    |-->[95]
+|    |    |    #-->f5a577cd5256815e742928aafc3f5c3fe5731c
+|    |    |-->[99]
+|    |    |    |-->1c376d160ffc8616fce607ef54521ed36bf3ad
+|    |    |    #-->9af49b7a79072b8e1c989f99f592afeb6e55d3
+|    |    |-->[9b]
+|    |    |    #-->5b5d4da44252663dec4aac150c475e07c14966
+|    |    |-->[9f]
+|    |    |    #-->695cc1c6a6a9caca45bc8fd149499c9ca8b799
+|    |    |-->[a2]
+|    |    |    #-->ccf7001975c550bbf671cdbf86d83ba4fba370
+|    |    |-->[a4]
+|    |    |    #-->43174b806e6a309857136b80009d9674993093
+|    |    |-->[a6]
+|    |    |    #-->5767e07488abbd307fc94849fbf73c4e35ebfe
+|    |    |-->[a7]
+|    |    |    |-->6cdd66a6705c7e34a666f1ee7514934524fbed
+|    |    |    |-->c1af43b0d831bfdcf6b8043ff84a3906184236
+|    |    |    #-->cd36838d88c2838a27a16efa79aa9f7ea99e64
+|    |    |-->[a8]
+|    |    |    #-->cf4c0dd4c30436695793a65ef6e078d7779517
+|    |    |-->[ab]
+|    |    |    #-->d0ce92e95e6e625776fdef265ca0283963550e
+|    |    |-->[b4]
+|    |    |    #-->d29780a2632d5ab27e9c0c71287787130d9322
+|    |    |-->[b9]
+|    |    |    #-->6e9efc3627d380ac2919a34e06546ba2338ad2
+|    |    |-->[be]
+|    |    |    #-->7ece7f927fc912f408b3a03cf46325da4eacf2
+|    |    |-->[c2]
+|    |    |    #-->83b7f8fc13b336643226bd8583e07a102a10ea
+|    |    |-->[c4]
+|    |    |    #-->7e9a6602cbc55ba1788224ee19b86454bce69a
+|    |    |-->[c5]
+|    |    |    #-->83a7df526d81c52c2e05590e51676a4552fdea
+|    |    |-->[c9]
+|    |    |    #-->27d0aa403cdb7e7d73a7d17578f1af2ea1f235
+|    |    |-->[ca]
+|    |    |    #-->81a3e3c0d9fbb2177264e0f487ea6dad0fec4e
+|    |    |-->[cc]
+|    |    |    #-->fbd84803b0a736f0d9bf2f48bdfe34c1a18eba
+|    |    |-->[d3]
+|    |    |    #-->a534046c1f0a5e91e630873c8cbf8e8d57e6d0
+|    |    |-->[d4]
+|    |    |    #-->5dd9055d310d545e5ff2a7db9687c63b1da943
+|    |    |-->[d5]
+|    |    |    #-->502d80f9ef9b6d2d051c503b5fbd0106925820
+|    |    |-->[d6]
+|    |    |    #-->4b105703e5d92f6aca2efca120f20bfbcce6b8
+|    |    |-->[d8]
+|    |    |    #-->7081ff670ad12d0d7657a6a8f893ef0a08da37
+|    |    |-->[df]
+|    |    |    #-->dbf5b844b6f78841228e6d1959960184cc9ffd
+|    |    |-->[e3]
+|    |    |    #-->baa09e495bd57c1665c1cbdb0bf7b8f205afad
+|    |    |-->[e5]
+|    |    |    #-->17ec7dff5cb2c1dea2770a8db4f01fa4ed31ef
+|    |    |-->[e6]
+|    |    |    #-->cfb765dfb4cc203bc1cd052ba508401a52b863
+|    |    |-->[e9]
+|    |    |    #-->d37bb7c06622fb4eaeae2a38ef08fdad6e865d
+|    |    |-->[f0]
+|    |    |    #-->3535ed969aad84c333558920e21b04d89986ac
+|    |    |-->[f4]
+|    |    |    #-->e88a2222cba02b071faf83a233aef16bf4fc9d
+|    |    |-->[f7]
+|    |    |    |-->2ee847aec429f9ff61c0e89075707e5ad491d1
+|    |    |    #-->e8a1752a1ea996f8d443526a9aced4e0ed64ca
+|    |    |-->[fd]
+|    |    |    #-->1e00ed2e23ddf5b63a744de1de0337083fd6f6
+|    |    |-->[fe]
+|    |    |    #-->6a671e9598f612bdfe55ff785900d9790423da
+|    |    |-->[ff]
+|    |    |    #-->4ea2ad57bca73636348c709a6662af80cc9fef
+|    |    |-->[info]
+|    |    #-->[pack]
+|    |         |-->pack-d122b1b3f8f502d4d47a347b86f54833d7751f4f.idx
+|    |         |-->pack-d122b1b3f8f502d4d47a347b86f54833d7751f4f.pack
+|    |         #-->pack-d122b1b3f8f502d4d47a347b86f54833d7751f4f.rev
+|    |-->packed-refs
+|    #-->[refs]
+|         |-->[heads]
+|         |    #-->main
+|         |-->[remotes]
+|         |    #-->[origin]
+|         |         |-->HEAD
+|         |         #-->main
+|         #-->[tags]
+|-->.gitignore
+|-->[.vs]
+|    #-->[BinaryFetch]
+|         #-->[v17]
+|              |-->.wsuo
+|              #-->DocumentLayout.json
+|-->LICENSE.txt
+|-->README.md
+#-->[project_binary_fetch]
+     |-->[.history]
+     |    #-->[binary_fetch_v1]
+     |         |-->ExtraInfo_20251014031438.cpp
+     |         |-->ExtraInfo_20251014204925.cpp
+     |         |-->ExtraInfo_20251014204934.cpp
+     |         |-->ExtraInfo_20251014204949.cpp
+     |         |-->ExtraInfo_20251014204957.cpp
+     |         |-->ExtraInfo_20251014205027.cpp
+     |         |-->ExtraInfo_20251014205031.cpp
+     |         |-->ExtraInfo_20251014205034.cpp
+     |         |-->ExtraInfo_20251014205038.cpp
+     |         |-->ExtraInfo_20251014205044.cpp
+     |         |-->ExtraInfo_20251014205048.cpp
+     |         |-->ExtraInfo_20251014210147.cpp
+     |         |-->ExtraInfo_20251014210157.cpp
+     |         |-->ExtraInfo_20251014210204.cpp
+     |         |-->ExtraInfo_20251014210207.cpp
+     |         |-->ExtraInfo_20251014210209.cpp
+     |         |-->ExtraInfo_20251014210614.cpp
+     |         |-->ExtraInfo_20251014210617.cpp
+     |         |-->ExtraInfo_20251014210633.cpp
+     |         #-->ExtraInfo_20251014210646.cpp
+     #-->[binary_fetch_v1]
+          |-->[.vs]
+          |    |-->[CopilotSnapshots]
+          |    |    #-->[0DB927DFB9CA4449BD3310514A0C7662]
+          |    #-->[binary_fetch_v1]
+          |         |-->ColorByRegexConfig.txt
+          |         |-->[CopilotIndices]
+          |         |    #-->[17.14.1231.31060]
+          |         |         |-->CodeChunks.db
+          |         |         |-->CodeChunks.db-shm
+          |         |         |-->CodeChunks.db-wal
+          |         |         |-->SemanticSymbols.db
+          |         |         |-->SemanticSymbols.db-shm
+          |         |         #-->SemanticSymbols.db-wal
+          |         |-->[FileContentIndex]
+          |         |    |-->60f99d41-5eaf-4e12-9ec5-1ada8399430f.vsidx
+          |         |    |-->a871997d-786c-42f0-a6ff-6d233952dff6.vsidx
+          |         |    |-->b45b2a60-bf1e-48e9-843d-4a85b86c72c0.vsidx
+          |         |    |-->baad9a11-2ac3-4e90-8706-5ca8e746f2e9.vsidx
+          |         |    #-->e182d24c-ad5f-4ad6-af3f-0e4a261e15f8.vsidx
+          |         |-->[copilot-chat]
+          |         |    #-->[fd9f6cd8]
+          |         |         #-->[sessions]
+          |         |              |-->14be5e88-30a3-4370-bac3-c52b9efe9621
+          |         |              |-->16e25d91-4867-45c0-91fc-42cee3f59bdd
+          |         |              |-->282e71e9-5e11-4347-ab97-5a0c074add7e
+          |         |              |-->49aadaa7-4fe1-4e40-b82e-2c9faf062ee4
+          |         |              |-->60af54fd-b282-4050-966e-0a28c41eb2a1
+          |         |              #-->df27b90d-cab9-4944-bd33-10514a0c7662
+          |         #-->[v17]
+          |              |-->.suo
+          |              |-->Browse.VC.db
+          |              |-->Browse.VC.db-shm
+          |              |-->Browse.VC.db-wal
+          |              |-->Browse.VC.opendb
+          |              |-->DocumentLayout.backup.json
+          |              |-->DocumentLayout.json
+          |              |-->Solution.VC.db
+          |              |-->fileList.bin
+          |              #-->[ipch]
+          |                   #-->[AutoPCH]
+          |                        |-->[159efab26411542d]
+          |                        |    #-->NETWORKINFO.ipch
+          |                        |-->[18ff350cb839084a]
+          |                        |    #-->VCTMP25320_335220.STORAGEINFO.00000000.ipch
+          |                        |-->[4e0d151e4406a7ba]
+          |                        |-->[5d752e4358a0323a]
+          |                        |    #-->BINARY_FETCH_V1.ipch
+          |                        |-->[780fc959c939895e]
+          |                        |-->[7a2ef86909fd662a]
+          |                        |    #-->MAIN.ipch
+          |                        |-->[7a39fde2bb0c8aba]
+          |                        |-->[8c1583053ec4e0d9]
+          |                        |-->[952daf583c127065]
+          |                        |-->[b94b3a7352789123]
+          |                        |    #-->TEST_MAIN.ipch
+          |                        |-->[bdeabfa0b5cf1deb]
+          |                        |    #-->BINARY_FETCH_V1.ipch
+          |                        |-->[c8df8ae86e1e4cbe]
+          |                        |    #-->STORAGEINFO.ipch
+          |                        |-->[d2cfeb50ca23a977]
+          |                        |    #-->ASCIIART.ipch
+          |                        |-->[d2d2da16310e48f7]
+          |                        |-->[f99cbe195658ef5]
+          |                        #-->[fa9a83cc99763ae1]
+          |                             #-->CENTRALCONTROL.ipch
+          |-->AsciiArt.cpp
+          |-->AsciiArt.h
+          |-->AsciiArt.txt
+          |-->CPUInfo.cpp
+          |-->CPUInfo.h
+          |-->CentralControl.cpp
+          |-->CentralControl.h
+          |-->CompactAudio.cpp
+          |-->CompactAudio.h
+          |-->CompactCPU.cpp
+          |-->CompactCPU.h
+          |-->CompactDisplay.cpp
+          |-->CompactDisplay.h
+          |-->CompactGPU.cpp
+          |-->CompactGPU.h
+          |-->CompactMemory.cpp
+          |-->CompactMemory.h
+          |-->CompactNetwork.cpp
+          |-->CompactNetwork.h
+          |-->CompactOS.cpp
+          |-->CompactOS.h
+          |-->CompactPerformance.cpp
+          |-->CompactPerformance.h
+          |-->CompactScreen.cpp
+          |-->CompactScreen.h
+          |-->CompactSystem.cpp
+          |-->CompactSystem.h
+          |-->CompactUser.cpp
+          |-->CompactUser.h
+          |-->ConfigReader.cpp
+          |-->ConsoleUtils.cpp
+          |-->DetailedGPUInfo.h
+          |-->DisplayInfo.cpp
+          |-->DisplayInfo.h
+          |-->DtailedGPUInfo.cpp
+          |-->ExtraInfo.cpp
+          |-->ExtraInfo.h
+          |-->GPUInfo.cpp
+          |-->GPUInfo.h
+          |-->Helpers.cpp
+          |-->Info about main.cpp.txt
+          |-->MemoryInfo.cpp
+          |-->MemoryInfo.h
+          |-->NetworkInfo.cpp
+          |-->NetworkInfo.h
+          |-->OSInfo.cpp
+          |-->OSInfo.h
+          |-->PerformanceInfo.cpp
+          |-->PerformanceInfo.h
+          |-->StorageInfo.cpp
+          |-->StorageInfo.h
+          |-->[StringUtlis.h]
+          |    #-->cpp
+          |-->SystemInfo.cpp
+          |-->SystemInfo.h
+          |-->UserInfo.cpp
+          |-->UserInfo.h
+          |-->[binary_fetch]
+          |    #-->[x64]
+          |         #-->[Debug]
+          |              |-->AsciiArt.obj
+          |              |-->CPUInfo.obj
+          |              |-->CentralControl.obj
+          |              |-->CompactAudio.obj
+          |              |-->CompactCPU.obj
+          |              |-->CompactDisplay.obj
+          |              |-->CompactGPU.obj
+          |              |-->CompactMemory.obj
+          |              |-->CompactNetwork.obj
+          |              |-->CompactOS.obj
+          |              |-->CompactPerformance.obj
+          |              |-->CompactScreen.obj
+          |              |-->CompactSystem.obj
+          |              |-->CompactUser.obj
+          |              |-->ConfigReader.obj
+          |              |-->ConsoleUtils.obj
+          |              |-->DetailedGPUInfo.obj
+          |              |-->DisplayInfo.obj
+          |              |-->DtailedGPUInfo.obj
+          |              |-->ExtraInfo.obj
+          |              |-->GPUInfo.obj
+          |              |-->Helpers.obj
+          |              |-->MemoryInfo.obj
+          |              |-->NetworkInfo.obj
+          |              |-->OSInfo.obj
+          |              |-->PerformanceInfo.obj
+          |              |-->StorageInfo.obj
+          |              |-->SystemInfo.obj
+          |              |-->UserInfo.obj
+          |              |-->binary_fetch.Build.CppClean.log
+          |              |-->binary_fetch.exe.recipe
+          |              |-->binary_fetch.ilk
+          |              |-->[binary_fetch.tlog]
+          |              |    |-->CL.command.1.tlog
+          |              |    |-->CL.read.1.tlog
+          |              |    |-->CL.write.1.tlog
+          |              |    |-->Cl.items.tlog
+          |              |    |-->binary_fetch.lastbuildstate
+          |              |    |-->link.command.1.tlog
+          |              |    |-->link.read.1.tlog
+          |              |    |-->link.secondary.1.tlog
+          |              |    |-->link.write.1.tlog
+          |              |    |-->rc.command.1.tlog
+          |              |    |-->rc.read.1.tlog
+          |              |    #-->rc.write.1.tlog
+          |              |-->binary_fetch_v1.log
+          |              |-->binary_fetch_v1.vcxproj.FileListAbsolute.txt
+          |              |-->compact_disk_info.obj
+          |              |-->main.obj
+          |              |-->personalization_info.obj
+          |              |-->vc143.idb
+          |              |-->vc143.pdb
+          |              #-->version_info.res
+          |-->binary_fetch_v1.cpp
+          |-->binary_fetch_v1.rc
+          |-->binary_fetch_v1.sln
+          |-->binary_fetch_v1.vcxproj
+          |-->binary_fetch_v1.vcxproj.filters
+          |-->binary_fetch_v1.vcxproj.user
+          |-->compact_disk_info.cpp
+          |-->compact_disk_info.h
+          |-->config.json
+          |-->json.hpp
+          |-->main-4 copy.txt
+          |-->main-5 copy.txt
+          |-->main.cpp
+          |-->personalization_info.cpp
+          |-->personalization_info.h
+          |-->resource.h
+          |-->version_info.rc
+          #-->[x64]
+               #-->[Debug]
+                    |-->binary_fetch.exe
+                    #-->binary_fetch.pdb

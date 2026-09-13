@@ -22,7 +22,8 @@
  *      information.
  *
  * AsciiArt is responsible for the first two stages.
- * LivePrinter is responsible for the final rendering stage.
+ * LivePrinter (now defined in main.cpp, alongside TerminalImage's
+ * rendering path) is responsible for the final rendering stage.
  *
  *
  * ------------------------------------------------------------
@@ -45,7 +46,7 @@
  * LOADING WORKFLOW
  * ------------------------------------------------------------
  *
- *        main.cppy
+ *        main.cpp
  *              |
  *              v
  *        AsciiArt::loadFromFile()
@@ -91,7 +92,7 @@
  *          ASCII ART READY
  *                |
  *                v
- *           LivePrinter: prints the art & manage forma
+ *           LivePrinter: prints the art & manage format
  *                |
  *                v
  *          Terminal Output
@@ -172,6 +173,9 @@
  *   height
  *       -> total number of lines
  *
+ *   paddingUp / paddingLeft / paddingRight
+ *       -> JSON-configurable spacing applied by the renderer
+ *
  * These values allow the rendering layer to perform alignment
  * without needing to understand file loading or parsing.
  *
@@ -180,7 +184,7 @@
  * RENDERING
  * ------------------------------------------------------------
  *
- * LivePrinter receives the prepared AsciiArt object.
+ * LivePrinter (main.cpp) receives the prepared AsciiArt object.
  *
  * It does NOT:
  *
@@ -210,7 +214,7 @@
  *             |
  *             |  parsed runtime representation
  *             v
- *        LivePrinter
+ *        LivePrinter (main.cpp)
  *             |
  *             |  rendering
  *             v
@@ -220,7 +224,9 @@
  *
  *   AsciiArt     = locate, initialize, load and prepare the art.
  *
- *   LivePrinter  = render the prepared art beside system info.
+ *   LivePrinter  = render the prepared art (or TerminalImage)
+ *                  beside system info. Lives in main.cpp so it
+ *                  can stay neutral between ASCII and image modes.
  *
  * This separation keeps file management, data preparation and
  * terminal rendering independent from each other.
@@ -256,16 +262,16 @@ This exact ascii art will be pasted on the "C:\Users\Public\BinaryFetch\BinaryAr
 BinaryFetch will load it from "C:\Users\Public\BinaryFetch\BinaryArt.txt"
 */
 static const std::string kDefaultAsciiArt =
-R"ASCIIART($1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
-$1##################### $15 <<<<<<<<<<<<<<<<<<<<<<
+R"ASCIIART($1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
+$1##################### $15 <<<<<<<<<<<<<<<<<<<<
 
 >>>>>>>>>>>>>>>>>>>>> $1 ######################
 >>>>>>>>>>>>>>>>>>>>> $1 ######################
@@ -338,7 +344,8 @@ void sanitizeLeadingInvisible(std::string& s) {
 
 // ---------------- AsciiArt Class ----------------
 
-AsciiArt::AsciiArt() : maxWidth(0), height(0), enabled(true), spacing(2) {
+AsciiArt::AsciiArt() : maxWidth(0), height(0), enabled(true), spacing(2),
+                        paddingUp(0), paddingLeft(0), paddingRight(0) {
     SetConsoleOutputCP(CP_UTF8);
 }
 
@@ -453,55 +460,12 @@ void AsciiArt::clear() {
     height = 0;
 }
 
-// ---------------- LivePrinter ----------------
-
-LivePrinter::LivePrinter(const AsciiArt& artRef) : art(artRef), index(0) {}
-
-void LivePrinter::push(const std::string& infoLine) {
-    printArtAndPad();
-    if (!infoLine.empty()) std::cout << infoLine;
-    std::cout << '\n';
-    index++;
+void AsciiArt::setPadding(int up, int left, int right) {
+    paddingUp = up;
+    paddingLeft = left;
+    paddingRight = right;
 }
 
-void LivePrinter::printArtAndPad() {
-    int artH = art.getHeight();
-    int maxW = art.getMaxWidth();
-    int spacing = art.getSpacing();
-
-    if (index < artH) {
-        std::cout << art.getLine(index);
-        int curW = art.getLineWidth(index);
-        if (curW < maxW) std::cout << std::string(maxW - curW, ' ');
-    }
-    else if (maxW > 0) {
-        std::cout << std::string(maxW, ' ');
-    }
-    if (spacing > 0) std::cout << std::string(spacing, ' ');
-}
-
-void LivePrinter::pushBlank() {
-    printArtAndPad();
-    std::cout << '\n';
-    index++;
-}
-
-void LivePrinter::finish() {
-    while (index < art.getHeight()) {
-        printArtAndPad();
-        std::cout << '\n';
-        index++;
-    }
-}
-
-void pushFormattedLines(LivePrinter& lp, const std::string& s) {
-    std::istringstream iss(s);
-    std::string line;
-    while (std::getline(iss, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        lp.push(line);
-    }
-}
 /*
 Color Code Feature:
 Use $n in the art to set colors (n = 1-15):
@@ -520,4 +484,9 @@ C:\Users\Public\BinaryFetch\BinaryArt.txt
 The default art is now embedded directly in this source file
 (kDefaultAsciiArt) rather than shipped as a separate .txt asset
 or a Win32 RCDATA resource.
+
+LivePrinter, previously defined in this file, now lives in
+main.cpp so it can stay neutral between ASCII-art rendering
+(AsciiArt) and image rendering (TerminalImage, Image.h/.cpp)
+without either backend header depending on the other.
 */
