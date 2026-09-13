@@ -18,35 +18,87 @@ ConfigManager::ConfigManager(bool devMode) {
     loadPlatformConfig(devMode);
 }
 
+// ===================== CONFIG LOADING (JSON + JSONC) =====================
+//
+// BinaryFetch supports two config extensions side by side:
+//   .jsonc  - preferred going forward; parsed with comments allowed
+//   .json   - legacy; still parsed exactly as before (comments happen to
+//             be allowed too now, but a comment-free file behaves
+//             identically either way, so nothing already deployed breaks)
+//
+// Resolution order, checked fresh on every launch:
+//   1. Both .jsonc and .json exist   -> .jsonc wins.
+//   2. Only .jsonc exists            -> load it.
+//   3. Only .json exists             -> load it AS-IS. We never silently
+//                                        create a .jsonc next to it — an
+//                                        existing legacy install stays on
+//                                        .json until the user removes that
+//                                        file themselves.
+//   4. Neither exists                -> self-heal from the embedded EXE
+//                                        resource. This is the ONLY branch
+//                                        that ever creates a new file, and
+//                                        it always writes .jsonc.
+//
+// So: delete the .json later (with no .jsonc present) and BinaryFetch will
+// recreate a fresh .jsonc default on the next run, per case 4. Nothing
+// about this ever overwrites a config file that already exists.
 void ConfigManager::loadPlatformConfig(bool devMode) {
-    std::string configDir = "C:\\Users\\Public\\BinaryFetch";
-    std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
+    std::string configDir       = "C:\\Users\\Public\\BinaryFetch";
+    std::string userConfigJsonc = configDir + "\\BinaryFetch_Config.jsonc";
+    std::string userConfigJson  = configDir + "\\BinaryFetch_Config.json";
     std::string configPath;
 
     if (devMode) {
-        configPath = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json";
-        std::ifstream devCheck(configPath);
-        if (!devCheck.good()) {
-            std::cerr << "Warning: Could not find development configuration JSON file at: " << configPath << std::endl;
-            m_loaded = false;
-            return;
+        std::string devJsonc = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.jsonc";
+        std::string devJson  = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json";
+
+        std::ifstream jsoncCheck(devJsonc);
+        bool devJsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        if (devJsoncExists) {
+            configPath = devJsonc;
+        } else {
+            std::ifstream jsonCheck(devJson);
+            bool devJsonExists = jsonCheck.good();
+            jsonCheck.close();
+
+            if (!devJsonExists) {
+                std::cerr << "Warning: Could not find development configuration file at: "
+                          << devJsonc << " or " << devJson << std::endl;
+                m_loaded = false;
+                return;
+            }
+            configPath = devJson;
         }
     } else {
-        configPath = userConfigPath;
         if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
             _mkdir(configDir.c_str());
         }
-        std::ifstream checkConfig(userConfigPath);
-        bool userConfigExists = checkConfig.good();
-        checkConfig.close();
 
-        if (!userConfigExists) {
+        std::ifstream jsoncCheck(userConfigJsonc);
+        bool jsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        std::ifstream jsonCheck(userConfigJson);
+        bool jsonExists = jsonCheck.good();
+        jsonCheck.close();
+
+        if (jsoncExists) {
+            // Case 1 (both present) and case 2 (jsonc only) both land here.
+            configPath = userConfigJsonc;
+        } else if (jsonExists) {
+            // Case 3: legacy .json only. Load as-is, create nothing.
+            configPath = userConfigJson;
+        } else {
+            // Case 4: neither present. Self-heal, writing .jsonc.
+            configPath = userConfigJsonc;
             HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(101), RT_RCDATA);
             if (hRes) {
                 HGLOBAL hData = LoadResource(NULL, hRes);
                 DWORD size = SizeofResource(NULL, hRes);
                 const char* data = static_cast<const char*>(LockResource(hData));
-                std::ofstream userConfig(userConfigPath, std::ios::binary);
+                std::ofstream userConfig(userConfigJsonc, std::ios::binary);
                 if (userConfig.is_open()) {
                     userConfig.write(data, size);
                     userConfig.close();
@@ -63,7 +115,17 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
     }
 
     try {
-        configFile >> m_config;
+        // ignore_comments = true is the entire JSONC upgrade. A file with
+        // zero comments in it — i.e. every existing .json config — parses
+        // byte-for-byte the same way as before, so this is purely additive
+        // and requires no migration step for anyone already running
+        // BinaryFetch.
+        m_config = nlohmann::json::parse(
+            configFile,
+            /* callback */ nullptr,
+            /* allow_exceptions */ true,
+            /* ignore_comments */ true
+        );
         if (m_config.is_object() && m_config.empty()) {
             m_loaded = false;
         } else {

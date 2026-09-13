@@ -33,9 +33,9 @@
     },
     "Image": {
         "enabled": true,
-        "image_path":"G:\\screenshot\\2d25e0e4ea83a994680aa861a19a8f14.jpg",
-        "image_size_percentage": 50,
-        "padding_up": 1,
+        "image_path":"G:\\screenshot\\1c5ed0745a8d02ecedacecb8f6b13ea9.jpg",
+        "image_size_percentage": 47,
+        "padding_up": 0,
         "padding_left": 0,
         "padding_right": 1
     }
@@ -545,7 +545,7 @@
   }
 },
 "compact_network_connection": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing": 0,
   "order": ["name", "type", "ip"],
   "prefixes": {
