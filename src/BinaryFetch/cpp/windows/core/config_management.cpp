@@ -7,14 +7,6 @@
 #include <unordered_map>
 
 ConfigManager::ConfigManager(bool devMode) {
-    m_colors = {
-        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-    };
     loadPlatformConfig(devMode);
 }
 
@@ -130,6 +122,7 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
             m_loaded = false;
         } else {
             m_loaded = true;
+            loadColorPalette();   // NEW: populate m_colors from JSON "colors" section
         }
     } catch (...) {
         m_loaded = false;
@@ -137,6 +130,75 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
 }
 
 bool ConfigManager::isLoaded() const { return m_loaded; }
+
+// ===================== COLOR PALETTE (JSON-DRIVEN) =====================
+//
+// Every color the app uses comes from the top-level "colors" object in
+// JSON. Three formats are accepted per entry:
+//   1. Raw ANSI escape  - starts with '\033', used exactly as written.
+//   2. Hex              - "#RRGGBB", converted to 24-bit truecolor.
+//   3. Plain RGB         - "R,G,B",   converted to 24-bit truecolor.
+// A value of "RESET" is special-cased to the reset code. Anything else
+// unrecognized is skipped (with a _DEBUG warning) rather than crashing
+// or silently corrupting output.
+std::string ConfigManager::parseColorValue(const std::string& raw) const {
+    if (raw.empty()) return "";
+
+    if (raw[0] == '\033') return raw; // literal escape sequence, passed through untouched
+
+    if (raw[0] == '#' && raw.size() == 7) {
+        try {
+            int r = std::stoi(raw.substr(1, 2), nullptr, 16);
+            int g = std::stoi(raw.substr(3, 2), nullptr, 16);
+            int b = std::stoi(raw.substr(5, 2), nullptr, 16);
+            return "\033[38;2;" + std::to_string(r) + ";" +
+                   std::to_string(g) + ";" + std::to_string(b) + "m";
+        } catch (...) {
+            return "";
+        }
+    }
+
+    std::stringstream ss(raw);
+    std::string token;
+    std::vector<int> parts;
+    while (std::getline(ss, token, ',')) {
+        try { parts.push_back(std::stoi(token)); }
+        catch (...) { return ""; }
+    }
+    if (parts.size() == 3) {
+        return "\033[38;2;" + std::to_string(parts[0]) + ";" +
+               std::to_string(parts[1]) + ";" + std::to_string(parts[2]) + "m";
+    }
+    return "";
+}
+
+// Rebuilds m_colors entirely from JSON's "colors" object. No color name
+// is hardcoded here — if "colors" is absent or empty, m_colors ends up
+// empty and resolveColor() degrades every lookup to plain white via its
+// single hardcoded safety net, without affecting any other config value.
+void ConfigManager::loadColorPalette() {
+    m_colors.clear();
+
+    if (!m_config.contains("colors") || !m_config["colors"].is_object())
+        return;
+
+    for (auto& [name, value] : m_config["colors"].items()) {
+        if (!value.is_string()) continue;
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_colors[name] = "\033[0m"; continue; }
+
+        std::string ansi = parseColorValue(raw);
+        if (!ansi.empty()) {
+            m_colors[name] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid color value for '" << name << "': " << raw << "\n";
+        }
+#endif
+    }
+}
 
 // ===================== RESOLVE SECTION KEY =====================
 std::string ConfigManager::resolveSectionKey(const std::string& section) const {
@@ -222,7 +284,8 @@ std::string ConfigManager::resolveColor(const std::string& colorName, const std:
     auto defIt = m_colors.find(defaultColor);
     if (defIt != m_colors.end()) return defIt->second;
     auto whiteIt = m_colors.find("white");
-    return (whiteIt != m_colors.end()) ? whiteIt->second : "\033[37m";
+    if (whiteIt != m_colors.end()) return whiteIt->second;
+    return "\033[37m"; // sole hardcoded fallback: only used if "colors" section is missing/empty in JSON
 }
 
 // ===================== ENABLED CHECKS =====================

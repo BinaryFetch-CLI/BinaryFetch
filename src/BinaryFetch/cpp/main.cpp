@@ -323,6 +323,14 @@ int main(){
     
    #ifdef _WIN32
           SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console
+
+          // Enable VT/ANSI escape processing so 24-bit truecolor codes
+          // (from the JSON "colors" section) render correctly instead of
+          // printing as raw garbage on legacy conhost.exe consoles.
+          HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+          DWORD consoleMode = 0;
+          GetConsoleMode(hOut, &consoleMode);
+          SetConsoleMode(hOut, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
    #endif
 
 

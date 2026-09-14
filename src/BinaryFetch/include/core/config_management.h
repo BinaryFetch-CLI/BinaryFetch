@@ -53,6 +53,9 @@ private:
     std::string resolveSectionKey(const std::string& section) const;
     std::string resolveSubsectionKey(const std::string& module, const std::string& subsection) const;
     std::string resolveColor(const std::string& colorName, const std::string& defaultColor) const;
+    
+    std::string parseColorValue(const std::string& raw) const;   // NEW: hex / rgb / raw-ansi -> escape code
+    void loadColorPalette();                                     // NEW: builds m_colors entirely from JSON
 
     nlohmann::json m_config;
     bool m_loaded{false};

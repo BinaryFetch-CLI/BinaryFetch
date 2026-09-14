@@ -27,6 +27,29 @@
   "detailed_network_connection",
   "detailed_audio_and_power"
 ],
+// Define any color name you want here — no limit.
+    // Supported formats:
+    //   "#RRGGBB"     -> hex color (e.g. "#FF0000")
+    //   "R,G,B"       -> plain RGB values (e.g. "255,140,0")
+    //   "\u001b[...m" -> raw ANSI escape code (advanced use only)
+    //   "RESET"       -> special value, always resets terminal color
+"colors": {
+  "red":            "#FF0000",
+  "green":          "#00FF00",
+  "yellow":         "#FFFF00",
+  "blue":           "#0000FF",
+  "magenta":        "#FF00FF",
+  "cyan":           "#00FFFF",
+  "white":          "#FFFFFF",
+  "bright_red":     "255,85,85",
+  "bright_green":   "85,255,85",
+  "bright_yellow":  "255,255,85",
+  "bright_blue":    "85,85,255",
+  "bright_magenta": "255,85,255",
+  "bright_cyan":    "85,255,255",
+  "bright_white":   "255,255,255",
+  "reset":          "RESET"
+},
 "art": {
     "Ascii_Art": {
         "enabled": false,
@@ -41,7 +64,7 @@
         // "G:/screenshot/sky.jpg"     -> works
         // "G:\\screenshot\\sky.jpg"   -> works
         // "G:\screenshot\sky.jpg"     -> error
-        "image_path":"G:\\screenshot\\1c5ed0745a8d02ecedacecb8f6b13ea9.jpg",
+        "image_path":"G:\\screenshot\\anime-image-desktop-wallpaper-manga-television-show-anime-3a9382afc56e81851fddc64214529998.png",
         "image_size_percentage": 47,
         "padding_up": 0,
         "padding_left": 0,
