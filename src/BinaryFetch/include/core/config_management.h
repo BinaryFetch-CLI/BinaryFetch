@@ -6,9 +6,16 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 
+
+enum class ConfigMode {
+    Dev,           // Dev_jsonc\Dev_BinaryFetch_Config.jsonc
+    ReleaseSource, // Default_JSON_theme_windows_RC\Default_BinaryFetch_Config.jsonc (edit directly)
+    Production     // C:\Users\Public\BinaryFetch\... self-heals from embedded resource 101
+};
+
 class ConfigManager {
 public:
-    explicit ConfigManager(bool devMode = false);
+    explicit ConfigManager(ConfigMode mode = ConfigMode::Production);
 
     bool isLoaded() const;
 
@@ -49,7 +56,7 @@ public:
     const nlohmann::json& getJson() const;
 
 private:
-    void loadPlatformConfig(bool devMode);
+    void loadPlatformConfig(ConfigMode mode);
     std::string resolveSectionKey(const std::string& section) const;
     std::string resolveSubsectionKey(const std::string& module, const std::string& subsection) const;
     std::string resolveColor(const std::string& colorName, const std::string& defaultColor) const;

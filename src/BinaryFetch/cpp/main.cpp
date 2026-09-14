@@ -336,13 +336,24 @@ int main(){
 
 
 
-    // CONFIG MANAGEMENT 
-    // DEV_MODE = true  → load default JSON directly from project folder (fast iteration)
-    // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 
-    //                    (self-heals from embedded EXE resource if the file is missing)
-    //                    NEVER overwrites an existing user config.
-    bool DEV_MODE = true; // ← set to true while developing, false before shipping
-    ConfigManager config(DEV_MODE);
+    // CONFIG MANAGEMENT----------------------------------------------------------------------------
+    // ConfigMode::Dev            → src\BinaryFetch\resources\Dev_jsonc\Dev_BinaryFetch_Config.jsonc
+    //                              (freely experiment, never embedded into the EXE)
+
+    // ConfigMode::ReleaseSource  → src\BinaryFetch\resources\Default_JSON_theme_windows_RC\
+    //                              Default_BinaryFetch_Config.jsonc — edit the actual shipping
+    //                              default directly. Needs a rebuild to reach a real production EXE.
+
+    // ConfigMode::Production     → C:\Users\Public\BinaryFetch\BinaryFetch_Config.jsonc
+    //                              (self-heals from embedded EXE resource 101 if missing.
+    //                              NEVER overwrites an existing user config.)
+
+    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed, set to Production before shipping
+    ConfigManager config(CONFIG_MODE);
+
+
+
+
     string r = config.getResetColor();
 
 	// Anyway....this is how we're allowed to print emojis in C++ console

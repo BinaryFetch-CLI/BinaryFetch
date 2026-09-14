@@ -6,8 +6,8 @@
 #include <sstream>
 #include <unordered_map>
 
-ConfigManager::ConfigManager(bool devMode) {
-    loadPlatformConfig(devMode);
+ConfigManager::ConfigManager(ConfigMode mode) {
+    loadPlatformConfig(mode);
 }
 
 // ===================== CONFIG LOADING (JSON + JSONC) =====================
@@ -34,15 +34,15 @@ ConfigManager::ConfigManager(bool devMode) {
 // So: delete the .json later (with no .jsonc present) and BinaryFetch will
 // recreate a fresh .jsonc default on the next run, per case 4. Nothing
 // about this ever overwrites a config file that already exists.
-void ConfigManager::loadPlatformConfig(bool devMode) {
+void ConfigManager::loadPlatformConfig(ConfigMode mode) {
     std::string configDir       = "C:\\Users\\Public\\BinaryFetch";
     std::string userConfigJsonc = configDir + "\\BinaryFetch_Config.jsonc";
     std::string userConfigJson  = configDir + "\\BinaryFetch_Config.json";
     std::string configPath;
 
-    if (devMode) {
-        std::string devJsonc = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.jsonc";
-        std::string devJson  = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json";
+    if (mode == ConfigMode::Dev) {
+        std::string devJsonc = "src\\BinaryFetch\\resources\\Dev_jsonc\\Dev_BinaryFetch_Config.jsonc";
+        std::string devJson  = "src\\BinaryFetch\\resources\\Dev_jsonc\\Dev_BinaryFetch_Config.json";
 
         std::ifstream jsoncCheck(devJsonc);
         bool devJsoncExists = jsoncCheck.good();
@@ -63,6 +63,24 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
             }
             configPath = devJson;
         }
+    } else if (mode == ConfigMode::ReleaseSource) {
+        // Edit the actual shipping default directly — the same file that
+        // gets embedded as resource 101 at build time. No self-heal, no
+        // Public folder involved. NOTE: edits here only reach a real
+        // production EXE after a rebuild re-embeds this file.
+        std::string releaseJsonc = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.jsonc";
+
+        std::ifstream releaseCheck(releaseJsonc);
+        bool releaseExists = releaseCheck.good();
+        releaseCheck.close();
+
+        if (!releaseExists) {
+            std::cerr << "Warning: Could not find release configuration file at: "
+                      << releaseJsonc << std::endl;
+            m_loaded = false;
+            return;
+        }
+        configPath = releaseJsonc;
     } else {
         if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
             _mkdir(configDir.c_str());
@@ -100,6 +118,7 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
     }
 
     std::ifstream configFile(configPath);
+    
     if (!configFile.is_open()) {
         std::cerr << "Warning: Cannot open configuration file: " << configPath << std::endl;
         m_loaded = false;
