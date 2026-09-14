@@ -312,6 +312,12 @@ private:
 };
 
 
+//  ███╗   ███╗ █████╗ ██╗███╗   ██╗    ██████╗██████╗ ██████╗ 
+//  ████╗ ████║██╔══██╗██║████╗  ██║   ██╔════╝██╔══██╗██╔══██╗
+//  ██╔████╔██║███████║██║██╔██╗ ██║   ██║     ██████╔╝██████╔╝
+//  ██║╚██╔╝██║██╔══██║██║██║╚██╗██║   ██║     ██╔═══╝ ██╔═══╝ 
+//  ██║ ╚═╝ ██║██║  ██║██║██║ ╚████║   ╚██████╗██║     ██║     
+//  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝    ╚═════╝╚═╝     ╚═╝     
 int main(){
 
     
@@ -335,7 +341,7 @@ int main(){
     // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
- // ART / IMAGE LOADING
+    // ART / IMAGE LOADING:
     // Image mode is tried first (if enabled); ASCII is the fallback,
     // both for a failed image load and for anyone who hasn't opted in.
     AsciiArt art;

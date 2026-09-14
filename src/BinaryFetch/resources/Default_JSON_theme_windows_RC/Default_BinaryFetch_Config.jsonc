@@ -1,4 +1,7 @@
 {
+  // from here, you can be able to adjust the order of
+  // each core modules (compact + detailed)
+  // Everything is under your control!!
   "section_order": [
   "header_settings",
   "compact_date_and_time",
