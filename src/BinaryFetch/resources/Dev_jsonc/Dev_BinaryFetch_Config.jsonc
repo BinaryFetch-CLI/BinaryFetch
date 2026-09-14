@@ -190,88 +190,43 @@
     "enabled": true,
     "top_line_spacing": 0,
     "order": ["name", "build", "arch", "uptime"],
-
-    "prefix": "│🎯 ",
-    "prefix_color": "red",
-
-    "label": {
-        "prefix": "",
-        "prefix_color": "",
-        "text": "OS",
-        "color": "red",
-        "suffix": ": ",
-        "suffix_color": "blue"
+    "prefixes": {
+      "prefix": "│🎯 ",
+      "prefix_color": "red"
     },
-
+    "label": {
+      "show": true,
+      "text": "OS",
+      "color": "red"
+    },
+    "separator": {
+      "text": ":",
+      "color": "blue"
+    },
+    "brackets": {
+      "open": "(",
+      "close": ")",
+      "color": "blue"
+    },
     "fields": {
-        "name": {
-            "label": {
-                "prefix": "",
-                "prefix_color": "",
-                "text": "",
-                "color": "",
-                "suffix": "",
-                "suffix_color": ""
-            },
-            "value": {
-                "prefix": "",
-                "prefix_color": "",
-                "color": "cyan",
-                "suffix": "",
-                "suffix_color": ""
-            }
-        },
-        "build": {
-            "label": {
-                "prefix": "",
-                "prefix_color": "",
-                "text": "",
-                "color": "",
-                "suffix": "",
-                "suffix_color": ""
-            },
-            "value": {
-                "prefix": "",
-                "prefix_color": "",
-                "color": "bright_blue",
-                "suffix": "",
-                "suffix_color": ""
-            }
-        },
-        "arch": {
-            "label": {
-                "prefix": "",
-                "prefix_color": "",
-                "text": "",
-                "color": "",
-                "suffix": "",
-                "suffix_color": ""
-            },
-            "value": {
-                "prefix": "(",
-                "prefix_color": "blue",
-                "color": "blue",
-                "suffix": ")",
-                "suffix_color": "blue"
-            }
-        },
-        "uptime": {
-            "label": {
-                "prefix": "(",
-                "prefix_color": "blue",
-                "text": "uptime",
-                "color": "cyan",
-                "suffix": ": ",
-                "suffix_color": "cyan"
-            },
-            "value": {
-                "prefix": "",
-                "prefix_color": "",
-                "color": "bright_cyan",
-                "suffix": ")",
-                "suffix_color": "blue"
-            }
-        }
+      "name": {
+        "show": true,
+        "value_color": "cyan"
+      },
+      "build": {
+        "show": true,
+        "value_color": "bright_blue"
+      },
+      "arch": {
+        "show": true,
+        "value_color": "blue"
+      },
+      "uptime": {
+        "show": true,
+        "label": "uptime: ",
+        "label_color": "cyan",
+        "value_color": "bright_cyan"
+      }
     }
 },
 "compact_processor": {

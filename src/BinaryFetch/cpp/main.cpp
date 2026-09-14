@@ -639,6 +639,75 @@ sections["compact_date_and_time"] = [&]() {
 };
 
 
+// ==================== COMPACT OPERATING SYSTEM ====================
+sections["compact_operating_system"] = [&]() {
+    if (!config.isEnabled("compact_operating_system")) return;
+    ostringstream ss;
+
+    // line spacing
+    int spacing = config.getNestedInt("compact_operating_system","top_line_spacing",0);
+    for (int n = 0; n < spacing; n++) {lp.push("");}
+
+    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
+    if (config.isFieldEnabled("compact_operating_system", "prefixes.show")) {
+        ss << config.getColor("compact_operating_system", "prefixes.prefix_color", "")
+           << config.getPrefix("compact_operating_system", "prefixes.prefix", "") << r;
+    }
+
+    // Label
+    ss << config.getColor("compact_operating_system", "label.color", "")
+       << config.getLabel("compact_operating_system", "label.text", "OS") << r;
+
+    // Separator
+    ss << config.getColor("compact_operating_system", "separator.color", "")
+       << config.getPrefix("compact_operating_system", "separator.text", ":") << " " << r;
+
+    // ---- Register each orderable field as a named lambda ----
+    std::map<std::string, std::function<void()>> fields;
+
+    fields["name"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.name.show")) return;
+        ss << config.getColor("compact_operating_system", "fields.name.value_color", "")
+           << c_os.getOSName() << r;
+    };
+
+    fields["build"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.build.show")) return;
+        ss << config.getColor("compact_operating_system", "fields.build.value_color", "")
+           << c_os.getOSBuild() << r;
+    };
+
+    fields["arch"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.arch.show")) return;
+        ss << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
+           << config.getColor("compact_operating_system", "fields.arch.value_color", "")
+           << c_os.getArchitecture() << r
+           << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+    };
+
+    fields["uptime"] = [&]() {
+        if (!config.isFieldEnabled("compact_operating_system", "fields.uptime.show")) return;
+        ss << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
+           << config.getColor("compact_operating_system", "fields.uptime.label_color", "")
+           << config.getLabel("compact_operating_system", "fields.uptime.label", "uptime: ") << r
+           << config.getColor("compact_operating_system", "fields.uptime.value_color", "")
+           << c_os.getUptime() << r
+           << config.getColor("compact_operating_system", "brackets.color", "")
+           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+    };
+
+    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    static const std::vector<std::string> defaultOrder =
+        {"name ", "build", "arch ", "uptime"};
+    auto order = config.getStringArray("compact_operating_system", "order", defaultOrder);
+
+    runOrderedFields(order, fields, ss);
+
+    lp.push(ss.str());
+};
 
 // -------------compact processor------------
 sections["compact_processor"] = [&]() {
