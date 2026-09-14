@@ -57,9 +57,25 @@ private:
     std::string parseColorValue(const std::string& raw) const;   // NEW: hex / rgb / raw-ansi -> escape code
     void loadColorPalette();                                     // NEW: builds m_colors entirely from JSON
 
+    // EMOJI STYLE SUPPORT (NEW)
+    void loadEmojiSettings();
+    std::string applyEmojiStyle(const std::string& raw) const;
+
+    // Renamed originals — same logic as before, just called "Raw" now.
+    // The public getLabel/getNestedLabel/getPrefix/getNestedPrefix/getNestedString
+    // below are thin wrappers that pipe these through applyEmojiStyle().
+    std::string getLabelRaw(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const;
+    std::string getNestedLabelRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const;
+    std::string getPrefixRaw(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const;
+    std::string getNestedPrefixRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const;
+    std::string getNestedStringRaw(const std::string& rawModule, const std::string& path, const std::string& defaultValue) const;
+
     nlohmann::json m_config;
     bool m_loaded{false};
     std::map<std::string, std::string> m_colors;
+
+    bool m_emojiEnabled{true};   
+    std::string m_emojiStyle{"auto"}; 
 };
 
 #endif // CONFIG_MANAGEMENT_H

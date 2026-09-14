@@ -118,11 +118,12 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
             /* allow_exceptions */ true,
             /* ignore_comments */ true
         );
-        if (m_config.is_object() && m_config.empty()) {
+         if (m_config.is_object() && m_config.empty()) {
             m_loaded = false;
         } else {
             m_loaded = true;
-            loadColorPalette();   // NEW: populate m_colors from JSON "colors" section
+            loadColorPalette();   // populate m_colors from JSON "colors" section
+            loadEmojiSettings();  // populate m_emojiEnabled / m_emojiStyle from JSON "emoji" section
         }
     } catch (...) {
         m_loaded = false;
@@ -536,7 +537,7 @@ int ConfigManager::getNestedInt(
 
 
 //nested string:
-std::string ConfigManager::getNestedString(
+std::string ConfigManager::getNestedStringRaw(
     const std::string& rawModule,
     const std::string& path,
     const std::string& defaultValue) const
@@ -574,6 +575,195 @@ std::string ConfigManager::getNestedString(
         return current.get<std::string>();
 
     return defaultValue;
+}
+
+
+// ===================== EMOJI STYLE (NEW) =====================
+//
+// Central place where emoji presentation gets applied, so no individual
+// module (CPU, GPU, memory, etc.) needs to know this feature exists.
+// Every module already pulls its icons/labels through getLabel/getPrefix/
+// getNestedLabel/getNestedPrefix/getNestedString — those five are now
+// thin wrappers around the *Raw versions above, piped through
+// applyEmojiStyle(). Section/alias resolution, defaults, and fallback
+// behavior are all unchanged; only the final returned string differs,
+// and only when an "emoji" section is present and non-default.
+
+namespace {
+
+// Decodes one UTF-8 codepoint at byte index i, writes the number of
+// bytes consumed into len. Malformed/truncated sequences fall back to
+// treating the single byte as-is, so a stray byte never corrupts or
+// crashes the rest of the string.
+char32_t decodeUtf8(const std::string& s, size_t i, size_t& len) {
+    unsigned char c0 = static_cast<unsigned char>(s[i]);
+    size_t remaining = s.size() - i;
+
+    auto isCont = [&](size_t idx) {
+        return idx < s.size() && (static_cast<unsigned char>(s[idx]) & 0xC0) == 0x80;
+    };
+
+    if (c0 < 0x80) { len = 1; return c0; }
+
+    if ((c0 & 0xE0) == 0xC0 && remaining >= 2 && isCont(i + 1)) {
+        len = 2;
+        return ((c0 & 0x1F) << 6) | (static_cast<unsigned char>(s[i + 1]) & 0x3F);
+    }
+    if ((c0 & 0xF0) == 0xE0 && remaining >= 3 && isCont(i + 1) && isCont(i + 2)) {
+        len = 3;
+        return ((c0 & 0x0F) << 12)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 2]) & 0x3F);
+    }
+    if ((c0 & 0xF8) == 0xF0 && remaining >= 4 && isCont(i + 1) && isCont(i + 2) && isCont(i + 3)) {
+        len = 4;
+        return ((c0 & 0x07) << 18)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 12)
+             | ((static_cast<unsigned char>(s[i + 2]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 3]) & 0x3F);
+    }
+
+    len = 1;
+    return c0; // unrecognised lead byte -> pass through untouched
+}
+
+void encodeUtf8(char32_t cp, std::string& out) {
+    if (cp < 0x80) {
+        out += static_cast<char>(cp);
+    } else if (cp < 0x800) {
+        out += static_cast<char>(0xC0 | (cp >> 6));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+        out += static_cast<char>(0xE0 | (cp >> 12));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (cp >> 18));
+        out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    }
+}
+
+// Heuristic "is this codepoint the kind of symbol/pictograph emoji
+// presentation selectors apply to". Covers the blocks BinaryFetch's own
+// icon set actually uses (dingbats/misc symbols + the supplementary
+// pictograph planes) plus a few adjacent symbol blocks. Not the full
+// Unicode emoji-property table, deliberately — no dependency needed —
+// but it's a safe superset for this app: nothing in these ranges is
+// normal prose text that could get accidentally mangled.
+bool isEmojiEligible(char32_t cp) {
+    return (cp >= 0x2190 && cp <= 0x21FF)    // Arrows
+        || (cp >= 0x2300 && cp <= 0x23FF)    // Misc Technical (⌚⏰⏱ etc.)
+        || (cp >= 0x25A0 && cp <= 0x25FF)    // Geometric Shapes
+        || (cp >= 0x2600 && cp <= 0x27BF)    // Misc Symbols + Dingbats (⚙️☀️✂️)
+        || (cp >= 0x2B00 && cp <= 0x2BFF)    // Misc Symbols and Arrows (⭐)
+        || (cp >= 0x1F000 && cp <= 0x1FFFF); // All main emoji pictograph blocks
+}
+
+constexpr char32_t VS_TEXT  = 0xFE0E; // U+FE0E - text presentation
+constexpr char32_t VS_EMOJI = 0xFE0F; // U+FE0F - emoji presentation
+
+} // namespace
+
+void ConfigManager::loadEmojiSettings() {
+    m_emojiEnabled = true;
+    m_emojiStyle   = "auto";
+
+    if (!m_config.contains("emoji") || !m_config["emoji"].is_object())
+        return; // section absent -> unchanged behavior, byte-identical output
+
+    const auto& e = m_config["emoji"];
+
+    if (e.contains("enabled") && e["enabled"].is_boolean())
+        m_emojiEnabled = e["enabled"].get<bool>();
+
+    if (e.contains("style") && e["style"].is_string()) {
+        std::string s = e["style"].get<std::string>();
+        if (s == "auto" || s == "color" || s == "text") {
+            m_emojiStyle = s;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid emoji style '" << s << "', defaulting to 'auto'\n";
+        }
+#endif
+    }
+}
+
+std::string ConfigManager::applyEmojiStyle(const std::string& raw) const {
+    // Fast path: enabled + auto is a pure no-op — what every config
+    // written before this feature existed will hit.
+    if (m_emojiEnabled && m_emojiStyle == "auto") return raw;
+    if (raw.empty()) return raw;
+
+    std::string out;
+    out.reserve(raw.size());
+
+    size_t i = 0;
+    while (i < raw.size()) {
+        size_t len = 1;
+        char32_t cp = decodeUtf8(raw, i, len);
+
+        if (isEmojiEligible(cp)) {
+            // Does an explicit variation selector already follow it?
+            // Consume it either way — we're about to decide the
+            // presentation ourselves.
+            size_t next = i + len;
+            size_t vsLen = 0;
+            if (next < raw.size()) {
+                size_t peekLen;
+                char32_t peekCp = decodeUtf8(raw, next, peekLen);
+                if (peekCp == VS_TEXT || peekCp == VS_EMOJI) vsLen = peekLen;
+            }
+
+            if (!m_emojiEnabled) {
+                // Drop the glyph (and its selector) entirely.
+            } else if (m_emojiStyle == "text") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_TEXT, out);
+            } else if (m_emojiStyle == "color") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_EMOJI, out);
+            } else {
+                // Shouldn't happen (loadEmojiSettings validates), stay safe.
+                out.append(raw, i, len + vsLen);
+            }
+
+            i = next + vsLen;
+            continue;
+        }
+
+        out.append(raw, i, len);
+        i += len;
+    }
+
+    return out;
+}
+
+// ===================== PUBLIC WRAPPERS (NEW) =====================
+// Same signatures modules already call — every module keeps working
+// with zero edits. Each just pipes the *Raw result through the emoji
+// styling layer.
+
+std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    return applyEmojiStyle(getLabelRaw(rawSection, key, defaultLabel));
+}
+
+std::string ConfigManager::getNestedLabel(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    return applyEmojiStyle(getNestedLabelRaw(rawModule, rawSection, key, defaultLabel));
+}
+
+std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getPrefixRaw(rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getNestedPrefixRaw(rawModule, rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedString(const std::string& rawModule, const std::string& path, const std::string& defaultValue) const {
+    return applyEmojiStyle(getNestedStringRaw(rawModule, path, defaultValue));
 }
 
 
@@ -666,7 +856,7 @@ std::vector<std::string> ConfigManager::getLayoutOrder() const
 
 
 // ===================== LABEL RESOLUTION =====================
-std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+std::string ConfigManager::getLabelRaw(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return defaultLabel;
 
@@ -700,7 +890,7 @@ std::string ConfigManager::getLabel(const std::string& rawSection, const std::st
     return defaultLabel;
 }
 
-std::string ConfigManager::getNestedLabel(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+std::string ConfigManager::getNestedLabelRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultLabel;
     std::string section = resolveSubsectionKey(module, rawSection);
@@ -720,7 +910,7 @@ std::string ConfigManager::getNestedLabel(const std::string& rawModule, const st
 }
 
 // ===================== PREFIX RESOLUTION =====================
-std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getPrefixRaw(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return defaultPrefix;
 
@@ -787,7 +977,7 @@ std::string ConfigManager::getPrefix(const std::string& rawSection, const std::s
     return defaultPrefix;
 }
 
-std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getNestedPrefixRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultPrefix;
     std::string section = resolveSubsectionKey(module, rawSection);
