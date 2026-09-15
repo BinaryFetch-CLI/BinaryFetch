@@ -747,74 +747,68 @@ fields["threads"] = [&]() {
 sections["compact_graphics_card"] = [&]() {
     if (!config.isEnabled("compact_graphics_card")) return;
     ostringstream ss;
+    const string sec = "compact_graphics_card";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_graphics_card","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
-    if (config.isFieldEnabled("compact_graphics_card", "prefixes.show")) {
-        ss << config.getColor("compact_graphics_card", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_graphics_card", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_graphics_card", "label.color", "")
-       << config.getLabel("compact_graphics_card", "label.text", "GPU") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "GPU") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_graphics_card", "separator.color", "")
-       << config.getPrefix("compact_graphics_card", "separator.text", ":") << " " << r;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["name"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.name.show")) return;
-        ss << config.getColor("compact_graphics_card", "fields.name.value_color", "")
-           << c_gpu.getGPUName() << r;
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_gpu.getGPUName());
     };
 
     fields["usage"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.usage.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.usage.value_color", "")
-           << c_gpu.getGPUUsagePercent()
-           << config.getColor("compact_graphics_card", "fields.usage.unit_color", "")
-           << config.getLabel("compact_graphics_card", "fields.usage.unit", "%") << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "usage.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getGPUUsagePercent();
+        printLV("usage", v.str());
     };
 
     fields["vram"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.vram.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.vram.value_color", "")
-           << c_gpu.getVRAMGB()
-           << config.getColor("compact_graphics_card", "fields.vram.unit_color", "")
-           << config.getLabel("compact_graphics_card", "fields.vram.unit", " GB") << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "vram.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getVRAMGB();
+        printLV("vram", v.str());
     };
 
     fields["freq"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.freq.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.freq.at_symbol_color", "")
-           << config.getLabel("compact_graphics_card", "fields.freq.at_symbol", "@") << r
-           << config.getColor("compact_graphics_card", "fields.freq.value_color", "")
-           << c_gpu.getGPUFrequency() << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "freq.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getGPUFrequency();
+        printLV("freq", v.str());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"name ", "usage ", "vram ", "freq"};
-    auto order = config.getStringArray("compact_graphics_card", "order", defaultOrder);
+        {"name", " ", "usage", " ", "vram", " ", "freq"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 

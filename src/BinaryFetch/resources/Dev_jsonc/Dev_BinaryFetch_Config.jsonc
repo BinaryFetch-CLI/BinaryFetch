@@ -372,48 +372,57 @@
 "compact_graphics_card": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["name", "usage", "vram", "freq"],
-    "prefixes": {
-      "prefix": "│💎 ",
-      "prefix_color": "red"
-    },
+    "order": ["name", " ", "usage", " ", "vram", " ", "freq"],
+
+    "prefix": "│💎 ",
+    "prefix_color": "red",
+
     "label": {
-      "show": true,
-      "text": "GPU",
-      "color": "red"
+        "text": "GPU",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "cyan"
     },
-    "separator": {
-      "text": ":",
-      "color": "cyan"
+
+    "name": {
+        "enabled": true,
+        "value": {
+            "color": "cyan"
+        }
     },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "bright_blue"
+    "usage": {
+        "enabled": true,
+        "value": {
+            "prefix": "(",
+            "prefix_color": "bright_blue",
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
     },
-    "fields": {
-      "name": {
-        "show": true,
-        "value_color": "cyan"
-      },
-      "usage": {
-        "show": true,
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      },
-      "vram": {
-        "show": true,
-        "value_color": "blue",
-        "unit": " GB",
-        "unit_color": "blue"
-      },
-      "freq": {
-        "show": true,
-        "value_color": "cyan",
-        "at_symbol": "@",
-        "at_symbol_color": "blue"
-      }
+    "vram": {
+        "enabled": true,
+        "value": {
+            "prefix": "(",
+            "prefix_color": "bright_blue",
+            "color": "blue",
+            "suffix": " GB)",
+            "suffix_color": "blue"
+        }
+    },
+    "freq": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "bright_blue",
+            "text": "@",
+            "color": "blue"
+        },
+        "value": {
+            "color": "cyan",
+            "suffix": ")",
+            "suffix_color": "bright_blue"
+        }
     }
 },
 "compact_display_monitor": {
