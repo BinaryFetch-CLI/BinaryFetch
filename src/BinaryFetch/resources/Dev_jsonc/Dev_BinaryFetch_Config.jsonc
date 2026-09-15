@@ -265,43 +265,56 @@
     "enabled": true,
     "top_line_spacing": 0,
     "order": ["name", "build", "arch", "uptime"],
-    "prefixes": {
-      "prefix": "│🎯 ",
-      "prefix_color": "red"
-    },
+
+    "prefix": "│🎯 ",
+    "prefix_color": "red",
+
     "label": {
-      "show": true,
-      "text": "OS",
-      "color": "red"
+        "text": "OS",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "blue"
     },
-    "separator": {
-      "text": ":",
-      "color": "blue"
-    },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "blue"
-    },
+
     "fields": {
-      "name": {
-        "show": true,
-        "value_color": "cyan"
-      },
-      "build": {
-        "show": true,
-        "value_color": "bright_blue"
-      },
-      "arch": {
-        "show": true,
-        "value_color": "blue"
-      },
-      "uptime": {
-        "show": true,
-        "label": "uptime: ",
-        "label_color": "cyan",
-        "value_color": "bright_cyan"
-      }
+        "name": {
+            "enabled": true,
+            "value": {
+                "color": "cyan"
+            }
+        },
+        "build": {
+            "enabled": true,
+            "value": {
+                "color": "bright_blue"
+            }
+        },
+        "arch": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "blue",
+                "color": "blue",
+                "suffix": ")",
+                "suffix_color": "blue"
+            }
+        },
+        "uptime": {
+            "enabled": true,
+            "label": {
+                "prefix": "(",
+                "prefix_color": "blue",
+                "text": "uptime",
+                "color": "cyan",
+                "suffix": ": ",
+                "suffix_color": "cyan"
+            },
+            "value": {
+                "color": "bright_cyan",
+                "suffix": ")",
+                "suffix_color": "blue"
+            }
+        }
     }
 },
 "compact_processor": {
