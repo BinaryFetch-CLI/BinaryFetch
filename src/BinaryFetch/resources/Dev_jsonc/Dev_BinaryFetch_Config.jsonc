@@ -763,127 +763,135 @@
     }
 },
 "compact_network_connection": {
-  "enabled": false,
-  "top_line_spacing": 0,
-  "order": ["name", "type", "ip"],
-  "prefixes": {
+    "enabled": true,
+    "top_line_spacing": 0,
+    "order": ["name", " ", "type", " ", "ip"],
+
     "prefix": "│🛜 ",
-    "prefix_color": "red"
-  },
-  "label": {
-    "show": true,
-    "text": "Network",
-    "color": "red"
-  },
-  "separator": {
-    "text": ":",
-    "color": "bright_cyan"
-  },
-  "fields": {
+    "prefix_color": "red",
+
+    "label": {
+        "text": "Network",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "bright_cyan"
+    },
+
     "name": {
-      "show": false,
-      "bracket_open": "(",
-      "bracket_close": ")",
-      "bracket_color": "cyan",
-      "label": "Name",
-      "label_color": "bright_cyan",
-      "label_suffix": ": ",
-      "label_suffix_color": "bright_cyan",
-      "value_color": "bright_cyan"
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "Name",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": ")",
+            "suffix_color": "cyan"
+        }
     },
     "type": {
-      "show": true,
-      "bracket_open": "(",
-      "bracket_close": ")",
-      "bracket_color": "cyan",
-      "label": "Type",
-      "label_color": "bright_cyan",
-      "label_suffix": ": ",
-      "label_suffix_color": "bright_cyan",
-      "value_color": "bright_cyan"
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "Type",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": ")",
+            "suffix_color": "cyan"
+        }
     },
     "ip": {
-      "show": true,
-      "bracket_open": "(",
-      "bracket_close": ")",
-      "bracket_color": "cyan",
-      "label": "ip",
-      "label_color": "bright_cyan",
-      "label_suffix": ": ",
-      "label_suffix_color": "bright_cyan",
-      "value_color": "bright_cyan"
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "ip",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": ")",
+            "suffix_color": "cyan"
+        }
     }
-  },
-  "label_color": "bright_cyan"
 },
 "compact_disk_storage": {
-  "enabled": true,
-  "top_line_spacing": 0,
-  "usage": {
-    "show": true,
-    "top_line_spacing": 0,
-    "prefixes": {
-      "show": true,
-      "prefix": "│📀 ",
-      "prefix_color": "red"
+    "enabled": true,
+
+    "usage": {
+        "enabled": true,
+        "top_line_spacing": 0,
+        "prefix": "│📀 ",
+        "prefix_color": "red",
+        "label": {
+            "text": "Disk Usage",
+            "color": "red",
+            "suffix": ": ",
+            "suffix_color": "red"
+        },
+        "letter": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "cyan",
+                "color": "bright_cyan",
+                "suffix": ":",
+                "suffix_color": "bright_cyan"
+            }
+        },
+        "size": {
+            "enabled": true,
+            "value": {
+                "prefix": " ",
+                "prefix_color": "bright_cyan",
+                "color": "bright_cyan",
+                "suffix": "%) ",
+                "suffix_color": "bright_cyan"
+            }
+        }
     },
-    "label": {
-      "text": "Disk Usage",
-      "color": "red"
-    },
-    "separator": {
-      "text": ":",
-      "color": "red",
-      "suffix": " ",
-      "suffix_color": "red"
-    },
-    "entry": {
-      "bracket_open": "(",
-      "bracket_close": ")",
-      "bracket_color": "cyan",
-      "letter_color": "bright_cyan",
-      "letter_suffix": ":",
-      "letter_suffix_space": " ",
-      "letter_suffix_color": "bright_cyan",
-      "value_color": "bright_cyan",
-      "unit": "%",
-      "unit_color": "bright_cyan",
-      "suffix": " ",
-      "suffix_color": "bright_cyan"
+
+    "capacity": {
+        "enabled": true,
+        "top_line_spacing": 0,
+        "prefix": "╰💾 ",
+        "prefix_color": "red",
+        "label": {
+            "text": "Disk Cap",
+            "color": "red",
+            "suffix": ": ",
+            "suffix_color": "red"
+        },
+        "letter": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "cyan",
+                "color": "bright_cyan",
+                "suffix": "-",
+                "suffix_color": "bright_cyan"
+            }
+        },
+        "size": {
+            "enabled": true,
+            "value": {
+                "color": "bright_cyan",
+                "suffix": "GB) ",
+                "suffix_color": "bright_cyan"
+            }
+        }
     }
-  },
-  "capacity": {
-    "show": true,
-    "top_line_spacing": 0,
-    "prefixes": {
-      "show": true,
-      "prefix": "╰💾 ",
-      "prefix_color": "red"
-    },
-    "label": {
-      "text": "Disk Cap",
-      "color": "red"
-    },
-    "separator": {
-      "text": ":",
-      "color": "red",
-      "suffix": " ",
-      "suffix_color": "red"
-    },
-    "entry": {
-      "bracket_open": "(",
-      "bracket_close": ")",
-      "bracket_color": "cyan",
-      "letter_color": "bright_cyan",
-      "separator": "-",
-      "separator_color": "bright_cyan",
-      "value_color": "bright_cyan",
-      "unit": "GB",
-      "unit_color": "bright_cyan",
-      "suffix": " ",
-      "suffix_color": "bright_cyan"
-    }
-  }
 },
 "detailed_system_memory": {
   "enabled": true,

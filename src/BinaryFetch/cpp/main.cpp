@@ -1171,59 +1171,58 @@ sections["compact_user_account"] = [&]() {
 // ==================== COMPACT NETWORK ====================
 sections["compact_network_connection"] = [&]() {
     if (!config.isEnabled("compact_network_connection")) return;
-
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_network_connection","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
-
     ostringstream ss;
+    const string sec = "compact_network_connection";
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_network_connection", "prefixes.show")) {
-        ss << config.getColor("compact_network_connection", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_network_connection", "prefixes.prefix", "") << r;
-    }
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Label
-    ss << config.getColor("compact_network_connection", "label.color", "")
-       << config.getLabel("compact_network_connection", "label.text", "Network") << r;
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Separator
-    ss << config.getColor("compact_network_connection", "separator.color", "")
-       << config.getPrefix("compact_network_connection", "separator.text", ":") << " " << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "Network") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Generic helper: prints one bracketed "(Label: value)" block, fully JSON-driven per field
-    auto addNetField = [&](const string& field, const string& value) {
-        if (!config.isFieldEnabled("compact_network_connection", "fields." + field + ".show")) return;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-        ss << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_open", "(")
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".label", "")
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_suffix_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".label_suffix", "")
-           << r
-           << config.getColor("compact_network_connection", "fields." + field + ".value_color", "")
-           << value
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_close", ")")
-           << r;
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
     };
 
-    // ---- Register each orderable field as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    fields["name"] = [&]() { addNetField("name", c_net.get_network_name()); };
-    fields["type"] = [&]() { addNetField("type", c_net.get_network_type()); };
-    fields["ip"]   = [&]() { addNetField("ip",   c_net.get_network_ip()); };
+    fields["name"] = [&]() {
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_net.get_network_name());
+    };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    fields["type"] = [&]() {
+        if (!config.getNestedBool(sec, "type.enabled", true)) return;
+        printLV("type", c_net.get_network_type());
+    };
+
+    fields["ip"] = [&]() {
+        if (!config.getNestedBool(sec, "ip.enabled", true)) return;
+        printLV("ip", c_net.get_network_ip());
+    };
+
     static const std::vector<std::string> defaultOrder =
-        {"name ", "type ", "ip"};
-    auto order = config.getStringArray("compact_network_connection", "order", defaultOrder);
+        {"name", " ", "type", " ", "ip"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -1233,107 +1232,58 @@ sections["compact_network_connection"] = [&]() {
 // ==================== COMPACT DISK ====================
 sections["compact_disk_storage"] = [&]() {
     if (!config.isEnabled("compact_disk_storage")) return;
+    const string sec = "compact_disk_storage";
+
+    auto printLV = [&](ostringstream& out, const string& path, const string& value) {
+        out << config.getColor(sec, path + ".value.prefix_color", "")
+            << config.getPrefix(sec, path + ".value.prefix", "") << r
+            << config.getColor(sec, path + ".value.color", "")
+            << value << r
+            << config.getColor(sec, path + ".value.suffix_color", "")
+            << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
+    auto printHeader = [&](ostringstream& out, const string& group,
+                           const string& defaultText) {
+        int spacing = config.getNestedInt(sec, group + ".top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
+
+        out << config.getColor(sec, group + ".prefix_color", "")
+            << config.getPrefix(sec, group + ".prefix", "") << r
+            << config.getColor(sec, group + ".label.prefix_color", "")
+            << config.getPrefix(sec, group + ".label.prefix", "") << r
+            << config.getColor(sec, group + ".label.color", "")
+            << config.getLabel(sec, group + ".label.text", defaultText) << r
+            << config.getColor(sec, group + ".label.suffix_color", "")
+            << config.getPrefix(sec, group + ".label.suffix", ": ") << r;
+    };
 
     // ---------- DISK USAGE ----------
-    if (config.isFieldEnabled("compact_disk_storage", "usage.show")) {
+    if (config.getNestedBool(sec, "usage.enabled", true)) {
         auto disks = disk.getAllDiskUsage();
         ostringstream ss;
+        printHeader(ss, "usage", "Disk Usage");
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_disk_storage","top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Usage prefix - from JSON
-        if (config.isFieldEnabled("compact_disk_storage", "usage.prefixes.show")) {
-            ss << config.getColor("compact_disk_storage", "usage.prefixes.prefix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.prefixes.prefix", "") << r;
-        }
-
-        // Usage label
-        ss << config.getColor("compact_disk_storage", "usage.label.color", "")
-           << config.getLabel("compact_disk_storage", "usage.label.text", "Disk Usage") << r;
-
-        // Usage separator
-        ss << config.getColor("compact_disk_storage", "usage.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "usage.separator.text", ":") << r
-           << config.getColor("compact_disk_storage", "usage.separator.suffix_color", "")
-           << config.getPrefix("compact_disk_storage", "usage.separator.suffix", " ") << r;
-
-        // Per-disk entry, fully JSON-driven
         for (const auto& d : disks) {
-            ss << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_open", "(") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.letter_color", "")
-               << d.first[0] << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix", ":") << r
-               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix_space", " ") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.value_color", "")
-               << fixed << setprecision(1) << d.second << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.unit_color", "")
-               << config.getLabel("compact_disk_storage", "usage.entry.unit", "%") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_close", ")") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.suffix", " ") << r;
+            printLV(ss, "usage.letter", string(1, d.first[0]));
+            ostringstream v;
+            v << fixed << setprecision(1) << d.second;
+            printLV(ss, "usage.size", v.str());
         }
         lp.push(ss.str());
     }
 
     // ---------- DISK CAPACITY ----------
-    if (config.isFieldEnabled("compact_disk_storage", "capacity.show")) {
+    if (config.getNestedBool(sec, "capacity.enabled", true)) {
         auto caps = disk.getDiskCapacity();
         ostringstream sc;
+        printHeader(sc, "capacity", "Disk Cap");
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_disk_storage","capacity.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Capacity prefix - from JSON
-        if (config.isFieldEnabled("compact_disk_storage", "capacity.prefixes.show")) {
-            sc << config.getColor("compact_disk_storage", "capacity.prefixes.prefix_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.prefixes.prefix", "") << r;
-        }
-
-        // Capacity label
-        sc << config.getColor("compact_disk_storage", "capacity.label.color", "")
-           << config.getLabel("compact_disk_storage", "capacity.label.text", "Disk Cap") << r;
-
-        // Capacity separator
-        sc << config.getColor("compact_disk_storage", "capacity.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "capacity.separator.text", ":") << r
-           << config.getColor("compact_disk_storage", "capacity.separator.suffix_color", "")
-           << config.getPrefix("compact_disk_storage", "capacity.separator.suffix", " ") << r;
-
-        // Per-disk entry, fully JSON-driven
         for (const auto& c : caps) {
-            sc << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_open", "(") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.letter_color", "")
-               << c.first[0] << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.separator_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.separator", "-") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.value_color", "")
-               << c.second << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.unit_color", "")
-               << config.getLabel("compact_disk_storage", "capacity.entry.unit", "GB") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_close", ")") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.suffix", " ") << r;
+            printLV(sc, "capacity.letter", string(1, c.first[0]));
+            ostringstream v;
+            v << c.second;
+            printLV(sc, "capacity.size", v.str());
         }
         lp.push(sc.str());
     }
