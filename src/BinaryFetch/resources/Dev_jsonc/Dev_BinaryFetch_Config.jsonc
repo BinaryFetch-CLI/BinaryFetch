@@ -120,10 +120,8 @@
   },
 "compact_date_and_time": {
     "enabled": true,
-    "show_emoji": true,
     "top_line_spacing": 0,
-    "emoji_color": "bright_cyan",
-    "order": ["time", "date", "week", "leap_year"],
+    "order": ["time", " ", "date", " ", "week", " ", "leap_year"],
 
     "prefix": "╭📅 ",
     "prefix_color": "red",
@@ -195,10 +193,8 @@
             }
         },
         "month_num": {
-            "enabled": false,
+            "enabled": true,
             "value": {
-                "prefix": " ",
-                "prefix_color": "bright_blue",
                 "color": "cyan",
                 "suffix": " : ",
                 "suffix_color": "bright_blue"
@@ -218,29 +214,33 @@
         "enabled": true,
 
         "label": {
-            "prefix":"(",
-            "prefix_color":"red",
+            "prefix": "(",
+            "prefix_color": "red",
             "text": "Week",
             "color": "blue",
             "suffix": ": ",
             "suffix_color": "blue"
         },
-        // week - number e.g. 47
         "num": {
             "enabled": true,
             "value": {
                 "color": "bright_cyan",
-                "suffix": "th ) ",
+                "suffix": "th ",
                 "suffix_color": "red"
             }
         },
         "day_name": {
-            "enabled": false
+            "enabled": true,
+            "value": {
+                "color": "bright_cyan",
+                "suffix": ") ",
+                "suffix_color": "red"
+            }
         }
     },
 
     "leap_year": {
-        "enabled": false,
+        "enabled": true,
 
         "label": {
             "text": "Leap Year",
@@ -428,13 +428,13 @@
 "compact_display_monitor": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["name", "resolution_w", "resolution_h", "scale", "upscale", "refresh"],
+    "order": ["name", " ", "resolution_w", "resolution_h", " ", "scale", " ", "upscale", " ", "refresh"],
 
     "prefix": "│🖥️ ",
     "prefix_color": "red",
 
     "label": {
-        "text": "Display",
+        "text": "Display ",
         "color": "red",
         "suffix": ": ",
         "suffix_color": "red"
@@ -484,7 +484,7 @@
         }
     },
     "upscale": {
-        "enabled": false,
+        "enabled": true,
         "label": {
             "prefix": "(",
             "prefix_color": "bright_cyan",
@@ -515,48 +515,55 @@
 "compact_system_memory": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["total", "free", "percent"],
-    "prefixes": {
-      "prefix": "│📟 ",
-      "prefix_color": "red"
-    },
+    "order": ["total", " ", "free", " ", "percent"],
+
+    "prefix": "│📟 ",
+    "prefix_color": "red",
+
     "label": {
-      "show": true,
-      "text": "Memory",
-      "color": "red"
+        "text": "Memory",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "bright_cyan"
     },
-    "separator": {
-      "text": ":",
-      "color": "bright_cyan"
+
+    "total": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "total: ",
+            "color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": " GB)",
+            "suffix_color": "bright_cyan"
+        }
     },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "cyan"
+    "free": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "free: ",
+            "color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": " GB)",
+            "suffix_color": "bright_cyan"
+        }
     },
-    "fields": {
-      "total": {
-        "show": true,
-        "label": "total: ",
-        "label_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": " GB",
-        "unit_color": "bright_cyan"
-      },
-      "free": {
-        "show": true,
-        "label": "free: ",
-        "label_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": " GB",
-        "unit_color": "bright_cyan"
-      },
-      "percent": {
-        "show": true,
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      }
+    "percent": {
+        "enabled": true,
+        "value": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
     }
 },
  "compact_audio_devices": {
