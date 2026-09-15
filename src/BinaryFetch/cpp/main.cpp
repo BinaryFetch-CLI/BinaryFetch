@@ -670,76 +670,73 @@ sections["compact_operating_system"] = [&]() {
 sections["compact_processor"] = [&]() {
     if (!config.isEnabled("compact_processor")) return;
     ostringstream ss;
+    const string sec = "compact_processor";
 
-    int spacing = config.getNestedInt("compact_processor","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    if (config.isFieldEnabled("compact_processor", "prefixes.show")) {
-        ss << config.getColor("compact_processor", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_processor", "prefixes.prefix", "") << r;
-    }
+    // Section prefix — bare prefix is allowed ONLY here, at depth 0.
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    ss << config.getColor("compact_processor", "label.color", "")
-       << config.getLabel("compact_processor", "label.text", "CPU") << r;
+    // Section label ("CPU: ") — same label shape as everywhere else.
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "CPU") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    ss << config.getColor("compact_processor", "separator.color", "")
-       << config.getPrefix("compact_processor", "separator.text", ":") << " " << r;
+    // Generic label+value printer — identical shape to compact_date_and_time.
+    // Brackets, dividers, @-symbols and units are not special concepts:
+    // they live in whichever neighbouring field touches them.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
 
     std::map<std::string, std::function<void()>> fields;
 
+fields["cores"] = [&]() {
+    if (!config.getNestedBool(sec, "cores.enabled", true)) return;
+    ostringstream v;
+    v << c_cpu.getCPUCores();
+    printLV("cores", v.str());
+};
+
+fields["threads"] = [&]() {
+    if (!config.getNestedBool(sec, "threads.enabled", true)) return;
+    ostringstream v;
+    v << c_cpu.getCPUThreads();
+    printLV("threads", v.str());
+};
+
     fields["name"] = [&]() {
-        if (!config.isFieldEnabled("compact_processor", "fields.name.show")) return;
-        ss << config.getColor("compact_processor", "fields.name.value_color", "")
-           << c_cpu.getCPUName() << r;
-        // no trailing space here anymore — "order" controls it now
-    };
-
-    fields["cores_threads"] = [&]() {
-        bool showCores = config.isFieldEnabled("compact_processor", "fields.cores.show");
-        bool showThreads = config.isFieldEnabled("compact_processor", "fields.threads.show");
-        if (!showCores && !showThreads) return;
-
-        ss << config.getColor("compact_processor", "brackets.color", "")
-           << config.getPrefix("compact_processor", "brackets.open", "(") << r;
-
-        if (showCores) {
-            ss << config.getColor("compact_processor", "fields.cores.value_color", "")
-               << c_cpu.getCPUCores() << r
-               << config.getColor("compact_processor", "fields.cores.value_suffix_color", "")
-               << config.getLabel("compact_processor", "fields.cores.value_suffix", "C") << r;
-        }
-
-        if (showCores && showThreads) {
-            ss << config.getColor("compact_processor", "separator.divider_color", "")
-               << config.getPrefix("compact_processor", "separator.divider", "/") << r;
-        }
-
-        if (showThreads) {
-            ss << config.getColor("compact_processor", "fields.threads.value_color", "")
-               << c_cpu.getCPUThreads() << r
-               << config.getColor("compact_processor", "fields.threads.value_suffix_color", "")
-               << config.getLabel("compact_processor", "fields.threads.value_suffix", "T") << r;
-        }
-
-        ss << config.getColor("compact_processor", "brackets.color", "")
-           << config.getPrefix("compact_processor", "brackets.close", ")") << r;
-        // no trailing space here anymore
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_cpu.getCPUName());
     };
 
     fields["clock"] = [&]() {
-        if (!config.isFieldEnabled("compact_processor", "fields.clock.show")) return;
-        ss << fixed << setprecision(2)
-           << config.getColor("compact_processor", "fields.clock.at_symbol_color", "")
-           << config.getLabel("compact_processor", "fields.clock.at_symbol", "@") << r
-           << config.getColor("compact_processor", "fields.clock.value_color", "") << " "
-           << c_cpu.getClockSpeed()
-           << config.getColor("compact_processor", "fields.clock.unit_color", "")
-           << config.getLabel("compact_processor", "fields.clock.unit", " GHz") << r;
+        if (!config.getNestedBool(sec, "clock.enabled", true)) return;
+        ostringstream v;
+        v << fixed << setprecision(2) << c_cpu.getClockSpeed();
+        printLV("clock", v.str());
     };
 
     static const std::vector<std::string> defaultOrder =
-        {"cores_threads ", "name ", "clock"};
-    auto order = config.getStringArray("compact_processor", "order", defaultOrder);
+        {"cores", "threads", " ", "name", " ", "clock"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
