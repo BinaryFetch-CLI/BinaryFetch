@@ -480,27 +480,30 @@ sections["compact_date_and_time"] = [&]() {
     TimeInfo time;
     ostringstream ss;
 
+    // line spacing
     int spacing = config.getNestedInt("compact_date_and_time","top_line_spacing",0);
     for (int n = 0; n < spacing; n++) {lp.push("");}
 
+    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
     if (config.isFieldEnabled("compact_date_and_time", "prefixes.show")) {
         ss << config.getColor("compact_date_and_time", "prefixes.prefix_color", "")
            << config.getPrefix("compact_date_and_time", "prefixes.prefix", "") << r;
     }
 
+    // ---- Register each orderable subsection as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
     // ---------- TIME SECTION ----------
     fields["time"] = [&]() {
         if (!config.isNestedEnabled("compact_date_and_time", "time", "enabled")) return;
 
+        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "time.open", "(") << r;
+
         if (config.isNestedEnabled("compact_date_and_time", "time", "show_label")) {
             ss << config.getNestedColor("compact_date_and_time", "time", "label", "")
-               << config.getNestedString("compact_date_and_time", "time.label_text", "Time") << r;
+               << config.getNestedString("compact_date_and_time", "time.label_text", "Time: ") << r;
         }
-
-        ss << config.getNestedColor("compact_date_and_time", "time", "value_prefix", "")
-           << config.getNestedString("compact_date_and_time", "time.value_prefix", "") << r;
 
         bool wrote = false;
 
@@ -525,21 +528,21 @@ sections["compact_date_and_time"] = [&]() {
                << setw(2) << setfill('0') << time.getSecond() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "time", "value_suffix", "")
-           << config.getNestedString("compact_date_and_time", "time.value_suffix", "") << r;
+        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "time.close", ")") << r;
     };
 
     // ---------- DATE SECTION ----------
     fields["date"] = [&]() {
         if (!config.isNestedEnabled("compact_date_and_time", "date", "enabled")) return;
 
+        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "date.open", "(") << r;
+
         if (config.isNestedEnabled("compact_date_and_time", "date", "show_label")) {
             ss << config.getNestedColor("compact_date_and_time", "date", "label", "")
-               << config.getNestedString("compact_date_and_time", "date.label_text", "Date") << r;
+               << config.getNestedString("compact_date_and_time", "date.label_text", "Date: ") << r;
         }
-
-        ss << config.getNestedColor("compact_date_and_time", "date", "value_prefix", "")
-           << config.getNestedString("compact_date_and_time", "date.value_prefix", "") << r;
 
         bool wrote = false;
 
@@ -572,21 +575,21 @@ sections["compact_date_and_time"] = [&]() {
                << time.getYearNumber() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "date", "value_suffix", "")
-           << config.getNestedString("compact_date_and_time", "date.value_suffix", "") << r;
+        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "date.close", ")") << r;
     };
 
     // ---------- WEEK SECTION ----------
     fields["week"] = [&]() {
         if (!config.isNestedEnabled("compact_date_and_time", "week", "enabled")) return;
 
+        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "week.open", "(") << r;
+
         if (config.isNestedEnabled("compact_date_and_time", "week", "show_label")) {
             ss << config.getNestedColor("compact_date_and_time", "week", "label", "")
-               << config.getNestedString("compact_date_and_time", "week.label_text", "Week") << r;
+               << config.getNestedString("compact_date_and_time", "week.label_text", "Week: ") << r;
         }
-
-        ss << config.getNestedColor("compact_date_and_time", "week", "value_prefix", "")
-           << config.getNestedString("compact_date_and_time", "week.value_prefix", "") << r;
 
         bool wrote = false;
 
@@ -603,29 +606,29 @@ sections["compact_date_and_time"] = [&]() {
                << time.getDayName() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "week", "value_suffix", "")
-           << config.getNestedString("compact_date_and_time", "week.value_suffix", "") << r;
+        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "week.close", ")") << r;
     };
 
     // ---------- LEAP YEAR SECTION ----------
     fields["leap_year"] = [&]() {
         if (!config.isNestedEnabled("compact_date_and_time", "leap_year", "enabled")) return;
 
+        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "leap_year.open", "(") << r;
+
         if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_label")) {
             ss << config.getNestedColor("compact_date_and_time", "leap_year", "label", "")
-               << config.getNestedString("compact_date_and_time", "leap_year.label_text", "Leap Year") << r;
+               << config.getNestedString("compact_date_and_time", "leap_year.label_text", "Leap Year: ") << r;
         }
-
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "value_prefix", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.value_prefix", "") << r;
 
         if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_val")) {
             ss << config.getNestedColor("compact_date_and_time", "leap_year", "val", "")
                << time.getLeapYear() << r;
         }
 
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "value_suffix", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.value_suffix", "") << r;
+        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
+           << config.getNestedString("compact_date_and_time", "leap_year.close", ")") << r;
     };
 
     // ---- Run subsections in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
