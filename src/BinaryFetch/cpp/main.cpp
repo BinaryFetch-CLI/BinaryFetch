@@ -348,7 +348,7 @@ int main(){
     //                              (self-heals from embedded EXE resource 101 if missing.
     //                              NEVER overwrites an existing user config.)
 
-    ConfigMode CONFIG_MODE = ConfigMode::Dev; // ← switch as needed, set to Production before shipping
+    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed, set to Production before shipping
     ConfigManager config(CONFIG_MODE);
 
 
