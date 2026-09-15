@@ -264,7 +264,7 @@
 "compact_operating_system": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["name", "build", "arch", "uptime"],
+    "order": ["name", " ", "build", " ", "arch", " ", "uptime"],
 
     "prefix": "│🎯 ",
     "prefix_color": "red",
@@ -276,44 +276,42 @@
         "suffix_color": "blue"
     },
 
-    "fields": {
-        "name": {
-            "enabled": true,
-            "value": {
-                "color": "cyan"
-            }
+    "name": {
+        "enabled": true,
+        "value": {
+            "color": "cyan"
+        }
+    },
+    "build": {
+        "enabled": true,
+        "value": {
+            "color": "bright_blue"
+        }
+    },
+    "arch": {
+        "enabled": true,
+        "value": {
+            "prefix": "(",
+            "prefix_color": "blue",
+            "color": "blue",
+            "suffix": ")",
+            "suffix_color": "blue"
+        }
+    },
+    "uptime": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "blue",
+            "text": "uptime",
+            "color": "cyan",
+            "suffix": ": ",
+            "suffix_color": "cyan"
         },
-        "build": {
-            "enabled": true,
-            "value": {
-                "color": "bright_blue"
-            }
-        },
-        "arch": {
-            "enabled": true,
-            "value": {
-                "prefix": "(",
-                "prefix_color": "blue",
-                "color": "blue",
-                "suffix": ")",
-                "suffix_color": "blue"
-            }
-        },
-        "uptime": {
-            "enabled": true,
-            "label": {
-                "prefix": "(",
-                "prefix_color": "blue",
-                "text": "uptime",
-                "color": "cyan",
-                "suffix": ": ",
-                "suffix_color": "cyan"
-            },
-            "value": {
-                "color": "bright_cyan",
-                "suffix": ")",
-                "suffix_color": "blue"
-            }
+        "value": {
+            "color": "bright_cyan",
+            "suffix": ")",
+            "suffix_color": "blue"
         }
     }
 },

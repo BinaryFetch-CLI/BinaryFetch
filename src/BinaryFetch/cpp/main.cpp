@@ -599,66 +599,60 @@ sections["compact_operating_system"] = [&]() {
     ostringstream ss;
     const string sec = "compact_operating_system";
 
-    // line spacing
     int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
     for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix icon — empty string renders nothing, no separate toggle needed
     ss << config.getColor(sec, "prefix_color", "")
        << config.getPrefix(sec, "prefix", "") << r;
 
-    // Section label ("OS: ")
     ss << config.getColor(sec, "label.prefix_color", "")
        << config.getPrefix(sec, "label.prefix", "") << r
        << config.getColor(sec, "label.color", "")
-       << config.getLabel(sec, "label.text", "") << r
+       << config.getLabel(sec, "label.text", "OS") << r
        << config.getColor(sec, "label.suffix_color", "")
-       << config.getPrefix(sec, "label.suffix", "") << r;
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // ---- Generic field printer: label{prefix,text,suffix} + value{prefix,val,suffix} ----
-    auto printField = [&](const string& field, const string& value) {
-        ss << config.getColor(sec, "fields." + field + ".label.prefix_color", "")
-           << config.getPrefix(sec, "fields." + field + ".label.prefix", "") << r
-           << config.getColor(sec, "fields." + field + ".label.color", "")
-           << config.getLabel(sec, "fields." + field + ".label.text", "") << r
-           << config.getColor(sec, "fields." + field + ".label.suffix_color", "")
-           << config.getPrefix(sec, "fields." + field + ".label.suffix", "") << r
+    // Same 5-key label/value printer as every other section.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-           << config.getColor(sec, "fields." + field + ".value.prefix_color", "")
-           << config.getPrefix(sec, "fields." + field + ".value.prefix", "") << r
-           << config.getColor(sec, "fields." + field + ".value.color", "")
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
            << value << r
-           << config.getColor(sec, "fields." + field + ".value.suffix_color", "")
-           << config.getPrefix(sec, "fields." + field + ".value.suffix", "") << r;
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
     };
 
-    // ---- Register each orderable field as a named lambda ----
-    // Visibility is controlled by "fields.X.enabled" + presence in "order".
     std::map<std::string, std::function<void()>> fields;
 
     fields["name"] = [&]() {
-        if (!config.getNestedBool(sec, "fields.name.enabled", true)) return;
-        printField("name", c_os.getOSName());
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_os.getOSName());
     };
 
     fields["build"] = [&]() {
-        if (!config.getNestedBool(sec, "fields.build.enabled", true)) return;
-        printField("build", c_os.getOSBuild());
+        if (!config.getNestedBool(sec, "build.enabled", true)) return;
+        printLV("build", c_os.getOSBuild());
     };
 
     fields["arch"] = [&]() {
-        if (!config.getNestedBool(sec, "fields.arch.enabled", true)) return;
-        printField("arch", c_os.getArchitecture());
+        if (!config.getNestedBool(sec, "arch.enabled", true)) return;
+        printLV("arch", c_os.getArchitecture());
     };
 
     fields["uptime"] = [&]() {
-        if (!config.getNestedBool(sec, "fields.uptime.enabled", true)) return;
-        printField("uptime", c_os.getUptime());
+        if (!config.getNestedBool(sec, "uptime.enabled", true)) return;
+        printLV("uptime", c_os.getUptime());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"name ", "build", "arch ", "uptime"};
+        {"name", " ", "build", " ", "arch", " ", "uptime"};
     auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
