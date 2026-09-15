@@ -109,15 +109,20 @@
 // Some of these keys are left out where they have no use case —
 // an omitted key just means empty/no effect, nothing breaks.
 
-  "header_settings": {
+"header_settings": {
     "enabled": true,
-    "header_prefix": "~>>",
-    "header_prefix_color": "blue",
-    "title": " BinaryFetch",
-    "title_color": "red",
-    "header_suffix": "",
-    "header_suffix_color": "bright_blue"
-  },
+
+    "prefix": "~>>",
+    "prefix_color": "blue",
+
+    "label": {
+        "text": " BinaryFetch",
+        "color": "red"
+    },
+
+    "suffix": "",
+    "suffix_color": "bright_blue"
+},
 "compact_date_and_time": {
     "enabled": true,
     "top_line_spacing": 0,

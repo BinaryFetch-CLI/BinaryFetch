@@ -443,25 +443,24 @@ int main(){
 // ==================== HEADER BANNER ====================
 sections["header_settings"] = [&]() {
     if (!config.isEnabled("header_settings")) return;
-
     ostringstream ss;
-    string r = config.getResetColor();
-    
-    // Prefix - from JSON (e.g., "~>>")
-    ss << config.getColor("header_settings", "header_prefix_color" )
-       << config.getPrefix("header_settings", "header_prefix" ) << r;
-    
-    // Title - from JSON (e.g., "BinaryFetch")
-    ss << config.getColor("header_settings", "title_color")
-       << config.getLabel("header_settings", "title", "") << r;
-    
-    // Suffix - from JSON (e.g., "-------------------------*")
-    ss << config.getColor("header_settings", "header_suffix_color")
-       << config.getPrefix("header_settings", "header_suffix", "") << r;
-    
+    const string sec = "header_settings";
+
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
+
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", "") << r;
+
+    ss << config.getColor(sec, "suffix_color", "")
+       << config.getPrefix(sec, "suffix", "") << r;
+
     lp.push(ss.str());
 };
-
 
 
 
@@ -859,9 +858,9 @@ sections["compact_display_monitor"] = [&]() {
 
         // "Display N: " — the " N" is a runtime index and stays in C++.
         ss << config.getColor(sec, "label.color", "")
-           << config.getLabel(sec, "label.text", "Display") << "" << (i + 1) << r
+           << config.getLabel(sec, "label.text", "Display ") << (i + 1) << r
            << config.getColor(sec, "label.suffix_color", "")
-           << config.getPrefix(sec, "label.suffix", ": ") << r;
+           << config.getPrefix(sec, "label.suffix", "") << r;
 
         std::map<std::string, std::function<void()>> fields;
 
