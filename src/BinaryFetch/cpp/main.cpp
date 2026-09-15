@@ -973,97 +973,67 @@ sections["compact_system_memory"] = [&]() {
 
     lp.push(ss.str());
 };
-// ==================== COMPACT AUDIO ====================
+
 sections["compact_audio_devices"] = [&]() {
     if (!config.isEnabled("compact_audio_devices")) return;
+    const string sec = "compact_audio_devices";
 
-    // ---- Register each orderable device-line as a named lambda ----
+    auto printLabelOnly = [&](ostringstream& ss, const string& path) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r;
+    };
+
+    auto printValueOnly = [&](ostringstream& ss, const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["input"] = [&]() {
-        if (!config.isFieldEnabled("compact_audio_devices", "input.show")) return;
+        if (!config.getNestedBool(sec, "input.enabled", true)) return;
         ostringstream ss;
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_audio_devices","input.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
+        int spacing = config.getNestedInt(sec, "input.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-        // Input prefix - from JSON
-        if (config.isFieldEnabled("compact_audio_devices", "input.prefixes.show")) {
-            ss << config.getColor("compact_audio_devices", "input.prefixes.prefix_color", "")
-               << config.getPrefix("compact_audio_devices", "input.prefixes.prefix", "") << r;
-        }
-
-        // Input label
-        ss << config.getColor("compact_audio_devices", "input.label.color", "")
-           << config.getLabel("compact_audio_devices", "input.label.text", "Audio Input") << r;
-
-        // Input separator
-        ss << config.getColor("compact_audio_devices", "input.separator.color", "")
-           << config.getPrefix("compact_audio_devices", "input.separator.text", ":") << " " << r;
-
-        // Input device name
-        ss << config.getColor("compact_audio_devices", "input.device_color", "")
-           << c_audio.active_audio_input() << r << " ";
-
-        // Input status
-        ss << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "input.status_bracket_open", "[") << r
-           << config.getColor("compact_audio_devices", "input.status_color", "")
-           << c_audio.active_audio_input_status() << r
-           << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "input.status_bracket_close", "]") << r;
+        printLabelOnly(ss, "input");
+        printValueOnly(ss, "input.device", c_audio.active_audio_input());
+        printValueOnly(ss, "input.status", c_audio.active_audio_input_status());
 
         lp.push(ss.str());
     };
 
     fields["output"] = [&]() {
-        if (!config.isFieldEnabled("compact_audio_devices", "output.show")) return;
+        if (!config.getNestedBool(sec, "output.enabled", true)) return;
         ostringstream ss;
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_audio_devices","output.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
+        int spacing = config.getNestedInt(sec, "output.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-        // Output prefix - from JSON
-        if (config.isFieldEnabled("compact_audio_devices", "output.prefixes.show")) {
-            ss << config.getColor("compact_audio_devices", "output.prefixes.prefix_color", "")
-               << config.getPrefix("compact_audio_devices", "output.prefixes.prefix", "") << r;
-        }
-
-        // Output label
-        ss << config.getColor("compact_audio_devices", "output.label.color", "")
-           << config.getLabel("compact_audio_devices", "output.label.text", "Audio Output") << r;
-
-        // Output separator
-        ss << config.getColor("compact_audio_devices", "output.separator.color", "")
-           << config.getPrefix("compact_audio_devices", "output.separator.text", ":") << " " << r;
-
-        // Output device name
-        ss << config.getColor("compact_audio_devices", "output.device_color", "")
-           << c_audio.active_audio_output() << r << " ";
-
-        // Output status
-        ss << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "output.status_bracket_open", "[") << r
-           << config.getColor("compact_audio_devices", "output.status_color", "")
-           << c_audio.active_audio_output_status() << r
-           << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "output.status_bracket_close", "]") << r;
+        printLabelOnly(ss, "output");
+        printValueOnly(ss, "output.device", c_audio.active_audio_output());
+        printValueOnly(ss, "output.status", c_audio.active_audio_output_status());
 
         lp.push(ss.str());
     };
 
-    // ---- Run device-lines in the order JSON specifies ----
-    static const std::vector<std::string> defaultOrder =
-        {"input", "output"};
-    auto order = config.getStringArray("compact_audio_devices", "order", defaultOrder);
+    static const std::vector<std::string> defaultOrder = {"input", "output"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     for (const auto& key : order) {
         auto it = fields.find(key);
         if (it != fields.end()) it->second();
     }
-};
+};   
 
 // ==================== COMPACT PERFORMANCE ====================
 sections["compact_resource_usage"] = [&]() {

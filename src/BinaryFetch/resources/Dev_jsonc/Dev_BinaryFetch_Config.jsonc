@@ -567,51 +567,67 @@
  "compact_audio_devices": {
     "enabled": true,
     "order": ["input", "output"],
+
     "input": {
-      "show": true,
-      "top_line_spacing": 0,
-      "prefixes": {
-        "prefix": "│🎙️ ",
-        "prefix_color": "red"
-      },
-      "label": {
-        "text": "Audio Input",
-        "color": "red"
-      },
-      "separator": {
-        "text": ":",
-        "color": "cyan"
-      },
-      "device_color": "blue",
-      "status_color": "blue",
-      "status_bracket_open": "[",
-      "status_bracket_close": "]",
-      "status_brackets_color": "bright_cyan"
+        "enabled": true,
+        "top_line_spacing": 0,
+        "label": {
+            "prefix": "│🎙️ ",
+            "prefix_color": "red",
+            "text": "Audio Input",
+            "color": "red",
+            "suffix": ": ",
+            "suffix_color": "cyan"
+        },
+        "device": {
+            "enabled": true,
+            "value": {
+                "color": "blue",
+                "suffix": " ",
+                "suffix_color": ""
+            }
+        },
+        "status": {
+            "enabled": true,
+            "value": {
+                "prefix": "[",
+                "prefix_color": "bright_cyan",
+                "color": "blue",
+                "suffix": "]",
+                "suffix_color": "bright_cyan"
+            }
+        }
     },
+
     "output": {
-      "show": true,
-      "top_line_spacing": 0,
-      "prefixes": {
-        "prefix": "│🔉 ",
-        "prefix_color": "red"
-      },
-      "label": {
-        "text": "Audio Output",
-        "color": "red"
-      },
-      "separator": {
-        "text": ":",
-        "color": "cyan"
-      },
-      "device_color": "blue",
-      "status_color": "blue",
-      "status_bracket_open": "[",
-      "status_bracket_close": "]",
-      "status_brackets_color": "bright_cyan"
-    },
-    "arrow": {
-      "text": "->",
-      "color": "bright_cyan"
+        "enabled": true,
+        "top_line_spacing": 0,
+        "label": {
+            "prefix": "│🔉 ",
+            "prefix_color": "red",
+            "text": "Audio Output",
+            "color": "red",
+            "suffix": ": ",
+            "suffix_color": "cyan"
+        },
+        "device": {
+            "enabled": true,
+            "value": {
+                "color": "blue",
+                "suffix": " ",
+                "suffix_color": ""
+            }
+        },
+        "status": {
+            "enabled": true,
+            "value": {
+                "prefix": "[",
+                "prefix_color": "bright_cyan",
+                "color": "blue",
+                "suffix": "]",
+                "suffix_color": "bright_cyan"
+            }
+        }
     }
 },
 "compact_resource_usage": {
