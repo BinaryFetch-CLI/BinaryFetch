@@ -633,75 +633,81 @@
 "compact_resource_usage": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["cpu", "gpu", "ram", "disk"],
-    "prefixes": {
-      "prefix": "│📊 ",
-      "prefix_color": "red"
-    },
+    "order": ["cpu", " ", "gpu", " ", "ram", " ", "disk"],
+
+    "prefix": "│📊 ",
+    "prefix_color": "red",
+
     "label": {
-      "show": true,
-      "text": "Performance",
-      "color": "red"
+        "text": "Performance",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "red"
     },
-    "separator": {
-      "text": ":",
-      "color": "red",
-      "suffix": " ",
-      "suffix_color": "red"
+
+    "cpu": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "CPU",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
     },
-    "fields": {
-      "cpu": {
-        "show": true,
-        "bracket_open": "(",
-        "bracket_close": ")",
-        "bracket_color": "cyan",
-        "label": "CPU",
-        "label_color": "bright_cyan",
-        "label_suffix": ": ",
-        "label_suffix_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      },
-      "gpu": {
-        "show": true,
-        "bracket_open": "(",
-        "bracket_close": ")",
-        "bracket_color": "cyan",
-        "label": "GPU",
-        "label_color": "bright_cyan",
-        "label_suffix": ": ",
-        "label_suffix_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      },
-      "ram": {
-        "show": true,
-        "bracket_open": "(",
-        "bracket_close": ")",
-        "bracket_color": "cyan",
-        "label": "RAM",
-        "label_color": "bright_cyan",
-        "label_suffix": ": ",
-        "label_suffix_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      },
-      "disk": {
-        "show": true,
-        "bracket_open": "(",
-        "bracket_close": ")",
-        "bracket_color": "cyan",
-        "label": "Disk",
-        "label_color": "bright_cyan",
-        "label_suffix": ": ",
-        "label_suffix_color": "bright_cyan",
-        "value_color": "bright_cyan",
-        "unit": "%",
-        "unit_color": "bright_cyan"
-      }
+    "gpu": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "GPU",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
+    },
+    "ram": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "RAM",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
+    },
+    "disk": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "Disk",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+        "value": {
+            "color": "bright_cyan",
+            "suffix": "%)",
+            "suffix_color": "bright_cyan"
+        }
     }
 },
 "compact_user_account": {

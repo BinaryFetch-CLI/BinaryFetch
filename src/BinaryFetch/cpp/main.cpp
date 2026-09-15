@@ -1039,62 +1039,67 @@ sections["compact_audio_devices"] = [&]() {
 sections["compact_resource_usage"] = [&]() {
     if (!config.isEnabled("compact_resource_usage")) return;
     ostringstream ss;
+    const string sec = "compact_resource_usage";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_resource_usage","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_resource_usage", "prefixes.show")) {
-        ss << config.getColor("compact_resource_usage", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_resource_usage", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_resource_usage", "label.color", "")
-       << config.getLabel("compact_resource_usage", "label.text", "Performance") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "Performance") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_resource_usage", "separator.color", "")
-       << config.getPrefix("compact_resource_usage", "separator.text", ":") << r
-       << config.getColor("compact_resource_usage", "separator.suffix_color", "")
-       << config.getPrefix("compact_resource_usage", "separator.suffix", " ") << r;
+    // Each stat is one "(Label: value%)" block — same 5-key shape.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // Generic helper: prints one bracketed "(Label: value%)" stat block, fully JSON-driven per field
-    auto addPerf = [&](const string& field, auto val) {
-        if (!config.isFieldEnabled("compact_resource_usage", "fields." + field + ".show")) return;
-
-        ss << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_open", "(") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".label_color", "")
-           << config.getLabel("compact_resource_usage", "fields." + field + ".label", field) << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".label_suffix_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".label_suffix", ": ") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".value_color", "")
-           << val << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".unit_color", "")
-           << config.getLabel("compact_resource_usage", "fields." + field + ".unit", "%") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_close", ")") << r;
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
     };
 
-    // ---- Register each orderable stat as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    fields["cpu"]  = [&]() { addPerf("cpu",  c_perf.getCPUUsage()); };
-    fields["gpu"]  = [&]() { addPerf("gpu",  c_perf.getGPUUsage()); };
-    fields["ram"]  = [&]() { addPerf("ram",  c_perf.getRAMUsage()); };
-    fields["disk"] = [&]() { addPerf("disk", c_perf.getDiskUsage()); };
+    fields["cpu"] = [&]() {
+        if (!config.getNestedBool(sec, "cpu.enabled", true)) return;
+        ostringstream v; v << c_perf.getCPUUsage();
+        printLV("cpu", v.str());
+    };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    fields["gpu"] = [&]() {
+        if (!config.getNestedBool(sec, "gpu.enabled", true)) return;
+        ostringstream v; v << c_perf.getGPUUsage();
+        printLV("gpu", v.str());
+    };
+
+    fields["ram"] = [&]() {
+        if (!config.getNestedBool(sec, "ram.enabled", true)) return;
+        ostringstream v; v << c_perf.getRAMUsage();
+        printLV("ram", v.str());
+    };
+
+    fields["disk"] = [&]() {
+        if (!config.getNestedBool(sec, "disk.enabled", true)) return;
+        ostringstream v; v << c_perf.getDiskUsage();
+        printLV("disk", v.str());
+    };
+
     static const std::vector<std::string> defaultOrder =
-        {"cpu ", "gpu ", "ram ", "disk"};
-    auto order = config.getStringArray("compact_resource_usage", "order", defaultOrder);
+        {"cpu", " ", "gpu", " ", "ram", " ", "disk"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
