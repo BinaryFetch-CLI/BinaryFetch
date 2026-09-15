@@ -711,47 +711,56 @@
     }
 },
 "compact_user_account": {
-  "enabled": true,
-  "top_line_spacing": 0,
-  "order": ["username", "domain", "type"],
-  "prefixes": {
+    "enabled": true,
+    "top_line_spacing": 0,
+    "order": ["username", " ", "domain", " ", "type"],
+
     "prefix": "│👾 ",
-    "prefix_color": "red"
-  },
-  "label": {
-    "show": true,
-    "text": "User",
-    "color": "red"
-  },
-  "separator": {
-    "text": ":",
-    "color": "bright_blue"
-  },
-  "brackets": {
-    "open": "(",
-    "close": ")",
-    "color": "cyan"
-  },
-  "fields": {
+    "prefix_color": "red",
+
+    "label": {
+        "text": "User",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "bright_blue"
+    },
+
     "username": {
-      "show": true,
-      "prefix": "@",
-      "prefix_color": "cyan",
-      "value_color": "cyan"
+        "enabled": true,
+        "value": {
+            "prefix": "@",
+            "prefix_color": "cyan",
+            "color": "cyan"
+        }
     },
     "domain": {
-      "show": true,
-      "label": "Domain: ",
-      "label_color": "blue",
-      "value_color": "blue"
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "Domain: ",
+            "color": "blue"
+        },
+        "value": {
+            "color": "blue",
+            "suffix": ")",
+            "suffix_color": "cyan"
+        }
     },
     "type": {
-      "show": true,
-      "label": "Type: ",
-      "label_color": "blue",
-      "value_color": "bright_blue"
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "cyan",
+            "text": "Type: ",
+            "color": "blue"
+        },
+        "value": {
+            "color": "bright_blue",
+            "suffix": ")",
+            "suffix_color": "cyan"
+        }
     }
-  }
 },
 "compact_network_connection": {
   "enabled": false,

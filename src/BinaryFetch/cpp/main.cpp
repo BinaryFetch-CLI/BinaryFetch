@@ -1110,69 +1110,63 @@ sections["compact_resource_usage"] = [&]() {
 sections["compact_user_account"] = [&]() {
     if (!config.isEnabled("compact_user_account")) return;
     ostringstream ss;
+    const string sec = "compact_user_account";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_user_account","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_user_account", "prefixes.show")) {
-        ss << config.getColor("compact_user_account", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_user_account", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_user_account", "label.color", "")
-       << config.getLabel("compact_user_account", "label.text", "User") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "User") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_user_account", "separator.color", "")
-       << config.getPrefix("compact_user_account", "separator.text", ":") << " " << r;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["username"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.username.show")) return;
-        ss << config.getColor("compact_user_account", "fields.username.prefix_color", "")
-           << config.getPrefix("compact_user_account", "fields.username.prefix", "@") << r
-           << config.getColor("compact_user_account", "fields.username.value_color", "")
-           << c_user.getUsername() << r;
+        if (!config.getNestedBool(sec, "username.enabled", true)) return;
+        printLV("username", c_user.getUsername());
     };
 
     fields["domain"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.domain.show")) return;
-        ss << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "fields.domain.label_color", "")
-           << config.getLabel("compact_user_account", "fields.domain.label", "Domain: ") << r
-           << config.getColor("compact_user_account", "fields.domain.value_color", "")
-           << c_user.getDomain() << r
-           << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "domain.enabled", true)) return;
+        printLV("domain", c_user.getDomain());
     };
 
     fields["type"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.type.show")) return;
-        ss << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "fields.type.label_color", "")
-           << config.getLabel("compact_user_account", "fields.type.label", "Type: ") << r
-           << config.getColor("compact_user_account", "fields.type.value_color", "")
-           << c_user.isAdmin() << r
-           << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "type.enabled", true)) return;
+        printLV("type", c_user.isAdmin());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"username ", "domain ", "type"};
-    auto order = config.getStringArray("compact_user_account", "order", defaultOrder);
+        {"username", " ", "domain", " ", "type"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
+
 
 // ==================== COMPACT NETWORK ====================
 sections["compact_network_connection"] = [&]() {
