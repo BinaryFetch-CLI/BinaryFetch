@@ -90,6 +90,25 @@
         "padding_right": 1
     }
 },
+
+
+// Config schema — read this once, it applies everywhere below.
+//
+// It might look big and messy at first glance, but it's actually
+// fully predictable. Every sub-module (a field, or a sub-value
+// inside a group) is built from exactly two parts:
+//
+//   1. label
+//   2. value
+//
+// And each of those always follows the same shape:
+//
+//   label: { prefix, prefix_color, text, color, suffix, suffix_color }
+//   value: { prefix, prefix_color, color, suffix, suffix_color }
+//
+// Some of these keys are left out where they have no use case —
+// an omitted key just means empty/no effect, nothing breaks.
+
   "header_settings": {
     "enabled": true,
     "header_prefix": "~>>",
@@ -105,81 +124,141 @@
     "top_line_spacing": 0,
     "emoji_color": "bright_cyan",
     "order": ["time", "date", "week", "leap_year"],
-    "prefixes": {
-      "prefix": "╭📅 ",
-      "prefix_color": "red"
-    },
+
+    "prefix": "╭📅 ",
+    "prefix_color": "red",
+
     "time": {
-      "enabled": true,
-      "show_label": true,
-      "show_hour": true,
-      "show_minute": true,
-      "show_second": true,
-      "open": "(",
-      "close": ")",
-      "label_text": "Time: ",
-      "sep_text": ":",
-      "colors": {
-        "bracket": "blue",
-        "label": "cyan",
-        "hour": "bright_blue",
-        "minute": "bright_blue",
-        "second": "bright_blue",
-        "sep": "cyan"
-      }
+        "enabled": true,
+
+        "label": {
+            "text": "Time",
+            "color": "red",
+            "suffix": ": ",
+            "suffix_color": "red"
+        },
+
+        "hour": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "blue",
+                "color": "bright_blue",
+                "suffix": ":",
+                "suffix_color": "cyan"
+            }
+        },
+        "minute": {
+            "enabled": true,
+            "value": {
+                "color": "bright_blue",
+                "suffix": ":",
+                "suffix_color": "cyan"
+            }
+        },
+        "second": {
+            "enabled": true,
+            "value": {
+                "color": "bright_blue",
+                "suffix": ")",
+                "suffix_color": "blue"
+            }
+        }
     },
+
     "date": {
-      "enabled": true,
-      "show_label": true,
-      "show_day": true,
-      "show_month_name": true,
-      "show_month_num": true,
-      "show_year": true,
-      "open": "(",
-      "close": ")",
-      "label_text": "Date: ",
-      "sep_text": " : ",
-      "num_sep_text": " ",
-      "colors": {
-        "bracket": "blue",
-        "label": "bright_cyan",
-        "day": "cyan",
-        "month_name": "cyan",
-        "month_num": "cyan",
-        "year": "cyan",
-        "sep": "bright_blue",
-        "num_sep_color": "bright_blue"
-      }
+        "enabled": true,
+
+        "label": {
+            "text": "Date",
+            "color": "bright_cyan",
+            "suffix": ": ",
+            "suffix_color": "bright_cyan"
+        },
+
+        "day": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "blue",
+                "color": "cyan",
+                "suffix": " : ",
+                "suffix_color": "bright_blue"
+            }
+        },
+        "month_name": {
+            "enabled": true,
+            "value": {
+                "color": "cyan",
+                "suffix": " : ",
+                "suffix_color": "bright_blue"
+            }
+        },
+        "month_num": {
+            "enabled": false,
+            "value": {
+                "prefix": " ",
+                "prefix_color": "bright_blue",
+                "color": "cyan",
+                "suffix": " : ",
+                "suffix_color": "bright_blue"
+            }
+        },
+        "year": {
+            "enabled": true,
+            "value": {
+                "color": "cyan",
+                "suffix": ")",
+                "suffix_color": "blue"
+            }
+        }
     },
+
     "week": {
-      "enabled": false,
-      "show_label": true,
-      "show_num": true,
-      "show_day_name": true,
-      "open": "(",
-      "close": ")",
-      "label_text": "Week: ",
-      "sep_text": " - ",
-      "colors": {
-        "bracket": "cyan",
-        "label": "blue",
-        "num": "bright_cyan",
-        "day_name": "bright_cyan",
-        "sep": "blue"
-      }
+        "enabled": true,
+
+        "label": {
+            "prefix":"(",
+            "prefix_color":"red",
+            "text": "Week",
+            "color": "blue",
+            "suffix": ": ",
+            "suffix_color": "blue"
+        },
+        // week - number e.g. 47
+        "num": {
+            "enabled": true,
+            "value": {
+                "color": "bright_cyan",
+                "suffix": "th ) ",
+                "suffix_color": "red"
+            }
+        },
+        "day_name": {
+            "enabled": false
+        }
     },
+
     "leap_year": {
-      "enabled": false,
-      "show_label": true,
-      "show_val": true,
-      "open": "(",
-      "close": ")",
-      "label_text": "Leap Year: ",
-      "colors": {
-        "bracket": "cyan",
-        "label": "blue",
-        "val": "bright_blue"
-      }
+        "enabled": false,
+
+        "label": {
+            "text": "Leap Year",
+            "color": "blue",
+            "suffix": ": ",
+            "suffix_color": "blue"
+        },
+
+        "val": {
+            "enabled": true,
+            "value": {
+                "prefix": "(",
+                "prefix_color": "cyan",
+                "color": "bright_blue",
+                "suffix": ")",
+                "suffix_color": "cyan"
+            }
+        }
     }
 },
 "compact_operating_system": {

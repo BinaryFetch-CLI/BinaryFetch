@@ -473,174 +473,125 @@ sections["header_settings"] = [&]() {
 //   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝   
 //                       C O M P A C T   M O D U L E S
 
-
 // ==================== COMPACT TIME ====================
 sections["compact_date_and_time"] = [&]() {
     if (!config.isEnabled("compact_date_and_time")) return;
     TimeInfo time;
     ostringstream ss;
+    const string sec = "compact_date_and_time";
 
-    // line spacing
-    int spacing = config.getNestedInt("compact_date_and_time","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
-    if (config.isFieldEnabled("compact_date_and_time", "prefixes.show")) {
-        ss << config.getColor("compact_date_and_time", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_date_and_time", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // ---- Register each orderable subsection as a named lambda ----
+    // ---- Generic label+value printer, reused by every sub-value ----
+    // Joining text (colons, dashes, brackets) is NOT a separate concept —
+    // it lives inside value.prefix / value.suffix of the field itself.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
+    // Prints only the group's own label (e.g. "Time: ")
+    auto printGroupLabel = [&](const string& group) {
+        ss << config.getColor(sec, group + ".label.prefix_color", "")
+           << config.getPrefix(sec, group + ".label.prefix", "") << r
+           << config.getColor(sec, group + ".label.color", "")
+           << config.getLabel(sec, group + ".label.text", "") << r
+           << config.getColor(sec, group + ".label.suffix_color", "")
+           << config.getPrefix(sec, group + ".label.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
-    // ---------- TIME SECTION ----------
+    // ---------- TIME ----------
     fields["time"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "time", "enabled")) return;
+        if (!config.getNestedBool(sec, "time.enabled", true)) return;
+        printGroupLabel("time");
 
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "time.open", "(") << r;
+        ostringstream v;
 
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "time", "label", "")
-               << config.getNestedString("compact_date_and_time", "time.label_text", "Time: ") << r;
+        if (config.getNestedBool(sec, "time.hour.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getHour();
+            printLV("time.hour", v.str());
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_hour")) {
-            ss << config.getNestedColor("compact_date_and_time", "time", "hour", "")
-               << setw(2) << setfill('0') << time.getHour() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "time.minute.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getMinute();
+            printLV("time.minute", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_minute")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
-            ss << config.getNestedColor("compact_date_and_time", "time", "minute", "")
-               << setw(2) << setfill('0') << time.getMinute() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "time.second.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getSecond();
+            printLV("time.second", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_second")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
-            ss << config.getNestedColor("compact_date_and_time", "time", "second", "")
-               << setw(2) << setfill('0') << time.getSecond() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "time.close", ")") << r;
     };
 
-    // ---------- DATE SECTION ----------
+    // ---------- DATE ----------
     fields["date"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "date", "enabled")) return;
+        if (!config.getNestedBool(sec, "date.enabled", true)) return;
+        printGroupLabel("date");
 
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "date.open", "(") << r;
+        ostringstream v;
 
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "date", "label", "")
-               << config.getNestedString("compact_date_and_time", "date.label_text", "Date: ") << r;
+        if (config.getNestedBool(sec, "date.day.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getDay();
+            printLV("date.day", v.str());
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_day")) {
-            ss << config.getNestedColor("compact_date_and_time", "date", "day", "")
-               << setw(2) << setfill('0') << time.getDay() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.month_name.enabled", true)) {
+            printLV("date.month_name", time.getMonthName());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "month_name", "")
-               << time.getMonthName() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.month_num.enabled", false)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getMonthNumber();
+            printLV("date.month_num", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_num")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "num_sep_color", "")
-                          << config.getNestedString("compact_date_and_time", "date.num_sep_text", " ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "month_num", "")
-               << setw(2) << setfill('0') << time.getMonthNumber() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.year.enabled", true)) {
+            printLV("date.year", std::to_string(time.getYearNumber()));
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_year")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "year", "")
-               << time.getYearNumber() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "date.close", ")") << r;
     };
 
-    // ---------- WEEK SECTION ----------
+    // ---------- WEEK ----------
     fields["week"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "week", "enabled")) return;
+        if (!config.getNestedBool(sec, "week.enabled", true)) return;
+        printGroupLabel("week");
 
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "week.open", "(") << r;
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "week", "label", "")
-               << config.getNestedString("compact_date_and_time", "week.label_text", "Week: ") << r;
+        if (config.getNestedBool(sec, "week.num.enabled", true)) {
+            printLV("week.num", std::to_string(time.getWeekNumber()));
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_num")) {
-            ss << config.getNestedColor("compact_date_and_time", "week", "num", "")
-               << time.getWeekNumber() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "week.day_name.enabled", true)) {
+            printLV("week.day_name", time.getDayName());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_day_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "week", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "week.sep_text", " - ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "week", "day_name", "")
-               << time.getDayName() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "week.close", ")") << r;
     };
 
-    // ---------- LEAP YEAR SECTION ----------
+    // ---------- LEAP YEAR ----------
     fields["leap_year"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "leap_year", "enabled")) return;
+        if (!config.getNestedBool(sec, "leap_year.enabled", true)) return;
+        printGroupLabel("leap_year");
 
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.open", "(") << r;
-
-        if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "leap_year", "label", "")
-               << config.getNestedString("compact_date_and_time", "leap_year.label_text", "Leap Year: ") << r;
+        if (config.getNestedBool(sec, "leap_year.val.enabled", true)) {
+            printLV("leap_year.val", time.getLeapYear());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_val")) {
-            ss << config.getNestedColor("compact_date_and_time", "leap_year", "val", "")
-               << time.getLeapYear() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.close", ")") << r;
     };
 
-    // ---- Run subsections in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"time ", "date ", "week ", "leap_year"};
-    auto order = config.getStringArray("compact_date_and_time", "order", defaultOrder);
+        {"time", "date", "week", "leap_year"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
-
 
 // ==================== COMPACT OPERATING SYSTEM ====================
 sections["compact_operating_system"] = [&]() {
