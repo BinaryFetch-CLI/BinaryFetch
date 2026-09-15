@@ -820,106 +820,95 @@ sections["compact_display_monitor"] = [&]() {
     if (!config.isEnabled("compact_display_monitor")) return;
     CompactScreen screenDetector;
     auto screens = screenDetector.getScreens();
+    const string sec = "compact_display_monitor";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_display_monitor","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
     if (screens.empty()) {
         ostringstream ss;
-        ss << config.getColor("compact_display_monitor", "header.text_color", "")
-           << config.getLabel("compact_display_monitor", "header.text", "Display") << r
-           << config.getColor("compact_display_monitor", "header.separator_color", "")
-           << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r
-           << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-           << config.getLabel("compact_display_monitor", "no_displays_text", "No displays detected") << r;
+        ss << config.getColor(sec, "prefix_color", "")
+           << config.getPrefix(sec, "prefix", "") << r
+           << config.getColor(sec, "label.color", "")
+           << config.getLabel(sec, "label.text", "Display") << r
+           << config.getColor(sec, "label.suffix_color", "")
+           << config.getPrefix(sec, "label.suffix", ": ") << r
+           << config.getColor(sec, "no_displays.color", "")
+           << config.getLabel(sec, "no_displays.text", "No displays detected") << r;
         lp.push(ss.str());
         return;
     }
+
+    // Same 5-key label/value printer as everywhere else.
+    auto printLV = [&](ostringstream& ss, const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
 
     for (size_t i = 0; i < screens.size(); ++i) {
         const auto& screen = screens[i];
         ostringstream ss;
 
-        // Prefix - comes entirely from JSON
-        if (config.isFieldEnabled("compact_display_monitor", "prefixes.show")) {
-            ss << config.getColor("compact_display_monitor", "prefixes.prefix_color", "")
-               << config.getPrefix("compact_display_monitor", "prefixes.prefix", "") << r;
-        }
+        ss << config.getColor(sec, "prefix_color", "")
+           << config.getPrefix(sec, "prefix", "") << r;
 
-        // Header: Display N:
-        ss << config.getColor("compact_display_monitor", "header.text_color", "")
-           << config.getLabel("compact_display_monitor", "header.text", "Display") << " " << (i + 1) << r
-           << config.getColor("compact_display_monitor", "header.separator_color", "")
-           << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r;
+        // "Display N: " — the " N" is a runtime index and stays in C++.
+        ss << config.getColor(sec, "label.color", "")
+           << config.getLabel(sec, "label.text", "Display") << "" << (i + 1) << r
+           << config.getColor(sec, "label.suffix_color", "")
+           << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-        // ---- Register each orderable field as a named lambda ----
         std::map<std::string, std::function<void()>> fields;
 
         fields["name"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.name.show")) return;
-            ss << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-               << screen.name << r;
+            if (!config.getNestedBool(sec, "name.enabled", true)) return;
+            printLV(ss, "name", screen.name);
         };
 
-        fields["resolution"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.resolution.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-               << screen.native_width << r
-               << config.getColor("compact_display_monitor", "fields.resolution.x_color", "")
-               << config.getLabel("compact_display_monitor", "fields.resolution.x_symbol", " x ") << r
-               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-               << screen.native_height << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        fields["resolution_w"] = [&]() {
+            if (!config.getNestedBool(sec, "resolution_w.enabled", true)) return;
+            ostringstream v; v << screen.native_width;
+            printLV(ss, "resolution_w", v.str());
+        };
+
+        fields["resolution_h"] = [&]() {
+            if (!config.getNestedBool(sec, "resolution_h.enabled", true)) return;
+            ostringstream v; v << screen.native_height;
+            printLV(ss, "resolution_h", v.str());
         };
 
         fields["scale"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.scale.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.scale.label_color", "")
-               << config.getLabel("compact_display_monitor", "fields.scale.label", "Scale: ") << r
-               << config.getColor("compact_display_monitor", "fields.scale.value_color", "")
-               << screen.scale_percent
-               << config.getColor("compact_display_monitor", "fields.scale.unit_color", "")
-               << config.getLabel("compact_display_monitor", "fields.scale.unit", "%") << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "scale.enabled", true)) return;
+            ostringstream v; v << screen.scale_percent;
+            printLV(ss, "scale", v.str());
         };
 
         fields["upscale"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.upscale.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.upscale.label_color", "")
-               << config.getLabel("compact_display_monitor", "fields.upscale.label", "upscale: ") << r
-               << config.getColor("compact_display_monitor", "fields.upscale.value_color", "")
-               << screen.upscale << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "upscale.enabled", false)) return;
+            ostringstream v; v << screen.upscale;
+            printLV(ss, "upscale", v.str());
         };
 
         fields["refresh"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.refresh.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.refresh.at_symbol_color", "")
-               << config.getLabel("compact_display_monitor", "fields.refresh.at_symbol", "@") << r
-               << config.getColor("compact_display_monitor", "fields.refresh.value_color", "")
-               << screen.refresh_rate
-               << config.getColor("compact_display_monitor", "fields.refresh.unit_color", "")
-               << config.getLabel("compact_display_monitor", "fields.refresh.unit", "Hz") << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "refresh.enabled", true)) return;
+            ostringstream v; v << screen.refresh_rate;
+            printLV(ss, "refresh", v.str());
         };
 
-        // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
         static const std::vector<std::string> defaultOrder =
-            {"name ", "resolution ", "scale ", "upscale ", "refresh"};
-        auto order = config.getStringArray("compact_display_monitor", "order", defaultOrder);
+            {"name", "", "resolution_w", "resolution_h", "", "scale", "", "upscale", "", "refresh"};
+        auto order = config.getStringArray(sec, "order", defaultOrder);
 
         runOrderedFields(order, fields, ss);
 

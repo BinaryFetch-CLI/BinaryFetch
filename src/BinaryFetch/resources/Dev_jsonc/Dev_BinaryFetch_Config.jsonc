@@ -428,58 +428,88 @@
 "compact_display_monitor": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["name", "resolution", "scale", "upscale", "refresh"],
-    "no_displays_text": "No displays detected",
-    "prefixes": {
-      "prefix": "│🖥️ ",
-      "prefix_color": "red"
+    "order": ["name", "resolution_w", "resolution_h", "scale", "upscale", "refresh"],
+
+    "prefix": "│🖥️ ",
+    "prefix_color": "red",
+
+    "label": {
+        "text": "Display",
+        "color": "red",
+        "suffix": ": ",
+        "suffix_color": "red"
     },
-    "header": {
-      "show": true,
-      "text": "Display",
-      "text_color": "red",
-      "separator": ":",
-      "separator_color": "red",
-      "header_text_color": "cyan"
+
+    "no_displays": {
+        "text": "No displays detected",
+        "color": "blue"
     },
-    "brackets": {
-      "open": "(",
-      "close": ")",
-      "color": "bright_cyan"
+
+    "name": {
+        "enabled": true,
+        "value": {
+            "color": "blue"
+        }
     },
-    "fields": {
-      "name": {
-        "show": true,
-        "value_color": "blue"
-      },
-      "resolution": {
-        "show": true,
-        "value_color": "cyan",
-        "x_symbol": " x ",
-        "x_color": "bright_blue"
-      },
-      "scale": {
-        "show": true,
-        "label": "Scale: ",
-        "label_color": "cyan",
-        "value_color": "blue",
-        "unit": "%",
-        "unit_color": "blue"
-      },
-      "upscale": {
-        "show": false,
-        "label": "upscale: ",
-        "label_color": "cyan",
-        "value_color": "cyan"
-      },
-      "refresh": {
-        "show": true,
-        "value_color": "blue",
-        "at_symbol": "@",
-        "at_symbol_color": "cyan",
-        "unit": "Hz",
-        "unit_color": "blue"
-      }
+    "resolution_w": {
+        "enabled": true,
+        "value": {
+            "prefix": "(",
+            "prefix_color": "bright_cyan",
+            "color": "cyan",
+            "suffix": " x ",
+            "suffix_color": "bright_blue"
+        }
+    },
+    "resolution_h": {
+        "enabled": true,
+        "value": {
+            "color": "cyan",
+            "suffix": ")",
+            "suffix_color": "bright_cyan"
+        }
+    },
+    "scale": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "bright_cyan",
+            "text": "Scale: ",
+            "color": "cyan"
+        },
+        "value": {
+            "color": "blue",
+            "suffix": "%)",
+            "suffix_color": "blue"
+        }
+    },
+    "upscale": {
+        "enabled": false,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "bright_cyan",
+            "text": "upscale: ",
+            "color": "cyan"
+        },
+        "value": {
+            "color": "cyan",
+            "suffix": ")",
+            "suffix_color": "bright_cyan"
+        }
+    },
+    "refresh": {
+        "enabled": true,
+        "label": {
+            "prefix": "(",
+            "prefix_color": "bright_cyan",
+            "text": "@",
+            "color": "cyan"
+        },
+        "value": {
+            "color": "blue",
+            "suffix": "Hz)",
+            "suffix_color": "blue"
+        }
     }
 },
 "compact_system_memory": {
