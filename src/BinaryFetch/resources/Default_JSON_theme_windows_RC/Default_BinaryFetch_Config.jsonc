@@ -5,6 +5,9 @@
   // BinaryFetch supports utf8 format
   // means, you can use emoji everywhere 
   // (unless you terminal doesn't support it)
+
+
+  // we can also toggle whole section by just commenting them form the order. (make sure to put the comma properly)
   "section_order": [
   "header_settings",
   "compact_date_and_time",
@@ -18,17 +21,17 @@
   "compact_user_account",
   "compact_network_connection",
   "compact_disk_storage",
-  "detailed_system_memory",
-  "detailed_disk_storage",
   "detailed_resource_usage",
-  "detailed_operating_system",
-  "detailed_processor",
-  "detailed_graphics_card",
-  "detailed_display_monitor",
-  "detailed_bios_and_motherboard",
-  "detailed_user_account",
-  "detailed_network_connection",
-  "detailed_audio_and_power"
+  //"detailed_system_memory",
+  "detailed_disk_storage"
+  //"detailed_operating_system",
+  //"detailed_processor",
+  //"detailed_graphics_card",
+  //"detailed_display_monitor",
+  //"detailed_bios_and_motherboard",
+  //"detailed_user_account",
+  //"detailed_network_connection",
+  //"detailed_audio_and_power"
 ],
 // Define any color name you want here — no limit.
 // Supported formats(3): "#RRGGBB","R,G,B","\u001b[...m"
@@ -59,7 +62,7 @@
 "amber":          "#F2C063",
 "orange":         "#F2924B",
 "muted":          "#7D8491",
-"muted_2":        "#565B66",
+"muted_2":        "107, 119, 122",
 "fg_dim":         "#C9CDD3"
 },
 // Global emoji control. style: "auto"/"color"/"text", enabled:false hides them
@@ -71,13 +74,13 @@
 },
 "art": {
     "Ascii_Art": {
-        "enabled": false,
+        "enabled": true,
         "padding_up": 0,
         "padding_left": 0,
         "padding_right": 0
     },
     "Image": {
-        "enabled": true,
+        "enabled": false,
         // Windows paths need DOUBLE backslashes ("\\") because a single
         // backslash is a JSON escape character. Forward slashes ("/")
         // "G:/screenshot/sky.jpg"     -> valid
@@ -230,7 +233,7 @@
             "enabled": true,
             "value": {
                 "color": "muted_2",
-                "suffix": "th )",
+                "suffix": "th)",
                 "suffix_color": "muted_2"
                 
             }
@@ -1031,31 +1034,31 @@
             "prefix": "------------------------- ",
             "prefix_color": "muted_2",
             "text": "STORAGE SUMMARY",
-            "text_color": "red",
+            "text_color": "green",
             "suffix": " --------------------------",
             "suffix_color": "muted_2"
         },
         "fields": {
             "storage_type": {
                 "show": true,
-                "value_color": "muted_2"
+                "value_color": "red"
             },
             "drive_letter": {
                 "show": true,
                 "label": "Disk",
-                "label_color": "red",
+                "label_color": "blue",
                 "letter_prefix": "(",
                 "letter_prefix_color": "muted_2",
                 "letter_suffix": ")",
                 "letter_suffix_color": "muted_2",
-                "letter_color": "red"
+                "letter_color": "blue"
             },
             "used_label": {
                 "show": true,
                 "prefix": " ",
                 "prefix_color": "muted_2",
                 "text": "Used",
-                "value_color": "red",
+                "value_color": "purple",
                 "suffix": " ",
                 "suffix_color": "muted_2"
             },
@@ -1069,7 +1072,7 @@
                 "show": true,
                 "value_color": "muted_2",
                 "unit": " GiB",
-                "unit_color": "red"
+                "unit_color": "muted_2"
             },
             "used_percentage": {
                 "show": true,
@@ -1077,7 +1080,7 @@
                 "spacer_color": "muted_2",
                 "prefix": "",
                 "prefix_color": "red",
-                "value_color": "muted_2",
+                "value_color": "red",
                 "suffix": "",
                 "suffix_color": "red"
             },
@@ -1090,15 +1093,15 @@
             "external_status": {
                 "show": true,
                 "external_text": "Ext",
-                "external_color": "muted_2",
+                "external_color": "blue",
                 "internal_text": "Int",
-                "internal_color": "muted_2"
+                "internal_color": "green"
             }
         },
         "brackets": {
             "square_open": " [",
             "square_close": "]",
-            "square_color": "muted_2",
+            "square_color": "red",
             "square_close_prefix": " ",
             "square_close_prefix_color": "muted_2",
             "round_open": "(",
@@ -1123,7 +1126,7 @@
             "prefix": " ",
             "prefix_color": "muted_2",
             "label": "Used: ",
-            "label_color": "red",
+            "label_color": "purple",
             "bar_gap": " ",
             "bar_gap_color": "muted_2",
             "value_color": "muted_2",
@@ -1165,9 +1168,9 @@
                 "empty": "░",
                 "empty_color": "white",
                 "left": "[",
-                "left_color": "muted_2",
+                "left_color": "red",
                 "right": "]",
-                "right_color": "muted_2"
+                "right_color": "red"
             }
         }
     },
@@ -1179,7 +1182,7 @@
             "prefix": "-------------------- ",
             "prefix_color": "muted_2",
             "text": "DISK PERFORMANCE & DETAILS",
-            "text_color": "red",
+            "text_color": "green",
             "suffix": " --------------------",
             "suffix_color": "muted_2"
         },
@@ -1187,18 +1190,18 @@
             "drive_letter": {
                 "show": true,
                 "label": "Disk",
-                "label_color": "red",
+                "label_color": "blue",
                 "letter_prefix": "(",
                 "letter_prefix_color": "muted_2",
                 "letter_suffix": ")",
                 "letter_suffix_color": "muted_2",
-                "letter_color": "red"
+                "letter_color": "blue"
             },
             "read_speed": {
                 "show": true,
                 "label": "Read: ",
                 "label_color": "muted_2",
-                "value_color": "red",
+                "value_color": "green",
                 "unit": "MB/s",
                 "unit_color": "muted_2"
             },
@@ -1206,28 +1209,28 @@
                 "show": true,
                 "label": "Write: ",
                 "label_color": "muted_2",
-                "value_color": "red",
+                "value_color": "purple",
                 "unit": "MB/s",
                 "unit_color": "muted_2"
             },
             "serial_number": {
                 "show": true,
                 "prefix": "SN-",
-                "value_color": "red"
+                "value_color": "blue"
             },
             "external_status": {
                 "show": true,
                 "external_text": "Ext",
-                "external_color": "muted_2",
+                "external_color": "blue",
                 "internal_text": "Int",
-                "internal_color": "muted_2"
+                "internal_color": "green"
             }
         },
         "speed_unit_color": "muted_2",
         "brackets": {
             "square_open": " [",
             "square_close": "]",
-            "square_color": "muted_2"
+            "square_color": "red"
         },
         "pipe": {
             "text": "|",
@@ -1236,7 +1239,7 @@
     }
 },
 "detailed_network_connection": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing": 0,
   "order": [ "type", "local_ip", "public_ip", "locale", "mac", "upload", "download"],
   "header": {
@@ -1429,7 +1432,7 @@
   }
 },
 "detailed_operating_system": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing": 0,
   "order": ["name", "build", "architecture", "kernel", "uptime", "install_date", "serial"],
   "header": {
@@ -1529,7 +1532,7 @@
   }
 },
 "detailed_processor": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing": 0,
   "order": ["brand", "utilization", "speed", "base_speed", "cores", "logical_processors", "sockets", "virtualization", "l1_cache", "l2_cache", "l3_cache"],
   "header": {
@@ -1681,7 +1684,7 @@
   }
 },
 "detailed_graphics_card": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing": 0,
   "show_gpu_list": true,
   "show_primary_gpu": false,
@@ -1843,7 +1846,7 @@
   }
 },
 "detailed_display_monitor": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing":0,
   "order": ["name", "applied_resolution", "native_resolution", "aspect_ratio", "scaling", "upscale", "dsr"],
   "banner": {
@@ -1959,7 +1962,7 @@
   }
 },
 "detailed_bios_and_motherboard": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing":0,
   "order": ["mb_model", "mb_manufacturer","bios_vendor", "bios_version", "bios_date" ],
   "header": {
@@ -2035,7 +2038,7 @@
   }
 },
 "detailed_user_account": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing":0,
   "order": ["username", "computer_name", "domain"],
   "header": {
@@ -2088,16 +2091,16 @@
 },
 "detailed_resource_usage": {
   "enabled": true,
-  "top_line_spacing":0,
+  "top_line_spacing": 0,
   "order": ["uptime", "cpu_usage", "ram_usage", "gpu_usage", "disk_usage"],
   "header": {
     "show": true,
-    "prefix": "#- ",
-    "prefix_color": "muted_2",
-    "text": "Performance Info ",
+    "prefix": "~>> ",
+    "prefix_color": "green",
+    "text": "Performance ",
     "text_color": "red",
-    "suffix": "-----------------------------------------------#",
-    "suffix_color": "muted_2"
+    "suffix": "———————————————————————————————————————————————————",
+    "suffix_color": "green"
   },
   "fields": {
     "uptime": {
@@ -2105,113 +2108,113 @@
       "uptime_prefix": "~ ",
       "uptime_prefix_color": "red",
       "label": "System Uptime",
-      "label_color": "muted_2",
-      "label_suffix": "             : ",
-      "label_suffix_color": "red",
-      "value_color": "muted_2",
+      "label_color": "orange",
+      "label_suffix": " : ",
+      "label_suffix_color": "green",
+      "value_color": "orange",
       "value_suffix": "",
-      "value_suffix_color": "red"
+      "value_suffix_color": "orange"
     },
     "cpu_usage": {
       "show": true,
       "cpu_usage_prefix": "~ ",
       "cpu_usage_prefix_color": "red",
       "label": "CPU Usage",
-      "label_color": "muted_2",
-      "label_suffix": "                 : ",
-      "label_suffix_color": "red",
-      "value_color": "muted_2",
+      "label_color": "red",
+      "label_suffix": "     : ",
+      "label_suffix_color": "green",
+      "value_color": "red",
       "value_suffix": "%",
       "value_suffix_color": "red",
       "visualizer": {
-       "enabled": true,
-       "width": 30,
-       "filled": "█",
-       "filled_color": "bright_green",
-       "empty": "░",
-       "empty_color": "white",
-       "left": "[",
-       "left_color": "muted_2",
-       "right": "]",
-       "right_color": "muted_2"
-   }
-},
+        "enabled": true,
+        "width": 43,
+        "filled": "█",
+        "filled_color": "red",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "muted_2",
+        "right": "]",
+        "right_color": "muted_2"
+      }
+    },
     "ram_usage": {
       "show": true,
       "ram_usage_prefix": "~ ",
       "ram_usage_prefix_color": "red",
       "label": "RAM Usage",
-      "label_color": "muted_2",
-      "label_suffix": "                 : ",
-      "label_suffix_color": "red",
-      "value_color": "muted_2",
+      "label_color": "green",
+      "label_suffix": "     : ",
+      "label_suffix_color": "green",
+      "value_color": "green",
       "value_suffix": "%",
-      "value_suffix_color": "red",
+      "value_suffix_color": "green",
       "visualizer": {
         "enabled": true,
-        "width": 30,
+        "width": 43,
         "filled": "█",
-        "filled_color": "bright_green",
+        "filled_color": "green",
         "empty": "░",
         "empty_color": "white",
         "left": "[",
         "left_color": "muted_2",
         "right": "]",
         "right_color": "muted_2"
-    }  
-    },
-    "disk_usage": {
-      "show": true,
-      "disk_usage_prefix": "~ ",
-      "disk_usage_prefix_color": "red",
-      "label": "Disk Usage",
-      "label_color": "muted_2",
-      "label_suffix": "                : ",
-      "label_suffix_color": "red",
-      "value_color": "muted_2",
-      "value_suffix": "%",
-      "value_suffix_color": "red",
-      "visualizer": {
-        "enabled": true,
-        "width": 30,
-        "filled": "█",
-        "filled_color": "bright_green",
-        "empty": "░",
-        "empty_color": "white",
-        "left": "[",
-        "left_color": "muted_2",
-        "right": "]",
-        "right_color": "muted_2"
-    }    
+      }
     },
     "gpu_usage": {
       "show": true,
       "gpu_usage_prefix": "~ ",
       "gpu_usage_prefix_color": "red",
       "label": "GPU Usage",
-      "label_color": "muted_2",
-      "label_suffix": "                 : ",
-      "label_suffix_color": "red",
-      "value_color": "muted_2",
+      "label_color": "purple",
+      "label_suffix": "     : ",
+      "label_suffix_color": "green",
+      "value_color": "purple",
       "value_suffix": "%",
-      "value_suffix_color": "red",
+      "value_suffix_color": "purple",
       "visualizer": {
         "enabled": true,
-        "width": 30,
+        "width": 43,
         "filled": "█",
-        "filled_color": "bright_green",
+        "filled_color": "purple",
         "empty": "░",
         "empty_color": "white",
         "left": "[",
         "left_color": "muted_2",
         "right": "]",
         "right_color": "muted_2"
-      }    
+      }
+    },
+    "disk_usage": {
+      "show": true,
+      "disk_usage_prefix": "~ ",
+      "disk_usage_prefix_color": "red",
+      "label": "Disk Usage",
+      "label_color": "blue",
+      "label_suffix": "    : ",
+      "label_suffix_color": "green",
+      "value_color": "blue",
+      "value_suffix": "%",
+      "value_suffix_color": "blue",
+      "visualizer": {
+        "enabled": true,
+        "width": 43,
+        "filled": "█",
+        "filled_color": "blue",
+        "empty": "░",
+        "empty_color": "white",
+        "left": "[",
+        "left_color": "muted_2",
+        "right": "]",
+        "right_color": "muted_2"
+      }
     }
   }
 },
 "detailed_audio_and_power": {
-  "enabled": true,
+  "enabled": false,
   "top_line_spacing":0,
   "order": ["output", "input", "power"],
   "output": {
