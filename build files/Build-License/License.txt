@@ -1,8 +1,11 @@
 Mozilla Public License Version 2.0
 ==================================
 
-Source: https://github.com/BinaryFetch-CLI/BinaryFetch
-This project belongs to: https://github.com/BinaryFetch-CLI
+Source: 
+https://github.com/BinaryFetch-CLI/BinaryFetch
+
+This project belongs to: 
+https://github.com/BinaryFetch-CLI
 
 1. Definitions
 --------------
