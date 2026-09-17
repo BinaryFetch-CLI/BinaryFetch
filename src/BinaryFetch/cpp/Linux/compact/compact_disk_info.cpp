@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <algorithm>
 
 DiskInfo::DiskInfo() {
     // Empty constructor
@@ -22,24 +24,42 @@ int DiskInfo::calculateUsedPercentage(const std::string& path) {
     return 0;
 }
 
+// Filesystem types we consider "real" physical disks
+static bool isPhysicalFsType(const std::string& fsType) {
+    static const std::unordered_set<std::string> allowed = {
+        "ext2", "ext3", "ext4", "xfs", "btrfs", "ntfs", "ntfs3",
+        "exfat", "f2fs", "reiserfs", "jfs", "zfs"
+    };
+    return allowed.count(fsType) > 0;
+}
+
 // Helper to scan `/proc/mounts` and find physical disk mount points
 static std::vector<std::string> getPhysicalMountPoints() {
     std::vector<std::string> mountPoints;
+    std::unordered_set<std::string> seenMountPoints; // dedupe
+
     std::ifstream file("/proc/mounts");
     if (!file.is_open()) return mountPoints;
 
     std::string device, mountPoint, fsType, options;
     int dump, pass;
     while (file >> device >> mountPoint >> fsType >> options >> dump >> pass) {
-        // Filter for physical drives (starts with /dev/)
-        if (device.rfind("/dev/", 0) == 0) {
-            // Exclude loop devices, udev, etc.
-            if (device.find("/dev/loop") == std::string::npos && 
-                device.find("/dev/tmpfs") == std::string::npos &&
-                device.find("/dev/shm") == std::string::npos) {
-                mountPoints.push_back(mountPoint);
-            }
-        }
+        // Must be a real block device
+        if (device.rfind("/dev/", 0) != 0) continue;
+
+        // Exclude loop devices, virtual/pseudo mounts
+        if (device.find("/dev/loop") != std::string::npos) continue;
+
+        // Exclude anything not a "real" disk filesystem
+        // (this also drops vfat/EFI partitions, squashfs, overlay, tmpfs, etc.)
+        if (!isPhysicalFsType(fsType)) continue;
+
+        // Skip duplicates — /proc/mounts can list the same mount point
+        // more than once (bind mounts, remounts, etc.)
+        if (seenMountPoints.count(mountPoint)) continue;
+        seenMountPoints.insert(mountPoint);
+
+        mountPoints.push_back(mountPoint);
     }
     return mountPoints;
 }
