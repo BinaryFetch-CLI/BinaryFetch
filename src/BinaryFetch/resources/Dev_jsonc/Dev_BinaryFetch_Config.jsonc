@@ -62,6 +62,27 @@
 "muted_2":        "#565B66",
 "fg_dim":         "#C9CDD3"
 },
+"ascii_color_prefixes": {
+  // Colors used by $N placeholders inside BinaryArt.txt.
+  // Not limited to $1-$15 — add as many as you want.
+  // Each value supports the same 3 formats as "colors" above,
+  // PLUS you can reference a name already defined in "colors".
+  "$1":  "#F2726B",
+  "$2":  "46,207,142",
+  "$3":  "cyan",
+  "$4":  "\u001b[35m",
+  "$5":  "magenta",
+  "$6":  "cyan",
+  "$7":  "white",
+  "$8":  "#F2726B",
+  "$9":  "#3ECF8E",
+  "$10": "#F2C063",
+  "$11": "#60A5FA",
+  "$12": "#C084FC",
+  "$13": "#5EEAD4",
+  "$14": "#E5E7EB",
+  "$15": "RESET"
+},
 // Global emoji control. style: "auto"/"color"/"text", enabled:false hides them
 "emoji": {
   // NOTE: "text"/"color" are requests only — some glyphs (e.g. 🧿) have no

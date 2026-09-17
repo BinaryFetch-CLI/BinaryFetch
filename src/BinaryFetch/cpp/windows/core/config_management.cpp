@@ -141,8 +141,9 @@ void ConfigManager::loadPlatformConfig(ConfigMode mode) {
             m_loaded = false;
         } else {
             m_loaded = true;
-            loadColorPalette();   // populate m_colors from JSON "colors" section
-            loadEmojiSettings();  // populate m_emojiEnabled / m_emojiStyle from JSON "emoji" section
+            loadColorPalette();          // populate m_colors from JSON "colors" section
+            loadAsciiColorPrefixes();    // populate m_asciiColorMap from JSON "ascii_color_prefixes" (name-lookup falls back to m_colors, so this must run after loadColorPalette())
+            loadEmojiSettings();         // populate m_emojiEnabled / m_emojiStyle from JSON "emoji" section
         }
     } catch (...) {
         m_loaded = false;
@@ -218,6 +219,69 @@ void ConfigManager::loadColorPalette() {
         }
 #endif
     }
+}
+
+// ===================== ASCII ART COLOR PREFIXES (JSON-DRIVEN) =====================
+//
+// $N placeholders inside BinaryArt.txt (and the embedded default art) are
+// resolved through this table instead of AsciiArt's own hardcoded map.
+// Starts from the same 15 built-in defaults AsciiArt always shipped with,
+// so an absent "ascii_color_prefixes" section is byte-identical to the old
+// behavior. Any $N present in JSON OVERRIDES that slot; anything not
+// listed keeps its default. New slots beyond $15 can be added freely.
+//
+// Each value accepts everything parseColorValue() accepts (hex, "R,G,B",
+// raw ANSI escape, "RESET") — and, additionally, a plain color NAME that
+// resolves against the same "colors" palette every other module uses.
+void ConfigManager::loadAsciiColorPrefixes() {
+    // Built-in defaults — identical to AsciiArt.cpp's original static colorMap.
+    m_asciiColorMap = {
+        {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
+        {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"},
+        {7, "\033[37m"}, {8, "\033[91m"}, {9, "\033[92m"},
+        {10, "\033[93m"}, {11, "\033[94m"}, {12, "\033[95m"},
+        {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
+    };
+
+    if (!m_config.contains("ascii_color_prefixes") || !m_config["ascii_color_prefixes"].is_object())
+        return; // section absent -> defaults above stay untouched
+
+    for (auto& [key, value] : m_config["ascii_color_prefixes"].items()) {
+        if (!value.is_string()) continue;
+
+        // Keys may be written as "$1" or "1" — strip a leading '$' if present.
+        std::string numPart = (!key.empty() && key[0] == '$') ? key.substr(1) : key;
+        int n;
+        try { n = std::stoi(numPart); }
+        catch (...) { continue; }
+
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_asciiColorMap[n] = "\033[0m"; continue; }
+
+        // Try direct parse first (hex / R,G,B / raw ANSI escape)...
+        std::string ansi = parseColorValue(raw);
+
+        // ...then fall back to a name lookup in the "colors" palette,
+        // exactly the way every other color field in this config works.
+        if (ansi.empty()) {
+            auto it = m_colors.find(raw);
+            if (it != m_colors.end()) ansi = it->second;
+        }
+
+        if (!ansi.empty()) {
+            m_asciiColorMap[n] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid ascii_color_prefixes value for '" << key << "': " << raw << "\n";
+        }
+#endif
+    }
+}
+
+const std::map<int, std::string>& ConfigManager::getAsciiColorMap() const {
+    return m_asciiColorMap;
 }
 
 // ===================== RESOLVE SECTION KEY =====================

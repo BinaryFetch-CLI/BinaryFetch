@@ -348,7 +348,7 @@ int main(){
     //                              (self-heals from embedded EXE resource 101 if missing.
     //                              NEVER overwrites an existing user config.)
 
-    ConfigMode CONFIG_MODE = ConfigMode::Production; // ← switch as needed, set to Production before shipping
+    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed, set to Production before shipping
     ConfigManager config(CONFIG_MODE);
 
 
@@ -396,6 +396,8 @@ int main(){
             config.getNestedInt("art", "Ascii_Art.padding_up", 0),
             config.getNestedInt("art", "Ascii_Art.padding_left", 0),
             config.getNestedInt("art", "Ascii_Art.padding_right", 0));
+
+        art.setColorMap(config.getAsciiColorMap());
 
         if (art.loadFromFile()) {
             mode = ArtMode::ASCII;

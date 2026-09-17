@@ -49,8 +49,12 @@ public:
         const std::string& module,
         const std::string& path,
         const std::vector<std::string>& fallback) const;
+        
     std::vector<std::string> getLayoutOrder() const;
 
+    // Ascii-art $N color prefixes (built from JSON "ascii_color_prefixes",
+    // falling back to the built-in default table for any $N not specified)
+    const std::map<int, std::string>& getAsciiColorMap() const;
 
     // Raw JSON access if required
     const nlohmann::json& getJson() const;
@@ -61,8 +65,10 @@ private:
     std::string resolveSubsectionKey(const std::string& module, const std::string& subsection) const;
     std::string resolveColor(const std::string& colorName, const std::string& defaultColor) const;
     
-    std::string parseColorValue(const std::string& raw) const;   // NEW: hex / rgb / raw-ansi -> escape code
-    void loadColorPalette();                                     // NEW: builds m_colors entirely from JSON
+    // NEW: hex / rgb / raw-ansi -> escape code
+    std::string parseColorValue(const std::string& raw) const;   
+    void loadColorPalette();             // builds m_colors entirely from JSON
+    void loadAsciiColorPrefixes();       // builds m_asciiColorMap from JSON "ascii_color_prefixes"
 
     // EMOJI STYLE SUPPORT (NEW)
     void loadEmojiSettings();
@@ -80,6 +86,7 @@ private:
     nlohmann::json m_config;
     bool m_loaded{false};
     std::map<std::string, std::string> m_colors;
+    std::map<int, std::string> m_asciiColorMap;       // $N -> ANSI escape, for ASCII art color prefixes
 
     bool m_emojiEnabled{true};   
     std::string m_emojiStyle{"auto"}; 

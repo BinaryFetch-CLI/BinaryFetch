@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 /*
  ---------------------------------------------------------
@@ -89,6 +90,13 @@ public:
     int getPaddingLeft() const { return paddingLeft; }
     int getPaddingRight() const { return paddingRight; }
 
+    // ------------ $N color map (JSON-configurable) ------------
+    // Injected from ConfigManager before loadFromFile() is called.
+    // If never set (left empty), processColorCodes() falls back to
+    // the same hardcoded 15-color default table AsciiArt always
+    // shipped with — fully optional, fully backward-compatible.
+    void setColorMap(const std::map<int, std::string>& map);
+
 private:
     std::vector<std::string> artLines;     // the actual ASCII art lines
     std::vector<int> artWidths;            // precomputed widths for faster alignment
@@ -99,6 +107,7 @@ private:
     int paddingUp;                         // blank lines before the art starts
     int paddingLeft;                       // spaces before each art line
     int paddingRight;                      // spaces after each art line
+    std::map<int, std::string> colorMap;   // $N -> ANSI escape, injected via setColorMap()
 
     // Internal helper: Get the full path to user's ASCII art file
     std::string getUserArtPath() const;

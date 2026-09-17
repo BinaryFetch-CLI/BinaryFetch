@@ -246,10 +246,14 @@
 #include <shlobj.h>
 #include <direct.h>
 
-// ---------------- Color Map (Cyan & White Theme) ----------------
-static const std::map<int, std::string> colorMap = {
+// ---------------- Default Color Map  ----------------
+// Used whenever no JSON-driven map has been injected via setColorMap()
+// (e.g. ConfigManager::getAsciiColorMap() when "ascii_color_prefixes" is
+// absent) — keeps old behavior byte-identical for anyone who hasn't
+// touched the new config section.
+static const std::map<int, std::string> kDefaultColorMap = {
     {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
-    {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"}, // Cyan
+    {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"}, 
     {7, "\033[37m"}, {8, "\033[91m"}, {9, "\033[92m"},
     {10, "\033[93m"}, {11, "\033[94m"}, {12, "\033[95m"},
     {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
@@ -292,7 +296,10 @@ std::string stripAnsiSequences(const std::string& s) {
     return std::regex_replace(s, ansi_re, "");
 }
 
-std::string processColorCodes(const std::string& line) {
+// Now takes the color table to use as a parameter, instead of reading
+// the old static colorMap directly. Call sites pass either the
+// JSON-injected AsciiArt::colorMap (if non-empty) or kDefaultColorMap.
+std::string processColorCodes(const std::string& line, const std::map<int, std::string>& colors) {
     std::string result = line;
     std::regex colorCodeRegex("\\$(\\d+)");
     std::smatch match;
@@ -302,8 +309,8 @@ std::string processColorCodes(const std::string& line) {
     while (std::regex_search(remaining, match, colorCodeRegex)) {
         processed += match.prefix();
         int colorNum = std::stoi(match[1].str());
-        auto it = colorMap.find(colorNum);
-        if (it != colorMap.end()) processed += it->second;
+        auto it = colors.find(colorNum);
+        if (it != colors.end()) processed += it->second;
         remaining = match.suffix();
     }
     processed += remaining + "\033[0m";
@@ -384,13 +391,15 @@ bool AsciiArt::loadArtFromPath(const std::string& filepath) {
         return false;
     }
 
+    const std::map<int, std::string>& activeColorMap = colorMap.empty() ? kDefaultColorMap : colorMap;
+
     std::string line;
     maxWidth = 0;
     bool isFirstLine = true;
     while (std::getline(file, line)) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (isFirstLine) { sanitizeLeadingInvisible(line); isFirstLine = false; }
-        std::string processedLine = processColorCodes(line);
+        std::string processedLine = processColorCodes(line, activeColorMap);
         artLines.push_back(processedLine);
         size_t vlen = visible_width(processedLine);
         artWidths.push_back((int)vlen);
@@ -405,6 +414,8 @@ bool AsciiArt::loadArtFromEmbedded() {
     artLines.clear();
     artWidths.clear();
 
+    const std::map<int, std::string>& activeColorMap = colorMap.empty() ? kDefaultColorMap : colorMap;
+
     std::istringstream stream(kDefaultAsciiArt);
     std::string line;
     maxWidth = 0;
@@ -412,7 +423,7 @@ bool AsciiArt::loadArtFromEmbedded() {
     while (std::getline(stream, line)) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (isFirstLine) { sanitizeLeadingInvisible(line); isFirstLine = false; }
-        std::string processedLine = processColorCodes(line);
+        std::string processedLine = processColorCodes(line, activeColorMap);
         artLines.push_back(processedLine);
         size_t vlen = visible_width(processedLine);
         artWidths.push_back((int)vlen);
@@ -466,8 +477,14 @@ void AsciiArt::setPadding(int up, int left, int right) {
     paddingRight = right;
 }
 
+
+void AsciiArt::setColorMap(const std::map<int, std::string>& map) {
+    colorMap = map;
+}
+
+
 /*
-Color Code Feature:
+Default Color Code Feature:
 Use $n in the art to set colors (n = 1-15):
 $1 = red              $8 = bright_red
 $2 = green            $9 = bright_green
