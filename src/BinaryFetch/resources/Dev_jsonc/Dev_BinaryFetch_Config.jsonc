@@ -67,6 +67,8 @@
   // Not limited to $1-$15 — add as many as you want.
   // Each value supports the same 3 formats as "colors" above,
   // PLUS you can reference a name already defined in "colors".
+  "show_colors": true,
+  
   "$1":  "#F2726B",
   "$2":  "46,207,142",
   "$3":  "cyan",

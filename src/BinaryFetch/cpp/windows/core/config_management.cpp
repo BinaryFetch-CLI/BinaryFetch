@@ -234,7 +234,6 @@ void ConfigManager::loadColorPalette() {
 // raw ANSI escape, "RESET") — and, additionally, a plain color NAME that
 // resolves against the same "colors" palette every other module uses.
 void ConfigManager::loadAsciiColorPrefixes() {
-    // Built-in defaults — identical to AsciiArt.cpp's original static colorMap.
     m_asciiColorMap = {
         {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
         {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"},
@@ -242,11 +241,18 @@ void ConfigManager::loadAsciiColorPrefixes() {
         {10, "\033[93m"}, {11, "\033[94m"}, {12, "\033[95m"},
         {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
     };
+    m_asciiShowColors = true;
 
     if (!m_config.contains("ascii_color_prefixes") || !m_config["ascii_color_prefixes"].is_object())
         return; // section absent -> defaults above stay untouched
 
-    for (auto& [key, value] : m_config["ascii_color_prefixes"].items()) {
+    const auto& section = m_config["ascii_color_prefixes"];
+
+    if (section.contains("show_colors") && section["show_colors"].is_boolean())
+        m_asciiShowColors = section["show_colors"].get<bool>();
+
+    for (auto& [key, value] : section.items()) {
+        if (key == "show_colors") continue;
         if (!value.is_string()) continue;
 
         // Keys may be written as "$1" or "1" — strip a leading '$' if present.
@@ -259,11 +265,8 @@ void ConfigManager::loadAsciiColorPrefixes() {
 
         if (raw == "RESET") { m_asciiColorMap[n] = "\033[0m"; continue; }
 
-        // Try direct parse first (hex / R,G,B / raw ANSI escape)...
         std::string ansi = parseColorValue(raw);
 
-        // ...then fall back to a name lookup in the "colors" palette,
-        // exactly the way every other color field in this config works.
         if (ansi.empty()) {
             auto it = m_colors.find(raw);
             if (it != m_colors.end()) ansi = it->second;
@@ -278,10 +281,20 @@ void ConfigManager::loadAsciiColorPrefixes() {
         }
 #endif
     }
+
+    if (!m_asciiShowColors) {
+        for (auto& [num, ansi] : m_asciiColorMap) {
+            ansi.clear();
+        }
+    }
 }
 
 const std::map<int, std::string>& ConfigManager::getAsciiColorMap() const {
     return m_asciiColorMap;
+}
+
+bool ConfigManager::isAsciiShowColorsEnabled() const {
+    return m_asciiShowColors;
 }
 
 // ===================== RESOLVE SECTION KEY =====================

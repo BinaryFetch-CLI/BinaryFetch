@@ -169,5 +169,145 @@ processColorCodes(line, activeColorMap)
 
 
 
+# `show_colors` — ASCII Art Color Toggle
 
+## Summary
+
+Adds a single boolean switch, `ascii_color_prefixes.show_colors`, that turns
+the `$N` color placeholders in `BinaryArt.txt` on or off globally, without
+touching the art file itself or removing the per-`$N` color definitions.
+
+- `true` (or key/section omitted) — current behavior, unchanged. Every `$N`
+  resolves to its mapped ANSI color.
+- `false` — every `$N` still gets consumed and stripped from the rendered
+  output, but resolves to no color at all, so the art prints in the
+  terminal's current/default foreground instead of the palette.
+
+## Files changed
+
+| File | Change |
+|---|---|
+| `config_management.h` | New private member `m_asciiShowColors`; new public getter `isAsciiShowColorsEnabled()` |
+| `config_management.cpp` | `loadAsciiColorPrefixes()` reads `show_colors` and, when `false`, clears every value in `m_asciiColorMap`; new `isAsciiShowColorsEnabled()` definition |
+| `AsciiArt.cpp` / `AsciiArt.h` | **No changes.** `AsciiArt` only ever consumes the map handed to it via `setColorMap()`; it has no awareness of the flag |
+| `main.cpp` | **No changes.** |
+
+## JSON usage
+
+```jsonc
+"ascii_color_prefixes": {
+  "show_colors": true,   // or false — add/remove this line
+  "$1":  "#F2726B",
+  "$2":  "46,207,142",
+  "$3":  "cyan",
+  "$4":  "\u001b[35m",
+  "$5":  "magenta",
+  "$6":  "cyan",
+  "$7":  "white",
+  "$8":  "#F2726B",
+  "$9":  "#3ECF8E",
+  "$10": "#F2C063",
+  "$11": "#60A5FA",
+  "$12": "#C084FC",
+  "$13": "#5EEAD4",
+  "$14": "#E5E7EB",
+  "$15": "RESET"
+}
+```
+
+## Code changes
+
+### `config_management.h`
+
+```cpp
+// private members
+std::map<int, std::string> m_asciiColorMap;
+bool m_asciiShowColors{true};   // NEW
+
+// public API
+const std::map<int, std::string>& getAsciiColorMap() const;
+bool isAsciiShowColorsEnabled() const;   // NEW
+```
+
+### `config_management.cpp`
+
+```cpp
+void ConfigManager::loadAsciiColorPrefixes() {
+    m_asciiColorMap = { /* ...15 built-in defaults, unchanged... */ };
+    m_asciiShowColors = true;   // reset every (re)load
+
+    if (!m_config.contains("ascii_color_prefixes") || !m_config["ascii_color_prefixes"].is_object())
+        return;
+
+    const auto& section = m_config["ascii_color_prefixes"];
+
+    if (section.contains("show_colors") && section["show_colors"].is_boolean())
+        m_asciiShowColors = section["show_colors"].get<bool>();
+
+    for (auto& [key, value] : section.items()) {
+        if (key == "show_colors") continue;   // not a $N entry
+        // ...unchanged per-$N parsing...
+    }
+
+    if (!m_asciiShowColors) {
+        for (auto& [num, ansi] : m_asciiColorMap) {
+            ansi.clear();   // keys 1..15 remain; values become ""
+        }
+    }
+}
+
+bool ConfigManager::isAsciiShowColorsEnabled() const {
+    return m_asciiShowColors;
+}
+```
+
+The clearing step runs **last**, so it overrides both the 15 built-in
+defaults and any custom per-`$N` overrides from the JSON — `show_colors`
+is a single switch that wins over everything else in the section.
+
+## Behavior reference
+
+| Condition | `m_asciiShowColors` | `$N` in art |
+|---|---|---|
+| `ascii_color_prefixes` section missing entirely | `true` (default) | Colored, as today |
+| Section present, `show_colors` key missing | `true` (default) | Colored, as today |
+| `show_colors` present but not a boolean (e.g. `"yes"`, `1`, `null`) | `true` (default) | Colored, as today |
+| `"show_colors": true` | `true` | Colored, as today |
+| `"show_colors": false` | `false` | `$N` tokens still consumed/removed, but resolve to `""` — no color escape inserted |
+
+`true` is always the fallback: the flag is opt-out, not opt-in. You only
+get uncolored art by explicitly writing `"show_colors": false`.
+
+## `show_colors: false` with color flags still present in the art
+
+`processColorCodes()` in `AsciiArt.cpp` never copies the literal `$N`
+text into its output — it only appends the text *around* each match and,
+if the number is found in the color map, whatever string that number
+maps to:
+
+```cpp
+while (std::regex_search(remaining, match, colorCodeRegex)) {
+    processed += match.prefix();                 // text before $N
+    auto it = colors.find(colorNum);
+    if (it != colors.end()) processed += it->second;   // "" when show_colors=false
+    remaining = match.suffix();                   // text after $N — "$N" itself is dropped either way
+}
+processed += remaining + "\033[0m";
+```
+
+So:
+
+- The `$N` marker itself is **always** stripped from what's printed —
+  with `show_colors` on or off, you never see a literal `$1` in the art.
+- With `show_colors: false`, the lookup for `$N` still succeeds (the key
+  exists in `m_asciiColorMap`), so no warning/fallback path fires — the
+  substitution is just an empty string. The art segment after that point
+  keeps whatever color was already active (or the terminal's default, if
+  none was), instead of switching to the mapped palette color.
+- The trailing `\033[0m` reset at the end of the line is unconditional
+  and still fires regardless of `show_colors`.
+
+**In short:** `show_colors: false` does not require editing `BinaryArt.txt`
+— it neutralizes every existing `$N` flag at render time, leaving the art
+in the terminal's plain/default color instead of your defined palette.
   

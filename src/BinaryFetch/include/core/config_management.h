@@ -55,6 +55,7 @@ public:
     // Ascii-art $N color prefixes (built from JSON "ascii_color_prefixes",
     // falling back to the built-in default table for any $N not specified)
     const std::map<int, std::string>& getAsciiColorMap() const;
+    bool isAsciiShowColorsEnabled() const;
 
     // Raw JSON access if required
     const nlohmann::json& getJson() const;
@@ -86,7 +87,8 @@ private:
     nlohmann::json m_config;
     bool m_loaded{false};
     std::map<std::string, std::string> m_colors;
-    std::map<int, std::string> m_asciiColorMap;       // $N -> ANSI escape, for ASCII art color prefixes
+    std::map<int, std::string> m_asciiColorMap; // $N -> ANSI escape, for ASCII art color prefixes
+    bool m_asciiShowColors{true};               // "ascii_color_prefixes.show_colors" toggle
 
     bool m_emojiEnabled{true};   
     std::string m_emojiStyle{"auto"}; 
