@@ -223,7 +223,7 @@
             }
         },
         "month_num": {
-            "enabled": true,
+            "enabled": false,
             "value": {
                 "color": "muted_2",
                 "suffix": " : ",
