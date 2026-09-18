@@ -118,7 +118,8 @@ Resolution order, checked fresh on every launch:
 
 So if you delete your `.json` later with no `.jsonc` present, BinaryFetch will recreate a fresh `.jsonc` default on the next run. Nothing ever overwrites a config file that already exists.
 
-![Alt text](https://private-user-images.githubusercontent.com/234583143/653280102-de3aafe4-5ede-4d42-82f5-7b27f3a6c1ad.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODk1ODkwNTIsIm5iZiI6MTc4OTU4ODc1MiwicGF0aCI6Ii8yMzQ1ODMxNDMvNjUzMjgwMTAyLWRlM2FhZmU0LTVlZGUtNGQ0Mi04MmY1LTdiMjdmM2E2YzFhZC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjYwOTE2JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDkxNlQxOTU5MTJaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT03Mjg3NTFlMjg1ZTRhMGNkZWZmNGQ5NGM2MzYyOWQxYWRiOTNiODMxMTQyYzY3ODk0NDRkNzRiMzExODk2ZThkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZyZXNwb25zZS1jb250ZW50LXR5cGU9aW1hZ2UlMkZwbmcifQ.lSI_71mxcR-cZl7AOnKYZHuI9TK-fotCNJVV7DKI0r0)
+<img width="1081" height="834" alt="BinaryFetch_preview_xi" src="https://github.com/user-attachments/assets/01bf0393-ab1f-4b62-9986-12272e268b27" />
+
 ### 3. Sixel Image Support for Windows Terminal
 
 BinaryFetch 1.6 adds image support through the `art` section. This is intended for terminals that support Sixel graphics, such as Windows Terminal.
