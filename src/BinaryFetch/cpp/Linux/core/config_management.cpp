@@ -1,7 +1,178 @@
-// config_management.cpp
+
+// ============================================================================
+// config_management.cpp (Linux) 
+// ============================================================================
+//
+// Linux implementation of ConfigManager, matching config_management.h.
+// Functionally equivalent to the Windows build; only the platform plumbing
+// differs. This header explains the Linux-specific bits end to end.
+//
+// ----------------------------------------------------------------------------
+// 1. CONFIG DIRECTORY
+// ----------------------------------------------------------------------------
+//
+// Follows the XDG Base Directory Specification:
+//
+//   - If $XDG_CONFIG_HOME is set and non-empty:
+//         $XDG_CONFIG_HOME/binaryfetch/
+//   - Otherwise:
+//         $HOME/.config/binaryfetch/
+//
+// $HOME itself falls back to getpwuid(getuid())->pw_dir if unset, and
+// finally to "." as a last-resort safety net. This is why the file needs
+// <pwd.h>, <unistd.h>, and <cstdlib>.
+//
+// Directory creation uses ensureDirectoryExists(), which walks the path
+// component by component and mkdir()s each missing level. Linux's mkdir(2)
+// is not recursive, unlike Windows' _mkdir which only ever needs the leaf
+// because C:\Users\Public already exists. So on a fresh account where
+// ~/.config/ doesn't exist yet, we create .config/ first, then
+// .config/binaryfetch/.
+//
+// ----------------------------------------------------------------------------
+// 2. CONFIG FILE RESOLUTION (per launch, checked fresh every time)
+// ----------------------------------------------------------------------------
+//
+// Two extensions are supported side by side:
+//
+//   .jsonc  - preferred going forward; parsed with comments allowed
+//   .json   - legacy; still parsed exactly as before. A comment-free file
+//             parses byte-for-byte identically to the old behavior, so
+//             nothing already deployed breaks.
+//
+// Resolution order:
+//
+//   1. Both .jsonc and .json exist  -> .jsonc wins.
+//   2. Only .jsonc exists           -> load it.
+//   3. Only .json exists            -> load it AS-IS. We never silently
+//                                       create a .jsonc next to it — an
+//                                       existing legacy install stays on
+//                                       .json until the user removes that
+//                                       file themselves.
+//   4. Neither exists               -> self-heal. This is the ONLY branch
+//                                       that ever creates a new file, and
+//                                       it always writes .jsonc.
+//
+// Rule 4 never overwrites an existing config. Delete the .jsonc later (with
+// no .json present) and BinaryFetch will recreate a fresh default on the
+// next run.
+//
+// ----------------------------------------------------------------------------
+// 3. SELF-HEAL — EMBEDDED DEFAULT (CMake-generated header)
+// ----------------------------------------------------------------------------
+//
+// The default JSONC ships INSIDE the binary. It is not read from disk at
+// runtime, which means self-heal works from any working directory — a user
+// can install BinaryFetch to /usr/bin, run it from /tmp, and the default
+// config still gets written correctly.
+//
+// The embedded bytes come from:
+//
+//   #include "embedded_default_config.h"
+//
+// which is generated at CMake configure time by:
+//
+//   cmake/embedded_config.h.in
+//       -> @BINARYFETCH_DEFAULT_JSONC_CONTENT@
+//       -> build/generated/embedded_default_config.h
+//
+// The generated header defines:
+//
+//   static const char EMBEDDED_DEFAULT_CONFIG[];
+//
+// containing the raw bytes of:
+//
+//   src/BinaryFetch/resources/Default_JSON_theme_windows_RC/
+//       Default_BinaryFetch_Config.jsonc
+//
+// CMake re-runs its configure step automatically whenever that JSONC file
+// changes (via CMAKE_CONFIGURE_DEPENDS), so edits to the source JSONC are
+// always reflected in the next build without a manual re-configure.
+//
+// This mirrors what the Windows build does with RC resource 101 — same
+// payload, same self-heal behavior, different mechanism because Linux has
+// no equivalent to the Windows resource system.
+//
+// ----------------------------------------------------------------------------
+// 4. PARSING
+// ----------------------------------------------------------------------------
+//
+// Uses nlohmann::json::parse() with ignore_comments = true. That single
+// flag is the entire JSONC upgrade — a file with zero comments parses
+// byte-for-byte the same way as before, so no migration is needed for
+// existing .json configs. Empty objects are treated as a load failure.
+//
+// On success, three post-parse passes run, in this order:
+//
+//   loadColorPalette()       - builds m_colors from the "colors" object
+//   loadAsciiColorPrefixes() - builds m_asciiColorMap from
+//                              "ascii_color_prefixes"; name lookups fall
+//                              back to m_colors, so this MUST run after
+//                              loadColorPalette()
+//   loadEmojiSettings()      - populates m_emojiEnabled / m_emojiStyle
+//                              from the "emoji" object
+//
+// A parse exception or an empty top-level object sets m_loaded = false and
+// every subsequent getter returns its default without crashing.
+//
+// ----------------------------------------------------------------------------
+// 5. WHAT IS IDENTICAL TO WINDOWS
+// ----------------------------------------------------------------------------
+//
+// Everything that matters for behavior:
+//
+//   - parseColorValue, loadColorPalette, loadAsciiColorPrefixes
+//   - resolveSectionKey, resolveSubsectionKey, resolveColor
+//   - all isEnabled / isFieldEnabled / isSubEnabled / isSectionEnabled /
+//     isNestedEnabled variants
+//   - all getNestedBool / getNestedInt / getNestedString / getStringArray
+//   - all color getters
+//   - the entire emoji subsystem (decodeUtf8, encodeUtf8,
+//     isEmojiEligible, applyEmojiStyle)
+//   - getLabel / getPrefix wrappers and their *Raw counterparts
+//   - getLayoutOrder
+//
+// From main.cpp's perspective, the two builds are indistinguishable.
+//
+// ----------------------------------------------------------------------------
+// 6. WHAT DIFFERS FROM WINDOWS
+// ----------------------------------------------------------------------------
+//
+// Only platform plumbing:
+//
+//   - Config dir path:  ~/.config/binaryfetch/  vs  C:\Users\Public\BinaryFetch\
+//   - Path separator:   /                       vs  \\
+//   - Directory create: ensureDirectoryExists() vs  GetFileAttributesA + _mkdir
+//   - Self-heal source: embedded header         vs  FindResource(RT_RCDATA, 101)
+//
+// ----------------------------------------------------------------------------
+// 7. CONFIG MODE SELECTION
+// ----------------------------------------------------------------------------
+//
+// ConfigManager takes a ConfigMode at construction time:
+//
+//   Dev            - reads src/BinaryFetch/resources/Dev_jsonc/...
+//                    (freely experiment, never embedded into the binary)
+//
+//   ReleaseSource  - reads the shipping default directly from the source
+//                    tree (src/BinaryFetch/resources/Default_JSON_theme...).
+//                    Useful while iterating on the JSONC — every launch
+//                    sees your latest edits with no self-heal copy in
+//                    between.
+//
+//   Production     - reads ~/.config/binaryfetch/BinaryFetch_Config.jsonc,
+//                    self-healing from the embedded default if missing.
+//                    This is the only mode that exercises the embed path
+//                    described in section 3.
+//
+// Flip CONFIG_MODE in main() to test each mode.
+// ============================================================================
+
+// config_management.cpp (linux)
 // Linux implementation matching config_management.h
 
 #include "core/config_management.h"
+#include "embedded_default_config.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -108,19 +279,18 @@ void ConfigManager::loadPlatformConfig(ConfigMode mode) {
         } else if (jsonExists) {
             configPath = userConfigJson;
         } else {
-            // Self-heal: write .jsonc to ~/.config/binaryfetch/BinaryFetch_Config.jsonc
+            // Self-heal: write the embedded default to
+            // ~/.config/binaryfetch/BinaryFetch_Config.jsonc
             configPath = userConfigJsonc;
 
-            std::string releaseSourcePath = "src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.jsonc";
-            std::ifstream srcFile(releaseSourcePath, std::ios::binary);
-
-            if (srcFile.is_open()) {
-                std::ofstream destFile(userConfigJsonc, std::ios::binary);
-                if (destFile.is_open()) {
-                    destFile << srcFile.rdbuf();
-                    destFile.close();
-                }
-                srcFile.close();
+            std::ofstream destFile(userConfigJsonc, std::ios::binary);
+            if (destFile.is_open()) {
+                destFile << EMBEDDED_DEFAULT_CONFIG;
+                destFile.close();
+            }
+            if (!destFile) {
+                std::cerr << "Warning: failed to write default config to "
+                          << userConfigJsonc << std::endl;
             }
         }
     }

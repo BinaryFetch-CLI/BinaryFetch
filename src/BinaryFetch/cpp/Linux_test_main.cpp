@@ -921,7 +921,7 @@ int main(){
     // ConfigMode::Production     → ~/.config/binaryfetch/BinaryFetch_Config.jsonc
     //                              (self-heals if missing. NEVER overwrites an existing user config.)
 
-    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed (Production uses ~/.config/binaryfetch/BinaryFetch_Config.jsonc)
+    ConfigMode CONFIG_MODE = ConfigMode::Production; // ← switch as needed (Production uses ~/.config/binaryfetch/BinaryFetch_Config.jsonc)
     ConfigManager config(CONFIG_MODE);
 
 

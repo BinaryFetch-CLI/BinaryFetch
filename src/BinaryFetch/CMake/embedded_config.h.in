@@ -1,0 +1,8 @@
+// Auto-generated from embedded_config.h.in — do not edit.
+#pragma once
+
+// Raw string delimiter is BFCFG (5 chars, well within the 16-char limit).
+// @ONLY substitution means only @VAR@ is replaced; the JSONC bytes pass
+// through untouched, including any ${...} or $N sequences it contains.
+static const char EMBEDDED_DEFAULT_CONFIG[] =
+R"BFCFG(@BINARYFETCH_DEFAULT_JSONC_CONTENT@)BFCFG";
