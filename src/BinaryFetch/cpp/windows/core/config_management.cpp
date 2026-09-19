@@ -6,47 +6,109 @@
 #include <sstream>
 #include <unordered_map>
 
-ConfigManager::ConfigManager(bool devMode) {
-    m_colors = {
-        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-    };
-    loadPlatformConfig(devMode);
+ConfigManager::ConfigManager(ConfigMode mode) {
+    loadPlatformConfig(mode);
 }
 
-void ConfigManager::loadPlatformConfig(bool devMode) {
-    std::string configDir = "C:\\Users\\Public\\BinaryFetch";
-    std::string userConfigPath = configDir + "\\BinaryFetch_Config.json";
+// ===================== CONFIG LOADING (JSON + JSONC) =====================
+//
+// BinaryFetch supports two config extensions side by side:
+//   .jsonc  - preferred going forward; parsed with comments allowed
+//   .json   - legacy; still parsed exactly as before (comments happen to
+//             be allowed too now, but a comment-free file behaves
+//             identically either way, so nothing already deployed breaks)
+//
+// Resolution order, checked fresh on every launch:
+//   1. Both .jsonc and .json exist   -> .jsonc wins.
+//   2. Only .jsonc exists            -> load it.
+//   3. Only .json exists             -> load it AS-IS. We never silently
+//                                        create a .jsonc next to it — an
+//                                        existing legacy install stays on
+//                                        .json until the user removes that
+//                                        file themselves.
+//   4. Neither exists                -> self-heal from the embedded EXE
+//                                        resource. This is the ONLY branch
+//                                        that ever creates a new file, and
+//                                        it always writes .jsonc.
+//
+// So: delete the .json later (with no .jsonc present) and BinaryFetch will
+// recreate a fresh .jsonc default on the next run, per case 4. Nothing
+// about this ever overwrites a config file that already exists.
+void ConfigManager::loadPlatformConfig(ConfigMode mode) {
+    std::string configDir       = "C:\\Users\\Public\\BinaryFetch";
+    std::string userConfigJsonc = configDir + "\\BinaryFetch_Config.jsonc";
+    std::string userConfigJson  = configDir + "\\BinaryFetch_Config.json";
     std::string configPath;
 
-    if (devMode) {
-        configPath = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.json";
-        std::ifstream devCheck(configPath);
-        if (!devCheck.good()) {
-            std::cerr << "Warning: Could not find development configuration JSON file at: " << configPath << std::endl;
+    if (mode == ConfigMode::Dev) {
+        std::string devJsonc = "src\\BinaryFetch\\resources\\Dev_jsonc\\Dev_BinaryFetch_Config.jsonc";
+        std::string devJson  = "src\\BinaryFetch\\resources\\Dev_jsonc\\Dev_BinaryFetch_Config.json";
+
+        std::ifstream jsoncCheck(devJsonc);
+        bool devJsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        if (devJsoncExists) {
+            configPath = devJsonc;
+        } else {
+            std::ifstream jsonCheck(devJson);
+            bool devJsonExists = jsonCheck.good();
+            jsonCheck.close();
+
+            if (!devJsonExists) {
+                std::cerr << "Warning: Could not find development configuration file at: "
+                          << devJsonc << " or " << devJson << std::endl;
+                m_loaded = false;
+                return;
+            }
+            configPath = devJson;
+        }
+    } else if (mode == ConfigMode::ReleaseSource) {
+        // Edit the actual shipping default directly — the same file that
+        // gets embedded as resource 101 at build time. No self-heal, no
+        // Public folder involved. NOTE: edits here only reach a real
+        // production EXE after a rebuild re-embeds this file.
+        std::string releaseJsonc = "src\\BinaryFetch\\resources\\Default_JSON_theme_windows_RC\\Default_BinaryFetch_Config.jsonc";
+
+        std::ifstream releaseCheck(releaseJsonc);
+        bool releaseExists = releaseCheck.good();
+        releaseCheck.close();
+
+        if (!releaseExists) {
+            std::cerr << "Warning: Could not find release configuration file at: "
+                      << releaseJsonc << std::endl;
             m_loaded = false;
             return;
         }
+        configPath = releaseJsonc;
     } else {
-        configPath = userConfigPath;
         if (GetFileAttributesA(configDir.c_str()) == INVALID_FILE_ATTRIBUTES) {
             _mkdir(configDir.c_str());
         }
-        std::ifstream checkConfig(userConfigPath);
-        bool userConfigExists = checkConfig.good();
-        checkConfig.close();
 
-        if (!userConfigExists) {
+        std::ifstream jsoncCheck(userConfigJsonc);
+        bool jsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        std::ifstream jsonCheck(userConfigJson);
+        bool jsonExists = jsonCheck.good();
+        jsonCheck.close();
+
+        if (jsoncExists) {
+            // Case 1 (both present) and case 2 (jsonc only) both land here.
+            configPath = userConfigJsonc;
+        } else if (jsonExists) {
+            // Case 3: legacy .json only. Load as-is, create nothing.
+            configPath = userConfigJson;
+        } else {
+            // Case 4: neither present. Self-heal, writing .jsonc.
+            configPath = userConfigJsonc;
             HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(101), RT_RCDATA);
             if (hRes) {
                 HGLOBAL hData = LoadResource(NULL, hRes);
                 DWORD size = SizeofResource(NULL, hRes);
                 const char* data = static_cast<const char*>(LockResource(hData));
-                std::ofstream userConfig(userConfigPath, std::ios::binary);
+                std::ofstream userConfig(userConfigJsonc, std::ios::binary);
                 if (userConfig.is_open()) {
                     userConfig.write(data, size);
                     userConfig.close();
@@ -56,6 +118,7 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
     }
 
     std::ifstream configFile(configPath);
+    
     if (!configFile.is_open()) {
         std::cerr << "Warning: Cannot open configuration file: " << configPath << std::endl;
         m_loaded = false;
@@ -63,11 +126,24 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
     }
 
     try {
-        configFile >> m_config;
-        if (m_config.is_object() && m_config.empty()) {
+        // ignore_comments = true is the entire JSONC upgrade. A file with
+        // zero comments in it — i.e. every existing .json config — parses
+        // byte-for-byte the same way as before, so this is purely additive
+        // and requires no migration step for anyone already running
+        // BinaryFetch.
+        m_config = nlohmann::json::parse(
+            configFile,
+            /* callback */ nullptr,
+            /* allow_exceptions */ true,
+            /* ignore_comments */ true
+        );
+         if (m_config.is_object() && m_config.empty()) {
             m_loaded = false;
         } else {
             m_loaded = true;
+            loadColorPalette();          // populate m_colors from JSON "colors" section
+            loadAsciiColorPrefixes();    // populate m_asciiColorMap from JSON "ascii_color_prefixes" (name-lookup falls back to m_colors, so this must run after loadColorPalette())
+            loadEmojiSettings();         // populate m_emojiEnabled / m_emojiStyle from JSON "emoji" section
         }
     } catch (...) {
         m_loaded = false;
@@ -75,6 +151,151 @@ void ConfigManager::loadPlatformConfig(bool devMode) {
 }
 
 bool ConfigManager::isLoaded() const { return m_loaded; }
+
+// ===================== COLOR PALETTE (JSON-DRIVEN) =====================
+//
+// Every color the app uses comes from the top-level "colors" object in
+// JSON. Three formats are accepted per entry:
+//   1. Raw ANSI escape  - starts with '\033', used exactly as written.
+//   2. Hex              - "#RRGGBB", converted to 24-bit truecolor.
+//   3. Plain RGB         - "R,G,B",   converted to 24-bit truecolor.
+// A value of "RESET" is special-cased to the reset code. Anything else
+// unrecognized is skipped (with a _DEBUG warning) rather than crashing
+// or silently corrupting output.
+std::string ConfigManager::parseColorValue(const std::string& raw) const {
+    if (raw.empty()) return "";
+
+    if (raw[0] == '\033') return raw; // literal escape sequence, passed through untouched
+
+    if (raw[0] == '#' && raw.size() == 7) {
+        try {
+            int r = std::stoi(raw.substr(1, 2), nullptr, 16);
+            int g = std::stoi(raw.substr(3, 2), nullptr, 16);
+            int b = std::stoi(raw.substr(5, 2), nullptr, 16);
+            return "\033[38;2;" + std::to_string(r) + ";" +
+                   std::to_string(g) + ";" + std::to_string(b) + "m";
+        } catch (...) {
+            return "";
+        }
+    }
+
+    std::stringstream ss(raw);
+    std::string token;
+    std::vector<int> parts;
+    while (std::getline(ss, token, ',')) {
+        try { parts.push_back(std::stoi(token)); }
+        catch (...) { return ""; }
+    }
+    if (parts.size() == 3) {
+        return "\033[38;2;" + std::to_string(parts[0]) + ";" +
+               std::to_string(parts[1]) + ";" + std::to_string(parts[2]) + "m";
+    }
+    return "";
+}
+
+// Rebuilds m_colors entirely from JSON's "colors" object. No color name
+// is hardcoded here — if "colors" is absent or empty, m_colors ends up
+// empty and resolveColor() degrades every lookup to plain white via its
+// single hardcoded safety net, without affecting any other config value.
+void ConfigManager::loadColorPalette() {
+    m_colors.clear();
+
+    if (!m_config.contains("colors") || !m_config["colors"].is_object())
+        return;
+
+    for (auto& [name, value] : m_config["colors"].items()) {
+        if (!value.is_string()) continue;
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_colors[name] = "\033[0m"; continue; }
+
+        std::string ansi = parseColorValue(raw);
+        if (!ansi.empty()) {
+            m_colors[name] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid color value for '" << name << "': " << raw << "\n";
+        }
+#endif
+    }
+}
+
+// ===================== ASCII ART COLOR PREFIXES (JSON-DRIVEN) =====================
+//
+// $N placeholders inside BinaryArt.txt (and the embedded default art) are
+// resolved through this table instead of AsciiArt's own hardcoded map.
+// Starts from the same 15 built-in defaults AsciiArt always shipped with,
+// so an absent "ascii_color_prefixes" section is byte-identical to the old
+// behavior. Any $N present in JSON OVERRIDES that slot; anything not
+// listed keeps its default. New slots beyond $15 can be added freely.
+//
+// Each value accepts everything parseColorValue() accepts (hex, "R,G,B",
+// raw ANSI escape, "RESET") — and, additionally, a plain color NAME that
+// resolves against the same "colors" palette every other module uses.
+void ConfigManager::loadAsciiColorPrefixes() {
+    m_asciiColorMap = {
+        {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
+        {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"},
+        {7, "\033[37m"}, {8, "\033[91m"}, {9, "\033[92m"},
+        {10, "\033[93m"}, {11, "\033[94m"}, {12, "\033[95m"},
+        {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
+    };
+    m_asciiShowColors = true;
+
+    if (!m_config.contains("ascii_color_prefixes") || !m_config["ascii_color_prefixes"].is_object())
+        return; // section absent -> defaults above stay untouched
+
+    const auto& section = m_config["ascii_color_prefixes"];
+
+    if (section.contains("show_colors") && section["show_colors"].is_boolean())
+        m_asciiShowColors = section["show_colors"].get<bool>();
+
+    for (auto& [key, value] : section.items()) {
+        if (key == "show_colors") continue;
+        if (!value.is_string()) continue;
+
+        // Keys may be written as "$1" or "1" — strip a leading '$' if present.
+        std::string numPart = (!key.empty() && key[0] == '$') ? key.substr(1) : key;
+        int n;
+        try { n = std::stoi(numPart); }
+        catch (...) { continue; }
+
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_asciiColorMap[n] = "\033[0m"; continue; }
+
+        std::string ansi = parseColorValue(raw);
+
+        if (ansi.empty()) {
+            auto it = m_colors.find(raw);
+            if (it != m_colors.end()) ansi = it->second;
+        }
+
+        if (!ansi.empty()) {
+            m_asciiColorMap[n] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid ascii_color_prefixes value for '" << key << "': " << raw << "\n";
+        }
+#endif
+    }
+
+    if (!m_asciiShowColors) {
+        for (auto& [num, ansi] : m_asciiColorMap) {
+            ansi.clear();
+        }
+    }
+}
+
+const std::map<int, std::string>& ConfigManager::getAsciiColorMap() const {
+    return m_asciiColorMap;
+}
+
+bool ConfigManager::isAsciiShowColorsEnabled() const {
+    return m_asciiShowColors;
+}
 
 // ===================== RESOLVE SECTION KEY =====================
 std::string ConfigManager::resolveSectionKey(const std::string& section) const {
@@ -160,7 +381,8 @@ std::string ConfigManager::resolveColor(const std::string& colorName, const std:
     auto defIt = m_colors.find(defaultColor);
     if (defIt != m_colors.end()) return defIt->second;
     auto whiteIt = m_colors.find("white");
-    return (whiteIt != m_colors.end()) ? whiteIt->second : "\033[37m";
+    if (whiteIt != m_colors.end()) return whiteIt->second;
+    return "\033[37m"; // sole hardcoded fallback: only used if "colors" section is missing/empty in JSON
 }
 
 // ===================== ENABLED CHECKS =====================
@@ -411,7 +633,7 @@ int ConfigManager::getNestedInt(
 
 
 //nested string:
-std::string ConfigManager::getNestedString(
+std::string ConfigManager::getNestedStringRaw(
     const std::string& rawModule,
     const std::string& path,
     const std::string& defaultValue) const
@@ -449,6 +671,195 @@ std::string ConfigManager::getNestedString(
         return current.get<std::string>();
 
     return defaultValue;
+}
+
+
+// ===================== EMOJI STYLE (NEW) =====================
+//
+// Central place where emoji presentation gets applied, so no individual
+// module (CPU, GPU, memory, etc.) needs to know this feature exists.
+// Every module already pulls its icons/labels through getLabel/getPrefix/
+// getNestedLabel/getNestedPrefix/getNestedString — those five are now
+// thin wrappers around the *Raw versions above, piped through
+// applyEmojiStyle(). Section/alias resolution, defaults, and fallback
+// behavior are all unchanged; only the final returned string differs,
+// and only when an "emoji" section is present and non-default.
+
+namespace {
+
+// Decodes one UTF-8 codepoint at byte index i, writes the number of
+// bytes consumed into len. Malformed/truncated sequences fall back to
+// treating the single byte as-is, so a stray byte never corrupts or
+// crashes the rest of the string.
+char32_t decodeUtf8(const std::string& s, size_t i, size_t& len) {
+    unsigned char c0 = static_cast<unsigned char>(s[i]);
+    size_t remaining = s.size() - i;
+
+    auto isCont = [&](size_t idx) {
+        return idx < s.size() && (static_cast<unsigned char>(s[idx]) & 0xC0) == 0x80;
+    };
+
+    if (c0 < 0x80) { len = 1; return c0; }
+
+    if ((c0 & 0xE0) == 0xC0 && remaining >= 2 && isCont(i + 1)) {
+        len = 2;
+        return ((c0 & 0x1F) << 6) | (static_cast<unsigned char>(s[i + 1]) & 0x3F);
+    }
+    if ((c0 & 0xF0) == 0xE0 && remaining >= 3 && isCont(i + 1) && isCont(i + 2)) {
+        len = 3;
+        return ((c0 & 0x0F) << 12)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 2]) & 0x3F);
+    }
+    if ((c0 & 0xF8) == 0xF0 && remaining >= 4 && isCont(i + 1) && isCont(i + 2) && isCont(i + 3)) {
+        len = 4;
+        return ((c0 & 0x07) << 18)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 12)
+             | ((static_cast<unsigned char>(s[i + 2]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 3]) & 0x3F);
+    }
+
+    len = 1;
+    return c0; // unrecognised lead byte -> pass through untouched
+}
+
+void encodeUtf8(char32_t cp, std::string& out) {
+    if (cp < 0x80) {
+        out += static_cast<char>(cp);
+    } else if (cp < 0x800) {
+        out += static_cast<char>(0xC0 | (cp >> 6));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+        out += static_cast<char>(0xE0 | (cp >> 12));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (cp >> 18));
+        out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    }
+}
+
+// Heuristic "is this codepoint the kind of symbol/pictograph emoji
+// presentation selectors apply to". Covers the blocks BinaryFetch's own
+// icon set actually uses (dingbats/misc symbols + the supplementary
+// pictograph planes) plus a few adjacent symbol blocks. Not the full
+// Unicode emoji-property table, deliberately — no dependency needed —
+// but it's a safe superset for this app: nothing in these ranges is
+// normal prose text that could get accidentally mangled.
+bool isEmojiEligible(char32_t cp) {
+    return (cp >= 0x2190 && cp <= 0x21FF)    // Arrows
+        || (cp >= 0x2300 && cp <= 0x23FF)    // Misc Technical (⌚⏰⏱ etc.)
+        || (cp >= 0x25A0 && cp <= 0x25FF)    // Geometric Shapes
+        || (cp >= 0x2600 && cp <= 0x27BF)    // Misc Symbols + Dingbats (⚙️☀️✂️)
+        || (cp >= 0x2B00 && cp <= 0x2BFF)    // Misc Symbols and Arrows (⭐)
+        || (cp >= 0x1F000 && cp <= 0x1FFFF); // All main emoji pictograph blocks
+}
+
+constexpr char32_t VS_TEXT  = 0xFE0E; // U+FE0E - text presentation
+constexpr char32_t VS_EMOJI = 0xFE0F; // U+FE0F - emoji presentation
+
+} // namespace
+
+void ConfigManager::loadEmojiSettings() {
+    m_emojiEnabled = true;
+    m_emojiStyle   = "auto";
+
+    if (!m_config.contains("emoji") || !m_config["emoji"].is_object())
+        return; // section absent -> unchanged behavior, byte-identical output
+
+    const auto& e = m_config["emoji"];
+
+    if (e.contains("enabled") && e["enabled"].is_boolean())
+        m_emojiEnabled = e["enabled"].get<bool>();
+
+    if (e.contains("style") && e["style"].is_string()) {
+        std::string s = e["style"].get<std::string>();
+        if (s == "auto" || s == "color" || s == "text") {
+            m_emojiStyle = s;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid emoji style '" << s << "', defaulting to 'auto'\n";
+        }
+#endif
+    }
+}
+
+std::string ConfigManager::applyEmojiStyle(const std::string& raw) const {
+    // Fast path: enabled + auto is a pure no-op — what every config
+    // written before this feature existed will hit.
+    if (m_emojiEnabled && m_emojiStyle == "auto") return raw;
+    if (raw.empty()) return raw;
+
+    std::string out;
+    out.reserve(raw.size());
+
+    size_t i = 0;
+    while (i < raw.size()) {
+        size_t len = 1;
+        char32_t cp = decodeUtf8(raw, i, len);
+
+        if (isEmojiEligible(cp)) {
+            // Does an explicit variation selector already follow it?
+            // Consume it either way — we're about to decide the
+            // presentation ourselves.
+            size_t next = i + len;
+            size_t vsLen = 0;
+            if (next < raw.size()) {
+                size_t peekLen;
+                char32_t peekCp = decodeUtf8(raw, next, peekLen);
+                if (peekCp == VS_TEXT || peekCp == VS_EMOJI) vsLen = peekLen;
+            }
+
+            if (!m_emojiEnabled) {
+                // Drop the glyph (and its selector) entirely.
+            } else if (m_emojiStyle == "text") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_TEXT, out);
+            } else if (m_emojiStyle == "color") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_EMOJI, out);
+            } else {
+                // Shouldn't happen (loadEmojiSettings validates), stay safe.
+                out.append(raw, i, len + vsLen);
+            }
+
+            i = next + vsLen;
+            continue;
+        }
+
+        out.append(raw, i, len);
+        i += len;
+    }
+
+    return out;
+}
+
+// ===================== PUBLIC WRAPPERS (NEW) =====================
+// Same signatures modules already call — every module keeps working
+// with zero edits. Each just pipes the *Raw result through the emoji
+// styling layer.
+
+std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    return applyEmojiStyle(getLabelRaw(rawSection, key, defaultLabel));
+}
+
+std::string ConfigManager::getNestedLabel(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    return applyEmojiStyle(getNestedLabelRaw(rawModule, rawSection, key, defaultLabel));
+}
+
+std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getPrefixRaw(rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getNestedPrefixRaw(rawModule, rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedString(const std::string& rawModule, const std::string& path, const std::string& defaultValue) const {
+    return applyEmojiStyle(getNestedStringRaw(rawModule, path, defaultValue));
 }
 
 
@@ -541,7 +952,7 @@ std::vector<std::string> ConfigManager::getLayoutOrder() const
 
 
 // ===================== LABEL RESOLUTION =====================
-std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+std::string ConfigManager::getLabelRaw(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return defaultLabel;
 
@@ -575,7 +986,7 @@ std::string ConfigManager::getLabel(const std::string& rawSection, const std::st
     return defaultLabel;
 }
 
-std::string ConfigManager::getNestedLabel(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+std::string ConfigManager::getNestedLabelRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultLabel;
     std::string section = resolveSubsectionKey(module, rawSection);
@@ -595,7 +1006,7 @@ std::string ConfigManager::getNestedLabel(const std::string& rawModule, const st
 }
 
 // ===================== PREFIX RESOLUTION =====================
-std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getPrefixRaw(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return defaultPrefix;
 
@@ -662,7 +1073,7 @@ std::string ConfigManager::getPrefix(const std::string& rawSection, const std::s
     return defaultPrefix;
 }
 
-std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getNestedPrefixRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultPrefix;
     std::string section = resolveSubsectionKey(module, rawSection);

@@ -22,9 +22,10 @@
      #include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
 #endif 
 
-// ASCII Art functionality
-#include "AsciiArt.h" // main.cpp (AsciiArt separated into header and implementation files)
+// ASCII Art & image functionality
+#include "AsciiArt.h" 
 #include "core/config_management.h"
+#include "Image.h"  
 
 
 // ------------------ Full System Info Modules ------------------
@@ -151,42 +152,262 @@ void runOrderedFields(const std::vector<std::string>& order,
     }
 }
 
+
+
+enum class ArtMode { ASCII, IMAGE, NONE };
+
+class LivePrinter {
+public:
+    LivePrinter(const AsciiArt& artRef, const TerminalImage& imageRef, ArtMode m)
+        : art(artRef), image(imageRef), mode(m), index(0), imageDrawn(false) {}
+
+    void push(const std::string& infoLine) {
+        printAndPad();
+        if (!infoLine.empty()) std::cout << infoLine;
+        std::cout << "\033[K" << '\n';
+        index++;
+    }
+
+    void pushBlank() {
+        printAndPad();
+        std::cout << "\033[K" << '\n';
+        index++;
+    }
+
+    void finish() {
+        int h = artHeight();
+        while (index < h) {
+            printAndPad();
+            std::cout << "\033[K" << '\n';
+            index++;
+        }
+        if (mode == ArtMode::IMAGE) drawImageIfDue(); // safety net if info was shorter than the art
+    }
+
+private:
+    const AsciiArt& art;
+    const TerminalImage& image;
+    ArtMode mode;
+    int index;
+    bool imageDrawn;
+
+    int artHeight() const {
+        switch (mode) {
+            case ArtMode::ASCII: return art.getPaddingUp() + art.getHeight();
+            case ArtMode::IMAGE: return image.getPaddingUp() + image.getRowSpan();
+            default: return 0;
+        }
+    }
+
+    void printAndPad() {
+        if (mode == ArtMode::ASCII) printAsciiAndPad();
+        else if (mode == ArtMode::IMAGE) printImageAndPad();
+    }
+
+    void printAsciiAndPad() {
+        int upPad = art.getPaddingUp();
+        if (index < upPad) return;
+
+        int artIndex = index - upPad;
+        if (art.getPaddingLeft() > 0) std::cout << std::string(art.getPaddingLeft(), ' ');
+        int artH = art.getHeight();
+        int maxW = art.getMaxWidth();
+        int spacing = art.getSpacing();
+        if (artIndex < artH) {
+            std::cout << art.getLine(artIndex);
+            int curW = art.getLineWidth(artIndex);
+            if (curW < maxW) std::cout << std::string(maxW - curW, ' ');
+        } else if (maxW > 0) {
+            std::cout << std::string(maxW, ' ');
+        }
+        if (art.getPaddingRight() > 0) std::cout << std::string(art.getPaddingRight(), ' ');
+        if (spacing > 0) std::cout << std::string(spacing, ' ');
+    }
+
+     // Same mechanism as ASCII in every respect except one: no `spacing`
+    // term is added on top of the image's own width. ASCII adds a couple
+    // of spaces past `maxWidth` for aesthetic separation, because art is
+    // drawn from ordinary characters and its right edge is a glyph, not a
+    // boundary. An image is different: it is rasterised to an exact pixel
+    // width, and — because TerminalImage has already cropped away the
+    // transparent margins — its right edge IS the visible boundary. Any
+    // spacing added here would appear as unexplained gap between the
+    // image and the info column, with nothing on screen to justify it.
+    // So the reserved column width is exactly:
+    //
+    //     paddingLeft + colSpan + paddingRight
+    //
+    // With all three set to 0 in JSON, the info column begins at the very
+    // next terminal cell after the image's rightmost visible pixel.
+    //
+    // Unlike printAsciiAndPad(), this function does NOT return early while
+    // index < upPad. padding_up only controls when the image itself gets
+    // drawn — it pushes the picture down `upPad` rows before the block
+    // starts — it must never affect where the info column starts
+    // horizontally. gapWidth is the reserved column width for every row
+    // of the render, from line 0 onward, whether that row sits above the
+    // image, beside it, or below it. Returning early here used to skip
+    // printing the gap for the first `upPad` lines, leaving the header
+    // and top info lines flush against column 0 while every line after
+    // the image block was indented by gapWidth — a ragged left edge any
+    // time padding_up > 0.
+    //
+    // The image itself genuinely can't be threaded into the same
+    // character-by-character stream — a Sixel blob is one indivisible
+    // unit to the terminal's parser — so there's exactly one unavoidable
+    // departure from "just print forward": once the block we reserved is
+    // complete, hop up by image.getRowSpan() rows (a number WE already
+    // know, never queried from the terminal), draw into the space we just
+    // cleared, then hop back down by that same exact number. Two matched
+    // relative moves, nothing remembered or restored — that's the piece
+    // that was actually breaking (DECSC/DECRC save-and-restore doesn't
+    // reliably survive a large Sixel write on this terminal).
+    void printImageAndPad() {
+        int upPad    = image.getPaddingUp();
+        int rows     = image.getRowSpan();
+        int gapEnd   = upPad + rows;
+        int gapWidth = image.getPaddingLeft() + image.getColSpan()
+                     + image.getPaddingRight();
+
+        if (index >= gapEnd) {
+            // First call past the block triggers the actual Sixel draw.
+            drawImageIfDue();
+            // Fall through — we still reserve the column on every line
+            // after the block, exactly like the ASCII path reserves
+            // maxWidth spaces past the last art row. This is what keeps
+            // the info column pinned at the same X for the whole render.
+        }
+
+        if (gapWidth > 0) std::cout << std::string(gapWidth, ' ');
+    }
+
+    void drawImageIfDue() {
+        if (imageDrawn || !image.isLoaded()) return;
+        imageDrawn = true;
+
+        int rows = image.getRowSpan();
+        if (rows <= 0) return;
+
+        // We are currently at the bottom-left of the reserved block, i.e. the
+        // row where the *next* info line will be printed. Save that position
+        // now — before any Sixel bytes have been written — so it's guaranteed
+        // to be a sane, trustworthy cursor location.
+        std::cout << "\0337";                            // DECSC: save cursor
+
+        // Hop up to the top of the block and draw the Sixel there.
+        std::cout << "\033[" << rows << "A" << '\r';
+        int leftPad = image.getPaddingLeft();
+        if (leftPad > 0) std::cout << std::string(leftPad, ' ');
+        image.draw();                                    // raw Sixel payload
+
+        // Restore cursor with DECRC. This is the crucial change: we do NOT
+        // use a relative "down rows" move here. A Sixel payload is opaque to
+        // the terminal's cursor tracker (ConPTY may count its printable bytes
+        // as text and drift), so any relative move after the Sixel goes to
+        // the wrong row. DECRC unconditionally snaps us back to the exact
+        // position we saved, which is the one place we know is correct.
+        std::cout << "\0338";                            // DECRC: restore cursor
+        std::cout.flush();
+    }
+};
+
+
+//  ███╗   ███╗ █████╗ ██╗███╗   ██╗    ██████╗██████╗ ██████╗ 
+//  ████╗ ████║██╔══██╗██║████╗  ██║   ██╔════╝██╔══██╗██╔══██╗
+//  ██╔████╔██║███████║██║██╔██╗ ██║   ██║     ██████╔╝██████╔╝
+//  ██║╚██╔╝██║██╔══██║██║██║╚██╗██║   ██║     ██╔═══╝ ██╔═══╝ 
+//  ██║ ╚═╝ ██║██║  ██║██║██║ ╚████║   ╚██████╗██║     ██║     
+//  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝    ╚═════╝╚═╝     ╚═╝     
 int main(){
 
     
    #ifdef _WIN32
           SetConsoleOutputCP(CP_UTF8); // UTF-8 output on Windows console
+
+          // Enable VT/ANSI escape processing so 24-bit truecolor codes
+          // (from the JSON "colors" section) render correctly instead of
+          // printing as raw garbage on legacy conhost.exe consoles.
+          HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+          DWORD consoleMode = 0;
+          GetConsoleMode(hOut, &consoleMode);
+          SetConsoleMode(hOut, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
    #endif
 
 
-        // SIMPLIFIED ASCII ART LOADING 
-        // Just call loadFromFile() - it handles everything automatically!
-        // - Checks C:\Users\<User>\AppData\BinaryFetch\BinaryArt.txt
-        //      or, ~/.config/BinaryFetch/BinaryArt.txt
-        // - If missing, create a new file named "BinaryArts.txt" then paste the 
-        // default ASCII art based on distro and loads from there.
-        // - User can modify their art anytime from their config folder
-    AsciiArt art;
-    if (!art.loadFromFile()) {
-        cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
-        // Program continues even if art fails to load
-    }
 
-    // CONFIG MANAGEMENT 
-    // DEV_MODE = true  → load default JSON directly from project folder (fast iteration 🧪)
-    // DEV_MODE = false → production: read/create C:\Users\Public\BinaryFetch\BinaryFetch_Config.json 🛰️
-    //                    (self-heals from embedded EXE resource if the file is missing)
-    //                    NEVER overwrites an existing user config.
-    bool DEV_MODE = true; // ← set to true while developing, false before shipping
-    ConfigManager config(DEV_MODE);
+
+    // CONFIG MANAGEMENT----------------------------------------------------------------------------
+    // ConfigMode::Dev            → src\BinaryFetch\resources\Dev_jsonc\Dev_BinaryFetch_Config.jsonc
+    //                              (freely experiment, never embedded into the EXE)
+
+    // ConfigMode::ReleaseSource  → src\BinaryFetch\resources\Default_JSON_theme_windows_RC\
+    //                              Default_BinaryFetch_Config.jsonc — edit the actual shipping
+    //                              default directly. Needs a rebuild to reach a real production EXE.
+
+    // ConfigMode::Production     → C:\Users\Public\BinaryFetch\BinaryFetch_Config.jsonc
+    //                              (self-heals from embedded EXE resource 101 if missing.
+    //                              NEVER overwrites an existing user config.)
+
+    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed, set to Production before shipping
+    ConfigManager config(CONFIG_MODE);
+
+
+
+
     string r = config.getResetColor();
 
 	// Anyway....this is how we're allowed to print emojis in C++ console
     // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
+    // ART / IMAGE LOADING:
+    // Image mode is tried first (if enabled); ASCII is the fallback,
+    // both for a failed image load and for anyone who hasn't opted in.
+    AsciiArt art;
+    TerminalImage image;
+    ArtMode mode = ArtMode::NONE;
+
+    bool imageEnabled = config.getNestedBool("art", "Image.enabled", false);
+    bool asciiEnabled = config.getNestedBool("art", "Ascii_Art.enabled", true);
+
+    if (imageEnabled) {
+        image.setPadding(
+            config.getNestedInt("art", "Image.padding_up", 0),
+            config.getNestedInt("art", "Image.padding_left", 0),
+            config.getNestedInt("art", "Image.padding_right", 0));
+
+        image.setCellWidthPx(config.getNestedInt("art", "Image.cell_width_px", 0));
+        image.setCellHeightPx(config.getNestedInt("art", "Image.cell_height_px", 0));
+
+        bool ok = image.load(
+            config.getNestedString("art", "Image.image_path", ""),
+            config.getNestedInt("art", "Image.image_size_percentage", 100));
+
+        if (ok) {
+            mode = ArtMode::IMAGE;
+            //image.render();
+        } else {
+            cout << "Warning: image could not be loaded. Falling back to ASCII.\n";
+        }
+    }
+
+    if (mode == ArtMode::NONE && asciiEnabled) {
+        art.setPadding(
+            config.getNestedInt("art", "Ascii_Art.padding_up", 0),
+            config.getNestedInt("art", "Ascii_Art.padding_left", 0),
+            config.getNestedInt("art", "Ascii_Art.padding_right", 0));
+
+        art.setColorMap(config.getAsciiColorMap());
+
+        if (art.loadFromFile()) {
+            mode = ArtMode::ASCII;
+        } else {
+            cout << "Warning: ASCII art could not be loaded. Continuing without art.\n";
+        }
+    }
+
     // Create LivePrinter
-    LivePrinter lp(art);
+    LivePrinter lp(art, image, mode);
 
 
     // create objects of all classes here 
@@ -224,25 +445,24 @@ int main(){
 // ==================== HEADER BANNER ====================
 sections["header_settings"] = [&]() {
     if (!config.isEnabled("header_settings")) return;
-
     ostringstream ss;
-    string r = config.getResetColor();
-    
-    // Prefix - from JSON (e.g., "~>>")
-    ss << config.getColor("header_settings", "header_prefix_color" )
-       << config.getPrefix("header_settings", "header_prefix" ) << r;
-    
-    // Title - from JSON (e.g., "BinaryFetch")
-    ss << config.getColor("header_settings", "title_color")
-       << config.getLabel("header_settings", "title", "") << r;
-    
-    // Suffix - from JSON (e.g., "-------------------------*")
-    ss << config.getColor("header_settings", "header_suffix_color")
-       << config.getPrefix("header_settings", "header_suffix", "") << r;
-    
+    const string sec = "header_settings";
+
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
+
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", "") << r;
+
+    ss << config.getColor(sec, "suffix_color", "")
+       << config.getPrefix(sec, "suffix", "") << r;
+
     lp.push(ss.str());
 };
-
 
 
 
@@ -254,239 +474,187 @@ sections["header_settings"] = [&]() {
 //   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═╝   
 //                       C O M P A C T   M O D U L E S
 
-
 // ==================== COMPACT TIME ====================
 sections["compact_date_and_time"] = [&]() {
     if (!config.isEnabled("compact_date_and_time")) return;
     TimeInfo time;
     ostringstream ss;
+    const string sec = "compact_date_and_time";
 
-    // line spacing
-    int spacing = config.getNestedInt("compact_date_and_time","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
-    if (config.isFieldEnabled("compact_date_and_time", "prefixes.show")) {
-        ss << config.getColor("compact_date_and_time", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_date_and_time", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // ---- Register each orderable subsection as a named lambda ----
+    // ---- Generic label+value printer, reused by every sub-value ----
+    // Joining text (colons, dashes, brackets) is NOT a separate concept —
+    // it lives inside value.prefix / value.suffix of the field itself.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
+    // Prints only the group's own label (e.g. "Time: ")
+    auto printGroupLabel = [&](const string& group) {
+        ss << config.getColor(sec, group + ".label.prefix_color", "")
+           << config.getPrefix(sec, group + ".label.prefix", "") << r
+           << config.getColor(sec, group + ".label.color", "")
+           << config.getLabel(sec, group + ".label.text", "") << r
+           << config.getColor(sec, group + ".label.suffix_color", "")
+           << config.getPrefix(sec, group + ".label.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
-    // ---------- TIME SECTION ----------
+    // ---------- TIME ----------
     fields["time"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "time", "enabled")) return;
+        if (!config.getNestedBool(sec, "time.enabled", true)) return;
+        printGroupLabel("time");
 
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "time.open", "(") << r;
+        ostringstream v;
 
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "time", "label", "")
-               << config.getNestedString("compact_date_and_time", "time.label_text", "Time: ") << r;
+        if (config.getNestedBool(sec, "time.hour.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getHour();
+            printLV("time.hour", v.str());
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_hour")) {
-            ss << config.getNestedColor("compact_date_and_time", "time", "hour", "")
-               << setw(2) << setfill('0') << time.getHour() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "time.minute.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getMinute();
+            printLV("time.minute", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_minute")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
-            ss << config.getNestedColor("compact_date_and_time", "time", "minute", "")
-               << setw(2) << setfill('0') << time.getMinute() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "time.second.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getSecond();
+            printLV("time.second", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "time", "show_second")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "time", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "time.sep_text", ":") << r;
-            ss << config.getNestedColor("compact_date_and_time", "time", "second", "")
-               << setw(2) << setfill('0') << time.getSecond() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "time", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "time.close", ")") << r;
     };
 
-    // ---------- DATE SECTION ----------
+    // ---------- DATE ----------
     fields["date"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "date", "enabled")) return;
+        if (!config.getNestedBool(sec, "date.enabled", true)) return;
+        printGroupLabel("date");
 
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "date.open", "(") << r;
+        ostringstream v;
 
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "date", "label", "")
-               << config.getNestedString("compact_date_and_time", "date.label_text", "Date: ") << r;
+        if (config.getNestedBool(sec, "date.day.enabled", true)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getDay();
+            printLV("date.day", v.str());
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_day")) {
-            ss << config.getNestedColor("compact_date_and_time", "date", "day", "")
-               << setw(2) << setfill('0') << time.getDay() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.month_name.enabled", true)) {
+            printLV("date.month_name", time.getMonthName());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "month_name", "")
-               << time.getMonthName() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.month_num.enabled", false)) {
+            v.str(""); v << setw(2) << setfill('0') << time.getMonthNumber();
+            printLV("date.month_num", v.str());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_month_num")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "num_sep_color", "")
-                          << config.getNestedString("compact_date_and_time", "date.num_sep_text", " ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "month_num", "")
-               << setw(2) << setfill('0') << time.getMonthNumber() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "date.year.enabled", true)) {
+            printLV("date.year", std::to_string(time.getYearNumber()));
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "date", "show_year")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "date", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "date.sep_text", " : ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "date", "year", "")
-               << time.getYearNumber() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "date", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "date.close", ")") << r;
     };
 
-    // ---------- WEEK SECTION ----------
+    // ---------- WEEK ----------
     fields["week"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "week", "enabled")) return;
+        if (!config.getNestedBool(sec, "week.enabled", true)) return;
+        printGroupLabel("week");
 
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "week.open", "(") << r;
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "week", "label", "")
-               << config.getNestedString("compact_date_and_time", "week.label_text", "Week: ") << r;
+        if (config.getNestedBool(sec, "week.num.enabled", true)) {
+            printLV("week.num", std::to_string(time.getWeekNumber()));
         }
-
-        bool wrote = false;
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_num")) {
-            ss << config.getNestedColor("compact_date_and_time", "week", "num", "")
-               << time.getWeekNumber() << r;
-            wrote = true;
+        if (config.getNestedBool(sec, "week.day_name.enabled", true)) {
+            printLV("week.day_name", time.getDayName());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "week", "show_day_name")) {
-            if (wrote) ss << config.getNestedColor("compact_date_and_time", "week", "sep", "")
-                          << config.getNestedString("compact_date_and_time", "week.sep_text", " - ") << r;
-            ss << config.getNestedColor("compact_date_and_time", "week", "day_name", "")
-               << time.getDayName() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "week", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "week.close", ")") << r;
     };
 
-    // ---------- LEAP YEAR SECTION ----------
+    // ---------- LEAP YEAR ----------
     fields["leap_year"] = [&]() {
-        if (!config.isNestedEnabled("compact_date_and_time", "leap_year", "enabled")) return;
+        if (!config.getNestedBool(sec, "leap_year.enabled", true)) return;
+        printGroupLabel("leap_year");
 
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.open", "(") << r;
-
-        if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_label")) {
-            ss << config.getNestedColor("compact_date_and_time", "leap_year", "label", "")
-               << config.getNestedString("compact_date_and_time", "leap_year.label_text", "Leap Year: ") << r;
+        if (config.getNestedBool(sec, "leap_year.val.enabled", true)) {
+            printLV("leap_year.val", time.getLeapYear());
         }
-
-        if (config.isNestedEnabled("compact_date_and_time", "leap_year", "show_val")) {
-            ss << config.getNestedColor("compact_date_and_time", "leap_year", "val", "")
-               << time.getLeapYear() << r;
-        }
-
-        ss << config.getNestedColor("compact_date_and_time", "leap_year", "bracket", "")
-           << config.getNestedString("compact_date_and_time", "leap_year.close", ")") << r;
     };
 
-    // ---- Run subsections in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"time ", "date ", "week ", "leap_year"};
-    auto order = config.getStringArray("compact_date_and_time", "order", defaultOrder);
+        {"time", "date", "week", "leap_year"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
 
-
 // ==================== COMPACT OPERATING SYSTEM ====================
 sections["compact_operating_system"] = [&]() {
     if (!config.isEnabled("compact_operating_system")) return;
     ostringstream ss;
+    const string sec = "compact_operating_system";
 
-    // line spacing
-    int spacing = config.getNestedInt("compact_operating_system","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
-    if (config.isFieldEnabled("compact_operating_system", "prefixes.show")) {
-        ss << config.getColor("compact_operating_system", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_operating_system", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_operating_system", "label.color", "")
-       << config.getLabel("compact_operating_system", "label.text", "OS") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "OS") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_operating_system", "separator.color", "")
-       << config.getPrefix("compact_operating_system", "separator.text", ":") << " " << r;
+    // Same 5-key label/value printer as every other section.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["name"] = [&]() {
-        if (!config.isFieldEnabled("compact_operating_system", "fields.name.show")) return;
-        ss << config.getColor("compact_operating_system", "fields.name.value_color", "")
-           << c_os.getOSName() << r;
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_os.getOSName());
     };
 
     fields["build"] = [&]() {
-        if (!config.isFieldEnabled("compact_operating_system", "fields.build.show")) return;
-        ss << config.getColor("compact_operating_system", "fields.build.value_color", "")
-           << c_os.getOSBuild() << r;
+        if (!config.getNestedBool(sec, "build.enabled", true)) return;
+        printLV("build", c_os.getOSBuild());
     };
 
     fields["arch"] = [&]() {
-        if (!config.isFieldEnabled("compact_operating_system", "fields.arch.show")) return;
-        ss << config.getColor("compact_operating_system", "brackets.color", "")
-           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
-           << config.getColor("compact_operating_system", "fields.arch.value_color", "")
-           << c_os.getArchitecture() << r
-           << config.getColor("compact_operating_system", "brackets.color", "")
-           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "arch.enabled", true)) return;
+        printLV("arch", c_os.getArchitecture());
     };
 
     fields["uptime"] = [&]() {
-        if (!config.isFieldEnabled("compact_operating_system", "fields.uptime.show")) return;
-        ss << config.getColor("compact_operating_system", "brackets.color", "")
-           << config.getPrefix("compact_operating_system", "brackets.open", "(") << r
-           << config.getColor("compact_operating_system", "fields.uptime.label_color", "")
-           << config.getLabel("compact_operating_system", "fields.uptime.label", "uptime: ") << r
-           << config.getColor("compact_operating_system", "fields.uptime.value_color", "")
-           << c_os.getUptime() << r
-           << config.getColor("compact_operating_system", "brackets.color", "")
-           << config.getPrefix("compact_operating_system", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "uptime.enabled", true)) return;
+        printLV("uptime", c_os.getUptime());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"name ", "build", "arch ", "uptime"};
-    auto order = config.getStringArray("compact_operating_system", "order", defaultOrder);
+        {"name", " ", "build", " ", "arch", " ", "uptime"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -497,76 +665,73 @@ sections["compact_operating_system"] = [&]() {
 sections["compact_processor"] = [&]() {
     if (!config.isEnabled("compact_processor")) return;
     ostringstream ss;
+    const string sec = "compact_processor";
 
-    int spacing = config.getNestedInt("compact_processor","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    if (config.isFieldEnabled("compact_processor", "prefixes.show")) {
-        ss << config.getColor("compact_processor", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_processor", "prefixes.prefix", "") << r;
-    }
+    // Section prefix — bare prefix is allowed ONLY here, at depth 0.
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    ss << config.getColor("compact_processor", "label.color", "")
-       << config.getLabel("compact_processor", "label.text", "CPU") << r;
+    // Section label ("CPU: ") — same label shape as everywhere else.
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "CPU") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    ss << config.getColor("compact_processor", "separator.color", "")
-       << config.getPrefix("compact_processor", "separator.text", ":") << " " << r;
+    // Generic label+value printer — identical shape to compact_date_and_time.
+    // Brackets, dividers, @-symbols and units are not special concepts:
+    // they live in whichever neighbouring field touches them.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
 
     std::map<std::string, std::function<void()>> fields;
 
+fields["cores"] = [&]() {
+    if (!config.getNestedBool(sec, "cores.enabled", true)) return;
+    ostringstream v;
+    v << c_cpu.getCPUCores();
+    printLV("cores", v.str());
+};
+
+fields["threads"] = [&]() {
+    if (!config.getNestedBool(sec, "threads.enabled", true)) return;
+    ostringstream v;
+    v << c_cpu.getCPUThreads();
+    printLV("threads", v.str());
+};
+
     fields["name"] = [&]() {
-        if (!config.isFieldEnabled("compact_processor", "fields.name.show")) return;
-        ss << config.getColor("compact_processor", "fields.name.value_color", "")
-           << c_cpu.getCPUName() << r;
-        // no trailing space here anymore — "order" controls it now
-    };
-
-    fields["cores_threads"] = [&]() {
-        bool showCores = config.isFieldEnabled("compact_processor", "fields.cores.show");
-        bool showThreads = config.isFieldEnabled("compact_processor", "fields.threads.show");
-        if (!showCores && !showThreads) return;
-
-        ss << config.getColor("compact_processor", "brackets.color", "")
-           << config.getPrefix("compact_processor", "brackets.open", "(") << r;
-
-        if (showCores) {
-            ss << config.getColor("compact_processor", "fields.cores.value_color", "")
-               << c_cpu.getCPUCores() << r
-               << config.getColor("compact_processor", "fields.cores.value_suffix_color", "")
-               << config.getLabel("compact_processor", "fields.cores.value_suffix", "C") << r;
-        }
-
-        if (showCores && showThreads) {
-            ss << config.getColor("compact_processor", "separator.divider_color", "")
-               << config.getPrefix("compact_processor", "separator.divider", "/") << r;
-        }
-
-        if (showThreads) {
-            ss << config.getColor("compact_processor", "fields.threads.value_color", "")
-               << c_cpu.getCPUThreads() << r
-               << config.getColor("compact_processor", "fields.threads.value_suffix_color", "")
-               << config.getLabel("compact_processor", "fields.threads.value_suffix", "T") << r;
-        }
-
-        ss << config.getColor("compact_processor", "brackets.color", "")
-           << config.getPrefix("compact_processor", "brackets.close", ")") << r;
-        // no trailing space here anymore
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_cpu.getCPUName());
     };
 
     fields["clock"] = [&]() {
-        if (!config.isFieldEnabled("compact_processor", "fields.clock.show")) return;
-        ss << fixed << setprecision(2)
-           << config.getColor("compact_processor", "fields.clock.at_symbol_color", "")
-           << config.getLabel("compact_processor", "fields.clock.at_symbol", "@") << r
-           << config.getColor("compact_processor", "fields.clock.value_color", "") << " "
-           << c_cpu.getClockSpeed()
-           << config.getColor("compact_processor", "fields.clock.unit_color", "")
-           << config.getLabel("compact_processor", "fields.clock.unit", " GHz") << r;
+        if (!config.getNestedBool(sec, "clock.enabled", true)) return;
+        ostringstream v;
+        v << fixed << setprecision(2) << c_cpu.getClockSpeed();
+        printLV("clock", v.str());
     };
 
     static const std::vector<std::string> defaultOrder =
-        {"cores_threads ", "name ", "clock"};
-    auto order = config.getStringArray("compact_processor", "order", defaultOrder);
+        {"cores", "threads", " ", "name", " ", "clock"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -577,74 +742,68 @@ sections["compact_processor"] = [&]() {
 sections["compact_graphics_card"] = [&]() {
     if (!config.isEnabled("compact_graphics_card")) return;
     ostringstream ss;
+    const string sec = "compact_graphics_card";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_graphics_card","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON (can be emoji, text, or empty)
-    if (config.isFieldEnabled("compact_graphics_card", "prefixes.show")) {
-        ss << config.getColor("compact_graphics_card", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_graphics_card", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_graphics_card", "label.color", "")
-       << config.getLabel("compact_graphics_card", "label.text", "GPU") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "GPU") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_graphics_card", "separator.color", "")
-       << config.getPrefix("compact_graphics_card", "separator.text", ":") << " " << r;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["name"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.name.show")) return;
-        ss << config.getColor("compact_graphics_card", "fields.name.value_color", "")
-           << c_gpu.getGPUName() << r;
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_gpu.getGPUName());
     };
 
     fields["usage"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.usage.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.usage.value_color", "")
-           << c_gpu.getGPUUsagePercent()
-           << config.getColor("compact_graphics_card", "fields.usage.unit_color", "")
-           << config.getLabel("compact_graphics_card", "fields.usage.unit", "%") << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "usage.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getGPUUsagePercent();
+        printLV("usage", v.str());
     };
 
     fields["vram"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.vram.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.vram.value_color", "")
-           << c_gpu.getVRAMGB()
-           << config.getColor("compact_graphics_card", "fields.vram.unit_color", "")
-           << config.getLabel("compact_graphics_card", "fields.vram.unit", " GB") << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "vram.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getVRAMGB();
+        printLV("vram", v.str());
     };
 
     fields["freq"] = [&]() {
-        if (!config.isFieldEnabled("compact_graphics_card", "fields.freq.show")) return;
-        ss << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.open", "(") << r
-           << config.getColor("compact_graphics_card", "fields.freq.at_symbol_color", "")
-           << config.getLabel("compact_graphics_card", "fields.freq.at_symbol", "@") << r
-           << config.getColor("compact_graphics_card", "fields.freq.value_color", "")
-           << c_gpu.getGPUFrequency() << r
-           << config.getColor("compact_graphics_card", "brackets.color", "")
-           << config.getPrefix("compact_graphics_card", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "freq.enabled", true)) return;
+        ostringstream v;
+        v << c_gpu.getGPUFrequency();
+        printLV("freq", v.str());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"name ", "usage ", "vram ", "freq"};
-    auto order = config.getStringArray("compact_graphics_card", "order", defaultOrder);
+        {"name", " ", "usage", " ", "vram", " ", "freq"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -656,106 +815,95 @@ sections["compact_display_monitor"] = [&]() {
     if (!config.isEnabled("compact_display_monitor")) return;
     CompactScreen screenDetector;
     auto screens = screenDetector.getScreens();
+    const string sec = "compact_display_monitor";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_display_monitor","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
     if (screens.empty()) {
         ostringstream ss;
-        ss << config.getColor("compact_display_monitor", "header.text_color", "")
-           << config.getLabel("compact_display_monitor", "header.text", "Display") << r
-           << config.getColor("compact_display_monitor", "header.separator_color", "")
-           << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r
-           << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-           << config.getLabel("compact_display_monitor", "no_displays_text", "No displays detected") << r;
+        ss << config.getColor(sec, "prefix_color", "")
+           << config.getPrefix(sec, "prefix", "") << r
+           << config.getColor(sec, "label.color", "")
+           << config.getLabel(sec, "label.text", "Display") << r
+           << config.getColor(sec, "label.suffix_color", "")
+           << config.getPrefix(sec, "label.suffix", ": ") << r
+           << config.getColor(sec, "no_displays.color", "")
+           << config.getLabel(sec, "no_displays.text", "No displays detected") << r;
         lp.push(ss.str());
         return;
     }
+
+    // Same 5-key label/value printer as everywhere else.
+    auto printLV = [&](ostringstream& ss, const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
+
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
 
     for (size_t i = 0; i < screens.size(); ++i) {
         const auto& screen = screens[i];
         ostringstream ss;
 
-        // Prefix - comes entirely from JSON
-        if (config.isFieldEnabled("compact_display_monitor", "prefixes.show")) {
-            ss << config.getColor("compact_display_monitor", "prefixes.prefix_color", "")
-               << config.getPrefix("compact_display_monitor", "prefixes.prefix", "") << r;
-        }
+        ss << config.getColor(sec, "prefix_color", "")
+           << config.getPrefix(sec, "prefix", "") << r;
 
-        // Header: Display N:
-        ss << config.getColor("compact_display_monitor", "header.text_color", "")
-           << config.getLabel("compact_display_monitor", "header.text", "Display") << " " << (i + 1) << r
-           << config.getColor("compact_display_monitor", "header.separator_color", "")
-           << config.getPrefix("compact_display_monitor", "header.separator", ":") << " " << r;
+        // "Display N: " — the " N" is a runtime index and stays in C++.
+        ss << config.getColor(sec, "label.color", "")
+           << config.getLabel(sec, "label.text", "Display ") << (i + 1) << r
+           << config.getColor(sec, "label.suffix_color", "")
+           << config.getPrefix(sec, "label.suffix", "") << r;
 
-        // ---- Register each orderable field as a named lambda ----
         std::map<std::string, std::function<void()>> fields;
 
         fields["name"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.name.show")) return;
-            ss << config.getColor("compact_display_monitor", "fields.name.value_color", "")
-               << screen.name << r;
+            if (!config.getNestedBool(sec, "name.enabled", true)) return;
+            printLV(ss, "name", screen.name);
         };
 
-        fields["resolution"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.resolution.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-               << screen.native_width << r
-               << config.getColor("compact_display_monitor", "fields.resolution.x_color", "")
-               << config.getLabel("compact_display_monitor", "fields.resolution.x_symbol", " x ") << r
-               << config.getColor("compact_display_monitor", "fields.resolution.value_color", "")
-               << screen.native_height << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+        fields["resolution_w"] = [&]() {
+            if (!config.getNestedBool(sec, "resolution_w.enabled", true)) return;
+            ostringstream v; v << screen.native_width;
+            printLV(ss, "resolution_w", v.str());
+        };
+
+        fields["resolution_h"] = [&]() {
+            if (!config.getNestedBool(sec, "resolution_h.enabled", true)) return;
+            ostringstream v; v << screen.native_height;
+            printLV(ss, "resolution_h", v.str());
         };
 
         fields["scale"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.scale.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.scale.label_color", "")
-               << config.getLabel("compact_display_monitor", "fields.scale.label", "Scale: ") << r
-               << config.getColor("compact_display_monitor", "fields.scale.value_color", "")
-               << screen.scale_percent
-               << config.getColor("compact_display_monitor", "fields.scale.unit_color", "")
-               << config.getLabel("compact_display_monitor", "fields.scale.unit", "%") << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "scale.enabled", true)) return;
+            ostringstream v; v << screen.scale_percent;
+            printLV(ss, "scale", v.str());
         };
 
         fields["upscale"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.upscale.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.upscale.label_color", "")
-               << config.getLabel("compact_display_monitor", "fields.upscale.label", "upscale: ") << r
-               << config.getColor("compact_display_monitor", "fields.upscale.value_color", "")
-               << screen.upscale << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "upscale.enabled", false)) return;
+            ostringstream v; v << screen.upscale;
+            printLV(ss, "upscale", v.str());
         };
 
         fields["refresh"] = [&]() {
-            if (!config.isFieldEnabled("compact_display_monitor", "fields.refresh.show")) return;
-            ss << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.open", "(") << r
-               << config.getColor("compact_display_monitor", "fields.refresh.at_symbol_color", "")
-               << config.getLabel("compact_display_monitor", "fields.refresh.at_symbol", "@") << r
-               << config.getColor("compact_display_monitor", "fields.refresh.value_color", "")
-               << screen.refresh_rate
-               << config.getColor("compact_display_monitor", "fields.refresh.unit_color", "")
-               << config.getLabel("compact_display_monitor", "fields.refresh.unit", "Hz") << r
-               << config.getColor("compact_display_monitor", "brackets.color", "")
-               << config.getPrefix("compact_display_monitor", "brackets.close", ")") << r;
+            if (!config.getNestedBool(sec, "refresh.enabled", true)) return;
+            ostringstream v; v << screen.refresh_rate;
+            printLV(ss, "refresh", v.str());
         };
 
-        // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
         static const std::vector<std::string> defaultOrder =
-            {"name ", "resolution ", "scale ", "upscale ", "refresh"};
-        auto order = config.getStringArray("compact_display_monitor", "order", defaultOrder);
+            {"name", "", "resolution_w", "resolution_h", "", "scale", "", "upscale", "", "refresh"};
+        auto order = config.getStringArray(sec, "order", defaultOrder);
 
         runOrderedFields(order, fields, ss);
 
@@ -767,230 +915,192 @@ sections["compact_display_monitor"] = [&]() {
 sections["compact_system_memory"] = [&]() {
     if (!config.isEnabled("compact_system_memory")) return;
     ostringstream ss;
+    const string sec = "compact_system_memory";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_system_memory","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - comes entirely from JSON
-    if (config.isFieldEnabled("compact_system_memory", "prefixes.show")) {
-        ss << config.getColor("compact_system_memory", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_system_memory", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_system_memory", "label.color", "")
-       << config.getLabel("compact_system_memory", "label.text", "Memory") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "Memory") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_system_memory", "separator.color", "")
-       << config.getPrefix("compact_system_memory", "separator.text", ":") << " " << r;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["total"] = [&]() {
-        if (!config.isFieldEnabled("compact_system_memory", "fields.total.show")) return;
-        ss << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
-           << config.getColor("compact_system_memory", "fields.total.label_color", "")
-           << config.getLabel("compact_system_memory", "fields.total.label", "total: ") << r
-           << config.getColor("compact_system_memory", "fields.total.value_color", "")
-           << c_memory.get_total_memory()
-           << config.getColor("compact_system_memory", "fields.total.unit_color", "")
-           << config.getLabel("compact_system_memory", "fields.total.unit", " GB") << r
-           << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "total.enabled", true)) return;
+        ostringstream v; v << c_memory.get_total_memory();
+        printLV("total", v.str());
     };
 
     fields["free"] = [&]() {
-        if (!config.isFieldEnabled("compact_system_memory", "fields.free.show")) return;
-        ss << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
-           << config.getColor("compact_system_memory", "fields.free.label_color", "")
-           << config.getLabel("compact_system_memory", "fields.free.label", "free: ") << r
-           << config.getColor("compact_system_memory", "fields.free.value_color", "")
-           << c_memory.get_free_memory()
-           << config.getColor("compact_system_memory", "fields.free.unit_color", "")
-           << config.getLabel("compact_system_memory", "fields.free.unit", " GB") << r
-           << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "free.enabled", true)) return;
+        ostringstream v; v << c_memory.get_free_memory();
+        printLV("free", v.str());
     };
 
     fields["percent"] = [&]() {
-        if (!config.isFieldEnabled("compact_system_memory", "fields.percent.show")) return;
-        ss << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.open", "(") << r
-           << config.getColor("compact_system_memory", "fields.percent.value_color", "")
-           << c_memory.get_used_memory_percent()
-           << config.getColor("compact_system_memory", "fields.percent.unit_color", "")
-           << config.getLabel("compact_system_memory", "fields.percent.unit", "%") << r
-           << config.getColor("compact_system_memory", "brackets.color", "")
-           << config.getPrefix("compact_system_memory", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "percent.enabled", true)) return;
+        ostringstream v; v << c_memory.get_used_memory_percent();
+        printLV("percent", v.str());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"total ", "free ", "percent"};
-    auto order = config.getStringArray("compact_system_memory", "order", defaultOrder);
+        {"total", " ", "free", " ", "percent"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
 
-// ==================== COMPACT AUDIO ====================
 sections["compact_audio_devices"] = [&]() {
     if (!config.isEnabled("compact_audio_devices")) return;
+    const string sec = "compact_audio_devices";
 
-    // ---- Register each orderable device-line as a named lambda ----
+    auto printLabelOnly = [&](ostringstream& ss, const string& path) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r;
+    };
+
+    auto printValueOnly = [&](ostringstream& ss, const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["input"] = [&]() {
-        if (!config.isFieldEnabled("compact_audio_devices", "input.show")) return;
+        if (!config.getNestedBool(sec, "input.enabled", true)) return;
         ostringstream ss;
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_audio_devices","input.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
+        int spacing = config.getNestedInt(sec, "input.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-        // Input prefix - from JSON
-        if (config.isFieldEnabled("compact_audio_devices", "input.prefixes.show")) {
-            ss << config.getColor("compact_audio_devices", "input.prefixes.prefix_color", "")
-               << config.getPrefix("compact_audio_devices", "input.prefixes.prefix", "") << r;
-        }
-
-        // Input label
-        ss << config.getColor("compact_audio_devices", "input.label.color", "")
-           << config.getLabel("compact_audio_devices", "input.label.text", "Audio Input") << r;
-
-        // Input separator
-        ss << config.getColor("compact_audio_devices", "input.separator.color", "")
-           << config.getPrefix("compact_audio_devices", "input.separator.text", ":") << " " << r;
-
-        // Input device name
-        ss << config.getColor("compact_audio_devices", "input.device_color", "")
-           << c_audio.active_audio_input() << r << " ";
-
-        // Input status
-        ss << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "input.status_bracket_open", "[") << r
-           << config.getColor("compact_audio_devices", "input.status_color", "")
-           << c_audio.active_audio_input_status() << r
-           << config.getColor("compact_audio_devices", "input.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "input.status_bracket_close", "]") << r;
+        printLabelOnly(ss, "input");
+        printValueOnly(ss, "input.device", c_audio.active_audio_input());
+        printValueOnly(ss, "input.status", c_audio.active_audio_input_status());
 
         lp.push(ss.str());
     };
 
     fields["output"] = [&]() {
-        if (!config.isFieldEnabled("compact_audio_devices", "output.show")) return;
+        if (!config.getNestedBool(sec, "output.enabled", true)) return;
         ostringstream ss;
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_audio_devices","output.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
+        int spacing = config.getNestedInt(sec, "output.top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-        // Output prefix - from JSON
-        if (config.isFieldEnabled("compact_audio_devices", "output.prefixes.show")) {
-            ss << config.getColor("compact_audio_devices", "output.prefixes.prefix_color", "")
-               << config.getPrefix("compact_audio_devices", "output.prefixes.prefix", "") << r;
-        }
-
-        // Output label
-        ss << config.getColor("compact_audio_devices", "output.label.color", "")
-           << config.getLabel("compact_audio_devices", "output.label.text", "Audio Output") << r;
-
-        // Output separator
-        ss << config.getColor("compact_audio_devices", "output.separator.color", "")
-           << config.getPrefix("compact_audio_devices", "output.separator.text", ":") << " " << r;
-
-        // Output device name
-        ss << config.getColor("compact_audio_devices", "output.device_color", "")
-           << c_audio.active_audio_output() << r << " ";
-
-        // Output status
-        ss << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "output.status_bracket_open", "[") << r
-           << config.getColor("compact_audio_devices", "output.status_color", "")
-           << c_audio.active_audio_output_status() << r
-           << config.getColor("compact_audio_devices", "output.status_brackets_color", "")
-           << config.getNestedString("compact_audio_devices", "output.status_bracket_close", "]") << r;
+        printLabelOnly(ss, "output");
+        printValueOnly(ss, "output.device", c_audio.active_audio_output());
+        printValueOnly(ss, "output.status", c_audio.active_audio_output_status());
 
         lp.push(ss.str());
     };
 
-    // ---- Run device-lines in the order JSON specifies ----
-    static const std::vector<std::string> defaultOrder =
-        {"input", "output"};
-    auto order = config.getStringArray("compact_audio_devices", "order", defaultOrder);
+    static const std::vector<std::string> defaultOrder = {"input", "output"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     for (const auto& key : order) {
         auto it = fields.find(key);
         if (it != fields.end()) it->second();
     }
-};
+};   
 
 // ==================== COMPACT PERFORMANCE ====================
 sections["compact_resource_usage"] = [&]() {
     if (!config.isEnabled("compact_resource_usage")) return;
     ostringstream ss;
+    const string sec = "compact_resource_usage";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_resource_usage","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_resource_usage", "prefixes.show")) {
-        ss << config.getColor("compact_resource_usage", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_resource_usage", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_resource_usage", "label.color", "")
-       << config.getLabel("compact_resource_usage", "label.text", "Performance") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "Performance") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_resource_usage", "separator.color", "")
-       << config.getPrefix("compact_resource_usage", "separator.text", ":") << r
-       << config.getColor("compact_resource_usage", "separator.suffix_color", "")
-       << config.getPrefix("compact_resource_usage", "separator.suffix", " ") << r;
+    // Each stat is one "(Label: value%)" block — same 5-key shape.
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // Generic helper: prints one bracketed "(Label: value%)" stat block, fully JSON-driven per field
-    auto addPerf = [&](const string& field, auto val) {
-        if (!config.isFieldEnabled("compact_resource_usage", "fields." + field + ".show")) return;
-
-        ss << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_open", "(") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".label_color", "")
-           << config.getLabel("compact_resource_usage", "fields." + field + ".label", field) << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".label_suffix_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".label_suffix", ": ") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".value_color", "")
-           << val << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".unit_color", "")
-           << config.getLabel("compact_resource_usage", "fields." + field + ".unit", "%") << r
-
-           << config.getColor("compact_resource_usage", "fields." + field + ".bracket_color", "")
-           << config.getPrefix("compact_resource_usage", "fields." + field + ".bracket_close", ")") << r;
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
     };
 
-    // ---- Register each orderable stat as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    fields["cpu"]  = [&]() { addPerf("cpu",  c_perf.getCPUUsage()); };
-    fields["gpu"]  = [&]() { addPerf("gpu",  c_perf.getGPUUsage()); };
-    fields["ram"]  = [&]() { addPerf("ram",  c_perf.getRAMUsage()); };
-    fields["disk"] = [&]() { addPerf("disk", c_perf.getDiskUsage()); };
+    fields["cpu"] = [&]() {
+        if (!config.getNestedBool(sec, "cpu.enabled", true)) return;
+        ostringstream v; v << c_perf.getCPUUsage();
+        printLV("cpu", v.str());
+    };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    fields["gpu"] = [&]() {
+        if (!config.getNestedBool(sec, "gpu.enabled", true)) return;
+        ostringstream v; v << c_perf.getGPUUsage();
+        printLV("gpu", v.str());
+    };
+
+    fields["ram"] = [&]() {
+        if (!config.getNestedBool(sec, "ram.enabled", true)) return;
+        ostringstream v; v << c_perf.getRAMUsage();
+        printLV("ram", v.str());
+    };
+
+    fields["disk"] = [&]() {
+        if (!config.getNestedBool(sec, "disk.enabled", true)) return;
+        ostringstream v; v << c_perf.getDiskUsage();
+        printLV("disk", v.str());
+    };
+
     static const std::vector<std::string> defaultOrder =
-        {"cpu ", "gpu ", "ram ", "disk"};
-    auto order = config.getStringArray("compact_resource_usage", "order", defaultOrder);
+        {"cpu", " ", "gpu", " ", "ram", " ", "disk"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -1001,126 +1111,119 @@ sections["compact_resource_usage"] = [&]() {
 sections["compact_user_account"] = [&]() {
     if (!config.isEnabled("compact_user_account")) return;
     ostringstream ss;
+    const string sec = "compact_user_account";
 
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_user_account","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_user_account", "prefixes.show")) {
-        ss << config.getColor("compact_user_account", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_user_account", "prefixes.prefix", "") << r;
-    }
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Label
-    ss << config.getColor("compact_user_account", "label.color", "")
-       << config.getLabel("compact_user_account", "label.text", "User") << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "User") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Separator
-    ss << config.getColor("compact_user_account", "separator.color", "")
-       << config.getPrefix("compact_user_account", "separator.text", ":") << " " << r;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-    // ---- Register each orderable field as a named lambda ----
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
     std::map<std::string, std::function<void()>> fields;
 
     fields["username"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.username.show")) return;
-        ss << config.getColor("compact_user_account", "fields.username.prefix_color", "")
-           << config.getPrefix("compact_user_account", "fields.username.prefix", "@") << r
-           << config.getColor("compact_user_account", "fields.username.value_color", "")
-           << c_user.getUsername() << r;
+        if (!config.getNestedBool(sec, "username.enabled", true)) return;
+        printLV("username", c_user.getUsername());
     };
 
     fields["domain"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.domain.show")) return;
-        ss << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "fields.domain.label_color", "")
-           << config.getLabel("compact_user_account", "fields.domain.label", "Domain: ") << r
-           << config.getColor("compact_user_account", "fields.domain.value_color", "")
-           << c_user.getDomain() << r
-           << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "domain.enabled", true)) return;
+        printLV("domain", c_user.getDomain());
     };
 
     fields["type"] = [&]() {
-        if (!config.isFieldEnabled("compact_user_account", "fields.type.show")) return;
-        ss << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.open", "(") << r
-           << config.getColor("compact_user_account", "fields.type.label_color", "")
-           << config.getLabel("compact_user_account", "fields.type.label", "Type: ") << r
-           << config.getColor("compact_user_account", "fields.type.value_color", "")
-           << c_user.isAdmin() << r
-           << config.getColor("compact_user_account", "brackets.color", "")
-           << config.getPrefix("compact_user_account", "brackets.close", ")") << r;
+        if (!config.getNestedBool(sec, "type.enabled", true)) return;
+        printLV("type", c_user.isAdmin());
     };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
     static const std::vector<std::string> defaultOrder =
-        {"username ", "domain ", "type"};
-    auto order = config.getStringArray("compact_user_account", "order", defaultOrder);
+        {"username", " ", "domain", " ", "type"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
     lp.push(ss.str());
 };
 
+
 // ==================== COMPACT NETWORK ====================
 sections["compact_network_connection"] = [&]() {
     if (!config.isEnabled("compact_network_connection")) return;
-
-    // line spacing json driven
-    int spacing = config.getNestedInt("compact_network_connection","top_line_spacing",0);
-    for (int n = 0; n < spacing; n++) {lp.push("");}
-
     ostringstream ss;
+    const string sec = "compact_network_connection";
 
-    // Prefix - from JSON
-    if (config.isFieldEnabled("compact_network_connection", "prefixes.show")) {
-        ss << config.getColor("compact_network_connection", "prefixes.prefix_color", "")
-           << config.getPrefix("compact_network_connection", "prefixes.prefix", "") << r;
-    }
+    int spacing = config.getNestedInt(sec, "top_line_spacing", 0);
+    for (int n = 0; n < spacing; n++) { lp.push(""); }
 
-    // Label
-    ss << config.getColor("compact_network_connection", "label.color", "")
-       << config.getLabel("compact_network_connection", "label.text", "Network") << r;
+    ss << config.getColor(sec, "prefix_color", "")
+       << config.getPrefix(sec, "prefix", "") << r;
 
-    // Separator
-    ss << config.getColor("compact_network_connection", "separator.color", "")
-       << config.getPrefix("compact_network_connection", "separator.text", ":") << " " << r;
+    ss << config.getColor(sec, "label.prefix_color", "")
+       << config.getPrefix(sec, "label.prefix", "") << r
+       << config.getColor(sec, "label.color", "")
+       << config.getLabel(sec, "label.text", "Network") << r
+       << config.getColor(sec, "label.suffix_color", "")
+       << config.getPrefix(sec, "label.suffix", ": ") << r;
 
-    // Generic helper: prints one bracketed "(Label: value)" block, fully JSON-driven per field
-    auto addNetField = [&](const string& field, const string& value) {
-        if (!config.isFieldEnabled("compact_network_connection", "fields." + field + ".show")) return;
+    auto printLV = [&](const string& path, const string& value) {
+        ss << config.getColor(sec, path + ".label.prefix_color", "")
+           << config.getPrefix(sec, path + ".label.prefix", "") << r
+           << config.getColor(sec, path + ".label.color", "")
+           << config.getLabel(sec, path + ".label.text", "") << r
+           << config.getColor(sec, path + ".label.suffix_color", "")
+           << config.getPrefix(sec, path + ".label.suffix", "") << r
 
-        ss << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_open", "(")
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".label", "")
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".label_suffix_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".label_suffix", "")
-           << r
-           << config.getColor("compact_network_connection", "fields." + field + ".value_color", "")
-           << value
-           << r
-           << config.getNestedColor("compact_network_connection", "fields." + field + ".bracket_color", "")
-           << config.getNestedString("compact_network_connection", "fields." + field + ".bracket_close", ")")
-           << r;
+           << config.getColor(sec, path + ".value.prefix_color", "")
+           << config.getPrefix(sec, path + ".value.prefix", "") << r
+           << config.getColor(sec, path + ".value.color", "")
+           << value << r
+           << config.getColor(sec, path + ".value.suffix_color", "")
+           << config.getPrefix(sec, path + ".value.suffix", "") << r;
     };
 
-    // ---- Register each orderable field as a named lambda ----
     std::map<std::string, std::function<void()>> fields;
 
-    fields["name"] = [&]() { addNetField("name", c_net.get_network_name()); };
-    fields["type"] = [&]() { addNetField("type", c_net.get_network_type()); };
-    fields["ip"]   = [&]() { addNetField("ip",   c_net.get_network_ip()); };
+    fields["name"] = [&]() {
+        if (!config.getNestedBool(sec, "name.enabled", true)) return;
+        printLV("name", c_net.get_network_name());
+    };
 
-    // ---- Run fields in the order JSON specifies, with spacing controlled by trailing spaces in each entry ----
+    fields["type"] = [&]() {
+        if (!config.getNestedBool(sec, "type.enabled", true)) return;
+        printLV("type", c_net.get_network_type());
+    };
+
+    fields["ip"] = [&]() {
+        if (!config.getNestedBool(sec, "ip.enabled", true)) return;
+        printLV("ip", c_net.get_network_ip());
+    };
+
     static const std::vector<std::string> defaultOrder =
-        {"name ", "type ", "ip"};
-    auto order = config.getStringArray("compact_network_connection", "order", defaultOrder);
+        {"name", " ", "type", " ", "ip"};
+    auto order = config.getStringArray(sec, "order", defaultOrder);
 
     runOrderedFields(order, fields, ss);
 
@@ -1130,107 +1233,58 @@ sections["compact_network_connection"] = [&]() {
 // ==================== COMPACT DISK ====================
 sections["compact_disk_storage"] = [&]() {
     if (!config.isEnabled("compact_disk_storage")) return;
+    const string sec = "compact_disk_storage";
+
+    auto printLV = [&](ostringstream& out, const string& path, const string& value) {
+        out << config.getColor(sec, path + ".value.prefix_color", "")
+            << config.getPrefix(sec, path + ".value.prefix", "") << r
+            << config.getColor(sec, path + ".value.color", "")
+            << value << r
+            << config.getColor(sec, path + ".value.suffix_color", "")
+            << config.getPrefix(sec, path + ".value.suffix", "") << r;
+    };
+
+    auto printHeader = [&](ostringstream& out, const string& group,
+                           const string& defaultText) {
+        int spacing = config.getNestedInt(sec, group + ".top_line_spacing", 0);
+        for (int n = 0; n < spacing; n++) { lp.push(""); }
+
+        out << config.getColor(sec, group + ".prefix_color", "")
+            << config.getPrefix(sec, group + ".prefix", "") << r
+            << config.getColor(sec, group + ".label.prefix_color", "")
+            << config.getPrefix(sec, group + ".label.prefix", "") << r
+            << config.getColor(sec, group + ".label.color", "")
+            << config.getLabel(sec, group + ".label.text", defaultText) << r
+            << config.getColor(sec, group + ".label.suffix_color", "")
+            << config.getPrefix(sec, group + ".label.suffix", ": ") << r;
+    };
 
     // ---------- DISK USAGE ----------
-    if (config.isFieldEnabled("compact_disk_storage", "usage.show")) {
+    if (config.getNestedBool(sec, "usage.enabled", true)) {
         auto disks = disk.getAllDiskUsage();
         ostringstream ss;
+        printHeader(ss, "usage", "Disk Usage");
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_disk_storage","top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Usage prefix - from JSON
-        if (config.isFieldEnabled("compact_disk_storage", "usage.prefixes.show")) {
-            ss << config.getColor("compact_disk_storage", "usage.prefixes.prefix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.prefixes.prefix", "") << r;
-        }
-
-        // Usage label
-        ss << config.getColor("compact_disk_storage", "usage.label.color", "")
-           << config.getLabel("compact_disk_storage", "usage.label.text", "Disk Usage") << r;
-
-        // Usage separator
-        ss << config.getColor("compact_disk_storage", "usage.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "usage.separator.text", ":") << r
-           << config.getColor("compact_disk_storage", "usage.separator.suffix_color", "")
-           << config.getPrefix("compact_disk_storage", "usage.separator.suffix", " ") << r;
-
-        // Per-disk entry, fully JSON-driven
         for (const auto& d : disks) {
-            ss << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_open", "(") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.letter_color", "")
-               << d.first[0] << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix", ":") << r
-               << config.getColor("compact_disk_storage", "usage.entry.letter_suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.letter_suffix_space", " ") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.value_color", "")
-               << fixed << setprecision(1) << d.second << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.unit_color", "")
-               << config.getLabel("compact_disk_storage", "usage.entry.unit", "%") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.bracket_close", ")") << r
-
-               << config.getColor("compact_disk_storage", "usage.entry.suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "usage.entry.suffix", " ") << r;
+            printLV(ss, "usage.letter", string(1, d.first[0]));
+            ostringstream v;
+            v << fixed << setprecision(1) << d.second;
+            printLV(ss, "usage.size", v.str());
         }
         lp.push(ss.str());
     }
 
     // ---------- DISK CAPACITY ----------
-    if (config.isFieldEnabled("compact_disk_storage", "capacity.show")) {
+    if (config.getNestedBool(sec, "capacity.enabled", true)) {
         auto caps = disk.getDiskCapacity();
         ostringstream sc;
+        printHeader(sc, "capacity", "Disk Cap");
 
-        // line spacing json driven
-        int spacing = config.getNestedInt("compact_disk_storage","capacity.top_line_spacing",0);
-        for (int n = 0; n < spacing; n++) {lp.push("");}
-
-        // Capacity prefix - from JSON
-        if (config.isFieldEnabled("compact_disk_storage", "capacity.prefixes.show")) {
-            sc << config.getColor("compact_disk_storage", "capacity.prefixes.prefix_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.prefixes.prefix", "") << r;
-        }
-
-        // Capacity label
-        sc << config.getColor("compact_disk_storage", "capacity.label.color", "")
-           << config.getLabel("compact_disk_storage", "capacity.label.text", "Disk Cap") << r;
-
-        // Capacity separator
-        sc << config.getColor("compact_disk_storage", "capacity.separator.color", "")
-           << config.getPrefix("compact_disk_storage", "capacity.separator.text", ":") << r
-           << config.getColor("compact_disk_storage", "capacity.separator.suffix_color", "")
-           << config.getPrefix("compact_disk_storage", "capacity.separator.suffix", " ") << r;
-
-        // Per-disk entry, fully JSON-driven
         for (const auto& c : caps) {
-            sc << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_open", "(") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.letter_color", "")
-               << c.first[0] << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.separator_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.separator", "-") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.value_color", "")
-               << c.second << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.unit_color", "")
-               << config.getLabel("compact_disk_storage", "capacity.entry.unit", "GB") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.bracket_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.bracket_close", ")") << r
-
-               << config.getColor("compact_disk_storage", "capacity.entry.suffix_color", "")
-               << config.getPrefix("compact_disk_storage", "capacity.entry.suffix", " ") << r;
+            printLV(sc, "capacity.letter", string(1, c.first[0]));
+            ostringstream v;
+            v << c.second;
+            printLV(sc, "capacity.size", v.str());
         }
         lp.push(sc.str());
     }

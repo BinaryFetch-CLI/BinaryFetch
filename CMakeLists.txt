@@ -167,28 +167,7 @@ if(WIN32)
 
     message(STATUS "Configuring BinaryFetch for Windows")
 
-    # ========================================================
-    # stb_image Header
-    # ========================================================
-
-    if(EXISTS "${BINARYFETCH_STB_IMAGE}/stb_image.h")
-
-        message(STATUS "stb_image header found:")
-        message(STATUS "  ${BINARYFETCH_STB_IMAGE}")
-
-        target_include_directories(BinaryFetch
-            PRIVATE
-                "${BINARYFETCH_STB_IMAGE}"
-        )
-
-    else()
-
-        message(FATAL_ERROR
-            "stb_image header was not found:\n"
-            "  ${BINARYFETCH_STB_IMAGE}/stb_image.h"
-        )
-
-    endif()
+  
 
 
     set(BINARYFETCH_SOURCES
@@ -333,6 +312,45 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 # ============================================================
+# Embedded Default Config (Linux self-heal payload)
+# ============================================================
+#
+# The Linux build embeds the default JSONC into the binary so self-heal
+# works from any working directory. Byte-for-byte identical to what
+# Windows embeds as resource 101.
+#
+# CMAKE_CONFIGURE_DEPENDS re-runs CMake's configure step whenever the
+# JSONC changes, so the embedded bytes stay in sync automatically.
+
+if(UNIX AND NOT APPLE)
+
+    set(BINARYFETCH_DEFAULT_JSONC
+        "${BINARYFETCH_RESOURCES}/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.jsonc"
+    )
+
+    if(NOT EXISTS "${BINARYFETCH_DEFAULT_JSONC}")
+        message(FATAL_ERROR
+            "Default config JSONC not found:\n"
+            "  ${BINARYFETCH_DEFAULT_JSONC}"
+        )
+    endif()
+
+    file(READ "${BINARYFETCH_DEFAULT_JSONC}"
+         BINARYFETCH_DEFAULT_JSONC_CONTENT)
+
+    configure_file(
+        "${BINARYFETCH_ROOT}/CMake/embedded_config.h.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_default_config.h"
+        @ONLY
+    )
+
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${BINARYFETCH_DEFAULT_JSONC}"
+    )
+
+endif()
+
+# ============================================================
 # Validate Platform Entry Point
 # ============================================================
 
@@ -414,6 +432,30 @@ if(WIN32)
 
     endif()
 
+
+    # ========================================================
+    # stb_image Header
+    # ========================================================
+
+    if(EXISTS "${BINARYFETCH_STB_IMAGE}/stb_image.h")
+
+        message(STATUS "stb_image header found:")
+        message(STATUS "  ${BINARYFETCH_STB_IMAGE}")
+
+        target_include_directories(BinaryFetch
+            PRIVATE
+                "${BINARYFETCH_STB_IMAGE}"
+        )
+
+    else()
+
+        message(FATAL_ERROR
+            "stb_image header was not found:\n"
+            "  ${BINARYFETCH_STB_IMAGE}/stb_image.h"
+        )
+
+    endif()
+
     # ========================================================
     # Windows Definitions
     # ========================================================
@@ -487,6 +529,15 @@ endif()
 if(UNIX AND NOT APPLE)
 
     message(STATUS "Linux-specific dependencies enabled")
+
+    # ========================================================
+    # Embedded default config header
+    # ========================================================
+
+    target_include_directories(BinaryFetch
+        PRIVATE
+            "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    )
 
     # ========================================================
     # Threads

@@ -3,10 +3,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 /*
  ---------------------------------------------------------
-    AsciiArt Utilities � Helper Functions (Declarations)
+    AsciiArt Utilities — Helper Functions (Declarations)
  ---------------------------------------------------------
 
  These helpers deal with visual correctness when printing
@@ -45,9 +46,11 @@ void sanitizeLeadingInvisible(std::string& s);
    - Keeping track of line widths
    - Reporting how tall and wide the art is
    - Providing safe access to art lines for real-time display
+   - Holding JSON-configurable padding (up/left/right) applied by
+     the renderer
 
-  This class does NOT print anything itself � LivePrinter
-  handles actual on-screen printing.
+  This class does NOT print anything itself — LivePrinter
+  (defined in main.cpp) handles actual on-screen printing.
 
   Windows-only.
 */
@@ -77,6 +80,23 @@ public:
     const std::string& getLine(int i) const { return artLines[i]; }
     int getLineWidth(int i) const { return (i >= 0 && i < (int)artWidths.size()) ? artWidths[i] : 0; }
 
+    // ------------ Padding (JSON-configurable) ------------
+    // up:    blank lines printed before the art starts
+    // left:  spaces printed before each art line
+    // right: spaces printed after each art line, before the
+    //        art->info spacing gap
+    void setPadding(int up, int left, int right);
+    int getPaddingUp() const { return paddingUp; }
+    int getPaddingLeft() const { return paddingLeft; }
+    int getPaddingRight() const { return paddingRight; }
+
+    // ------------ $N color map (JSON-configurable) ------------
+    // Injected from ConfigManager before loadFromFile() is called.
+    // If never set (left empty), processColorCodes() falls back to
+    // the same hardcoded 15-color default table AsciiArt always
+    // shipped with — fully optional, fully backward-compatible.
+    void setColorMap(const std::map<int, std::string>& map);
+
 private:
     std::vector<std::string> artLines;     // the actual ASCII art lines
     std::vector<int> artWidths;            // precomputed widths for faster alignment
@@ -84,6 +104,10 @@ private:
     int height;                            // number of lines
     bool enabled;                          // toggle for showing/hiding the ASCII art
     int spacing;                           // spaces between art and info columns
+    int paddingUp;                         // blank lines before the art starts
+    int paddingLeft;                       // spaces before each art line
+    int paddingRight;                      // spaces after each art line
+    std::map<int, std::string> colorMap;   // $N -> ANSI escape, injected via setColorMap()
 
     // Internal helper: Get the full path to user's ASCII art file
     std::string getUserArtPath() const;
@@ -101,60 +125,5 @@ private:
     // string (fallback used when writing to disk fails)
     bool loadArtFromEmbedded();
 };
-
-
-
-/*
- ---------------------------------------------------------
-                     LivePrinter Class
- ---------------------------------------------------------
-
-  This component performs the "magic" of incremental,
-  side-by-side printing.
-
-  Every time the program pushes a line of system info,
-  LivePrinter prints:
-     [ASCII ART LINE] + padding + [INFO LINE]
-
-  This allows the system info to appear gradually while the
-  ASCII art stays on the left, properly aligned.
-*/
-class LivePrinter {
-public:
-    LivePrinter(const AsciiArt& artRef);
-
-    // Push a single line of system info.
-    // Each call prints the next art line (or blank padding).
-    void push(const std::string& infoLine);
-
-    // Same as push("") � convenient for spacing
-    void pushBlank();
-
-    // After finishing all info lines, print any remaining
-    // ASCII art lines that weren't paired with info.
-    void finish();
-
-private:
-    const AsciiArt& art;   // reference to the loaded ASCII art
-    int index;             // which art line we are currently on
-
-    // Core helper: prints the art line + spacing
-    void printArtAndPad();
-};
-
-
-
-/*
- ---------------------------------------------------------
-       Helper: Push multi-line formatted string
- ---------------------------------------------------------
-
-  Some parts of the project generate multi-line text blocks
-  (such as full CPU info or multiline network summaries).
-
-  This helper splits a long string by newline characters
-  and pushes each line individually to LivePrinter.
-*/
-void pushFormattedLines(LivePrinter& lp, const std::string& s);
 
 #endif // ASCIIART_H

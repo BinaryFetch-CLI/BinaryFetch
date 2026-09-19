@@ -1,118 +1,506 @@
+
+// ============================================================================
+// config_management.cpp (Linux) 
+// ============================================================================
+//
+// Linux implementation of ConfigManager, matching config_management.h.
+// Functionally equivalent to the Windows build; only the platform plumbing
+// differs. This header explains the Linux-specific bits end to end.
+//
+// ----------------------------------------------------------------------------
+// 1. CONFIG DIRECTORY
+// ----------------------------------------------------------------------------
+//
+// Follows the XDG Base Directory Specification:
+//
+//   - If $XDG_CONFIG_HOME is set and non-empty:
+//         $XDG_CONFIG_HOME/binaryfetch/
+//   - Otherwise:
+//         $HOME/.config/binaryfetch/
+//
+// $HOME itself falls back to getpwuid(getuid())->pw_dir if unset, and
+// finally to "." as a last-resort safety net. This is why the file needs
+// <pwd.h>, <unistd.h>, and <cstdlib>.
+//
+// Directory creation uses ensureDirectoryExists(), which walks the path
+// component by component and mkdir()s each missing level. Linux's mkdir(2)
+// is not recursive, unlike Windows' _mkdir which only ever needs the leaf
+// because C:\Users\Public already exists. So on a fresh account where
+// ~/.config/ doesn't exist yet, we create .config/ first, then
+// .config/binaryfetch/.
+//
+// ----------------------------------------------------------------------------
+// 2. CONFIG FILE RESOLUTION (per launch, checked fresh every time)
+// ----------------------------------------------------------------------------
+//
+// Two extensions are supported side by side:
+//
+//   .jsonc  - preferred going forward; parsed with comments allowed
+//   .json   - legacy; still parsed exactly as before. A comment-free file
+//             parses byte-for-byte identically to the old behavior, so
+//             nothing already deployed breaks.
+//
+// Resolution order:
+//
+//   1. Both .jsonc and .json exist  -> .jsonc wins.
+//   2. Only .jsonc exists           -> load it.
+//   3. Only .json exists            -> load it AS-IS. We never silently
+//                                       create a .jsonc next to it — an
+//                                       existing legacy install stays on
+//                                       .json until the user removes that
+//                                       file themselves.
+//   4. Neither exists               -> self-heal. This is the ONLY branch
+//                                       that ever creates a new file, and
+//                                       it always writes .jsonc.
+//
+// Rule 4 never overwrites an existing config. Delete the .jsonc later (with
+// no .json present) and BinaryFetch will recreate a fresh default on the
+// next run.
+//
+// ----------------------------------------------------------------------------
+// 3. SELF-HEAL — EMBEDDED DEFAULT (CMake-generated header)
+// ----------------------------------------------------------------------------
+//
+// The default JSONC ships INSIDE the binary. It is not read from disk at
+// runtime, which means self-heal works from any working directory — a user
+// can install BinaryFetch to /usr/bin, run it from /tmp, and the default
+// config still gets written correctly.
+//
+// The embedded bytes come from:
+//
+//   #include "embedded_default_config.h"
+//
+// which is generated at CMake configure time by:
+//
+//   cmake/embedded_config.h.in
+//       -> @BINARYFETCH_DEFAULT_JSONC_CONTENT@
+//       -> build/generated/embedded_default_config.h
+//
+// The generated header defines:
+//
+//   static const char EMBEDDED_DEFAULT_CONFIG[];
+//
+// containing the raw bytes of:
+//
+//   src/BinaryFetch/resources/Default_JSON_theme_windows_RC/
+//       Default_BinaryFetch_Config.jsonc
+//
+// CMake re-runs its configure step automatically whenever that JSONC file
+// changes (via CMAKE_CONFIGURE_DEPENDS), so edits to the source JSONC are
+// always reflected in the next build without a manual re-configure.
+//
+// This mirrors what the Windows build does with RC resource 101 — same
+// payload, same self-heal behavior, different mechanism because Linux has
+// no equivalent to the Windows resource system.
+//
+// ----------------------------------------------------------------------------
+// 4. PARSING
+// ----------------------------------------------------------------------------
+//
+// Uses nlohmann::json::parse() with ignore_comments = true. That single
+// flag is the entire JSONC upgrade — a file with zero comments parses
+// byte-for-byte the same way as before, so no migration is needed for
+// existing .json configs. Empty objects are treated as a load failure.
+//
+// On success, three post-parse passes run, in this order:
+//
+//   loadColorPalette()       - builds m_colors from the "colors" object
+//   loadAsciiColorPrefixes() - builds m_asciiColorMap from
+//                              "ascii_color_prefixes"; name lookups fall
+//                              back to m_colors, so this MUST run after
+//                              loadColorPalette()
+//   loadEmojiSettings()      - populates m_emojiEnabled / m_emojiStyle
+//                              from the "emoji" object
+//
+// A parse exception or an empty top-level object sets m_loaded = false and
+// every subsequent getter returns its default without crashing.
+//
+// ----------------------------------------------------------------------------
+// 5. WHAT IS IDENTICAL TO WINDOWS
+// ----------------------------------------------------------------------------
+//
+// Everything that matters for behavior:
+//
+//   - parseColorValue, loadColorPalette, loadAsciiColorPrefixes
+//   - resolveSectionKey, resolveSubsectionKey, resolveColor
+//   - all isEnabled / isFieldEnabled / isSubEnabled / isSectionEnabled /
+//     isNestedEnabled variants
+//   - all getNestedBool / getNestedInt / getNestedString / getStringArray
+//   - all color getters
+//   - the entire emoji subsystem (decodeUtf8, encodeUtf8,
+//     isEmojiEligible, applyEmojiStyle)
+//   - getLabel / getPrefix wrappers and their *Raw counterparts
+//   - getLayoutOrder
+//
+// From main.cpp's perspective, the two builds are indistinguishable.
+//
+// ----------------------------------------------------------------------------
+// 6. WHAT DIFFERS FROM WINDOWS
+// ----------------------------------------------------------------------------
+//
+// Only platform plumbing:
+//
+//   - Config dir path:  ~/.config/binaryfetch/  vs  C:\Users\Public\BinaryFetch\
+//   - Path separator:   /                       vs  \\
+//   - Directory create: ensureDirectoryExists() vs  GetFileAttributesA + _mkdir
+//   - Self-heal source: embedded header         vs  FindResource(RT_RCDATA, 101)
+//
+// ----------------------------------------------------------------------------
+// 7. CONFIG MODE SELECTION
+// ----------------------------------------------------------------------------
+//
+// ConfigManager takes a ConfigMode at construction time:
+//
+//   Dev            - reads src/BinaryFetch/resources/Dev_jsonc/...
+//                    (freely experiment, never embedded into the binary)
+//
+//   ReleaseSource  - reads the shipping default directly from the source
+//                    tree (src/BinaryFetch/resources/Default_JSON_theme...).
+//                    Useful while iterating on the JSONC — every launch
+//                    sees your latest edits with no self-heal copy in
+//                    between.
+//
+//   Production     - reads ~/.config/binaryfetch/BinaryFetch_Config.jsonc,
+//                    self-healing from the embedded default if missing.
+//                    This is the only mode that exercises the embed path
+//                    described in section 3.
+//
+// Flip CONFIG_MODE in main() to test each mode.
+// ============================================================================
+
+// config_management.cpp (linux)
+// Linux implementation matching config_management.h
+
 #include "core/config_management.h"
+#include "embedded_default_config.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <pwd.h>
+#include <errno.h>
 
-ConfigManager::ConfigManager(bool devMode) {
-    m_colors = {
-        {"red", "\033[31m"}, {"green", "\033[32m"}, {"yellow", "\033[33m"},
-        {"blue", "\033[34m"}, {"magenta", "\033[35m"}, {"cyan", "\033[36m"},
-        {"white", "\033[37m"}, {"bright_red", "\033[91m"}, {"bright_green", "\033[92m"},
-        {"bright_yellow", "\033[93m"}, {"bright_blue", "\033[94m"},
-        {"bright_magenta", "\033[95m"}, {"bright_cyan", "\033[96m"},
-        {"bright_white", "\033[97m"}, {"reset", "\033[0m"}
-    };
-
-    loadPlatformConfig(devMode);
+static std::string getHomeDir() {
+    const char* home = std::getenv("HOME");
+    if (home && *home != '\0') {
+        return std::string(home);
+    }
+    struct passwd* pw = getpwuid(getuid());
+    if (pw && pw->pw_dir) {
+        return std::string(pw->pw_dir);
+    }
+    return ".";
 }
 
-void ConfigManager::loadPlatformConfig(bool devMode) {
+static std::string getLinuxConfigDir() {
+    const char* xdg = std::getenv("XDG_CONFIG_HOME");
+    if (xdg && *xdg != '\0') {
+        return std::string(xdg) + "/binaryfetch";
+    }
+    return getHomeDir() + "/.config/binaryfetch";
+}
+
+static bool ensureDirectoryExists(const std::string& directory) {
+    size_t pos = 0;
+    while ((pos = directory.find('/', pos + 1)) != std::string::npos) {
+        std::string sub = directory.substr(0, pos);
+        if (!sub.empty()) {
+            mkdir(sub.c_str(), 0755);
+        }
+    }
+    return (mkdir(directory.c_str(), 0755) == 0 || errno == EEXIST);
+}
+
+ConfigManager::ConfigManager(ConfigMode mode) {
+    loadPlatformConfig(mode);
+}
+
+// ===================== CONFIG LOADING (JSON + JSONC) =====================
+void ConfigManager::loadPlatformConfig(ConfigMode mode) {
+    std::string configDir       = getLinuxConfigDir();
+    std::string userConfigJsonc = configDir + "/BinaryFetch_Config.jsonc";
+    std::string userConfigJson  = configDir + "/BinaryFetch_Config.json";
     std::string configPath;
-    if (devMode) {
-        std::vector<std::string> candidatePaths = {
-            "src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-            "resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json",
-            "resources/Default_BinaryFetch_Config.json"
-        };
-        for (const auto& path : candidatePaths) {
-            std::ifstream testFile(path);
-            if (testFile.good()) {
-                configPath = path;
-                testFile.close();
-                break;
+
+    if (mode == ConfigMode::Dev) {
+        std::string devJsonc = "src/BinaryFetch/resources/Dev_jsonc/Dev_BinaryFetch_Config.jsonc";
+        std::string devJson  = "src/BinaryFetch/resources/Dev_jsonc/Dev_BinaryFetch_Config.json";
+
+        std::ifstream jsoncCheck(devJsonc);
+        bool devJsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        if (devJsoncExists) {
+            configPath = devJsonc;
+        } else {
+            std::ifstream jsonCheck(devJson);
+            bool devJsonExists = jsonCheck.good();
+            jsonCheck.close();
+
+            if (!devJsonExists) {
+                std::cerr << "Warning: Could not find development configuration file at: "
+                          << devJsonc << " or " << devJson << std::endl;
+                m_loaded = false;
+                return;
+            }
+            configPath = devJson;
+        }
+    } else if (mode == ConfigMode::ReleaseSource) {
+        std::string releaseJsonc = "src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.jsonc";
+
+        std::ifstream releaseCheck(releaseJsonc);
+        bool releaseExists = releaseCheck.good();
+        releaseCheck.close();
+
+        if (!releaseExists) {
+            std::cerr << "Warning: Could not find release configuration file at: "
+                      << releaseJsonc << std::endl;
+            m_loaded = false;
+            return;
+        }
+        configPath = releaseJsonc;
+    } else {
+        ensureDirectoryExists(configDir);
+
+        std::ifstream jsoncCheck(userConfigJsonc);
+        bool jsoncExists = jsoncCheck.good();
+        jsoncCheck.close();
+
+        std::ifstream jsonCheck(userConfigJson);
+        bool jsonExists = jsonCheck.good();
+        jsonCheck.close();
+
+        if (jsoncExists) {
+            configPath = userConfigJsonc;
+        } else if (jsonExists) {
+            configPath = userConfigJson;
+        } else {
+            // Self-heal: write the embedded default to
+            // ~/.config/binaryfetch/BinaryFetch_Config.jsonc
+            configPath = userConfigJsonc;
+
+            std::ofstream destFile(userConfigJsonc, std::ios::binary);
+            if (destFile.is_open()) {
+                destFile << EMBEDDED_DEFAULT_CONFIG;
+                destFile.close();
+            }
+            if (!destFile) {
+                std::cerr << "Warning: failed to write default config to "
+                          << userConfigJsonc << std::endl;
             }
         }
-        if (configPath.empty()) {
-            configPath = "src/BinaryFetch/resources/Default_JSON_theme_windows_RC/Default_BinaryFetch_Config.json";
-        }
     }
-    else {
-        configPath = "/etc/BinaryFetch/BinaryFetch_Config.json";
+
+    std::ifstream configFile(configPath);
+    if (!configFile.is_open()) {
+        std::cerr << "Warning: Cannot open configuration file: " << configPath << std::endl;
+        m_loaded = false;
+        return;
     }
-    m_loaded = false;
-    std::ifstream config_file(configPath);
-    if (config_file.is_open()) {
-        try {
-            m_config = nlohmann::json::parse(config_file);
+
+    try {
+        m_config = nlohmann::json::parse(
+            configFile,
+            /* callback */ nullptr,
+            /* allow_exceptions */ true,
+            /* ignore_comments */ true
+        );
+        if (m_config.is_object() && m_config.empty()) {
+            m_loaded = false;
+        } else {
             m_loaded = true;
+            loadColorPalette();
+            loadAsciiColorPrefixes();
+            loadEmojiSettings();
         }
-        catch (...) {}
-        config_file.close();
+    } catch (...) {
+        m_loaded = false;
     }
 }
 
 bool ConfigManager::isLoaded() const { return m_loaded; }
-const nlohmann::json& ConfigManager::getJson() const { return m_config; }
-std::string ConfigManager::getResetColor() const { return "\033[0m"; }
 
+// ===================== COLOR PALETTE (JSON-DRIVEN) =====================
+std::string ConfigManager::parseColorValue(const std::string& raw) const {
+    if (raw.empty()) return "";
+
+    if (raw[0] == '\033') return raw;
+
+    if (raw[0] == '#' && raw.size() == 7) {
+        try {
+            int r = std::stoi(raw.substr(1, 2), nullptr, 16);
+            int g = std::stoi(raw.substr(3, 2), nullptr, 16);
+            int b = std::stoi(raw.substr(5, 2), nullptr, 16);
+            return "\033[38;2;" + std::to_string(r) + ";" +
+                   std::to_string(g) + ";" + std::to_string(b) + "m";
+        } catch (...) {
+            return "";
+        }
+    }
+
+    std::stringstream ss(raw);
+    std::string token;
+    std::vector<int> parts;
+    while (std::getline(ss, token, ',')) {
+        try { parts.push_back(std::stoi(token)); }
+        catch (...) { return ""; }
+    }
+    if (parts.size() == 3) {
+        return "\033[38;2;" + std::to_string(parts[0]) + ";" +
+               std::to_string(parts[1]) + ";" + std::to_string(parts[2]) + "m";
+    }
+    return "";
+}
+
+void ConfigManager::loadColorPalette() {
+    m_colors.clear();
+
+    if (!m_config.contains("colors") || !m_config["colors"].is_object())
+        return;
+
+    for (auto& [name, value] : m_config["colors"].items()) {
+        if (!value.is_string()) continue;
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_colors[name] = "\033[0m"; continue; }
+
+        std::string ansi = parseColorValue(raw);
+        if (!ansi.empty()) {
+            m_colors[name] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid color value for '" << name << "': " << raw << "\n";
+        }
+#endif
+    }
+}
+
+// ===================== ASCII ART COLOR PREFIXES (JSON-DRIVEN) =====================
+void ConfigManager::loadAsciiColorPrefixes() {
+    m_asciiColorMap = {
+        {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
+        {4, "\033[34m"}, {5, "\033[35m"}, {6, "\033[36m"},
+        {7, "\033[37m"}, {8, "\033[91m"}, {9, "\033[92m"},
+        {10, "\033[93m"}, {11, "\033[94m"}, {12, "\033[95m"},
+        {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
+    };
+    m_asciiShowColors = true;
+
+    if (!m_config.contains("ascii_color_prefixes") || !m_config["ascii_color_prefixes"].is_object())
+        return;
+
+    const auto& section = m_config["ascii_color_prefixes"];
+
+    if (section.contains("show_colors") && section["show_colors"].is_boolean())
+        m_asciiShowColors = section["show_colors"].get<bool>();
+
+    for (auto& [key, value] : section.items()) {
+        if (key == "show_colors") continue;
+        if (!value.is_string()) continue;
+
+        std::string numPart = (!key.empty() && key[0] == '$') ? key.substr(1) : key;
+        int n;
+        try { n = std::stoi(numPart); }
+        catch (...) { continue; }
+
+        std::string raw = value.get<std::string>();
+
+        if (raw == "RESET") { m_asciiColorMap[n] = "\033[0m"; continue; }
+
+        std::string ansi = parseColorValue(raw);
+
+        if (ansi.empty()) {
+            auto it = m_colors.find(raw);
+            if (it != m_colors.end()) ansi = it->second;
+        }
+
+        if (!ansi.empty()) {
+            m_asciiColorMap[n] = ansi;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid ascii_color_prefixes value for '" << key << "': " << raw << "\n";
+        }
+#endif
+    }
+
+    if (!m_asciiShowColors) {
+        for (auto& [num, ansi] : m_asciiColorMap) {
+            ansi.clear();
+        }
+    }
+}
+
+const std::map<int, std::string>& ConfigManager::getAsciiColorMap() const {
+    return m_asciiColorMap;
+}
+
+bool ConfigManager::isAsciiShowColorsEnabled() const {
+    return m_asciiShowColors;
+}
+
+// ===================== RESOLVE SECTION KEY =====================
 std::string ConfigManager::resolveSectionKey(const std::string& section) const {
     if (m_config.contains(section)) return section;
 
     static const std::unordered_map<std::string, std::string> aliases = {
+        {"compact_os", "compact_operating_system"},
+        {"compact_cpu", "compact_processor"},
+        {"compact_gpu", "compact_graphics_card"},
+        {"compact_screen", "compact_display_monitor"},
+        {"compact_memory", "compact_system_memory"},
+        {"compact_audio", "compact_audio_devices"},
+        {"compact_performance", "compact_resource_usage"},
+        {"compact_user", "compact_user_account"},
+        {"compact_network", "compact_network_connection"},
+        {"compact_disk", "compact_disk_storage"},
+        {"compact_time", "compact_date_and_time"},
+        {"detailed_memory", "detailed_system_memory"},
+        {"detailed_storage", "detailed_disk_storage"},
+        {"network_info", "detailed_network_connection"},
+        {"dummy_network_info", "detailed_dummy_network_connection"},
+        {"os_info", "detailed_operating_system"},
+        {"cpu_info", "detailed_processor"},
+        {"gpu_info", "detailed_graphics_card"},
+        {"display_info", "detailed_display_monitor"},
+        {"bios_mb_info", "detailed_bios_and_motherboard"},
+        {"user_info", "detailed_user_account"},
+        {"performance_info", "detailed_resource_usage"},
+        {"audio_power_info", "detailed_audio_and_power"},
         {"header", "header_settings"},
-        {"header_settings", "header"},
-        {"compact_time", "date_and_time"},
-        {"date_and_time", "compact_time"},
-        {"compact_os", "operating_system"},
-        {"operating_system", "compact_os"},
-        {"compact_cpu", "processor"},
-        {"processor", "compact_cpu"},
-        {"compact_gpu", "graphics_card"},
-        {"graphics_card", "compact_gpu"},
-        {"compact_screen", "display_monitor"},
-        {"display_monitor", "compact_screen"},
-        {"compact_memory", "system_memory"},
-        {"system_memory", "compact_memory"},
-        {"compact_audio", "audio_devices"},
-        {"audio_devices", "compact_audio"},
-        {"compact_performance", "resource_usage"},
-        {"resource_usage", "compact_performance"},
-        {"compact_user", "user_account"},
-        {"user_account", "compact_user"},
-        {"compact_network", "network_connection"},
-        {"network_connection", "compact_network"},
-        {"compact_disk", "disk_storage"},
-        {"disk_storage", "compact_disk"},
-        {"detailed_memory", "memory_details"},
-        {"memory_details", "detailed_memory"},
-        {"detailed_storage", "storage_details"},
-        {"storage_details", "detailed_storage"},
-        {"network_info", "network_details"},
-        {"network_details", "network_info"},
-        {"os_info", "operating_system_details"},
-        {"operating_system_details", "os_info"},
-        {"cpu_info", "processor_details"},
-        {"processor_details", "cpu_info"},
-        {"gpu_info", "graphics_details"},
-        {"graphics_details", "gpu_info"},
-        {"display_info", "display_details"},
-        {"display_details", "display_info"},
-        {"bios_mb_info", "bios_and_motherboard"},
-        {"bios_and_motherboard", "bios_mb_info"},
-        {"user_info", "user_details"},
-        {"user_details", "user_info"},
-        {"performance_info", "performance_monitor"},
-        {"performance_monitor", "performance_info"},
-        {"audio_power_info", "audio_and_power"},
-        {"audio_and_power", "audio_power_info"}
+        {"date_and_time", "compact_date_and_time"},
+        {"operating_system", "compact_operating_system"},
+        {"processor", "compact_processor"},
+        {"graphics_card", "compact_graphics_card"},
+        {"display_monitor", "compact_display_monitor"},
+        {"system_memory", "compact_system_memory"},
+        {"audio_devices", "compact_audio_devices"},
+        {"resource_usage", "compact_resource_usage"},
+        {"user_account", "compact_user_account"},
+        {"network_connection", "compact_network_connection"},
+        {"disk_storage", "compact_disk_storage"},
+        {"memory_details", "detailed_system_memory"},
+        {"storage_details", "detailed_disk_storage"},
+        {"network_details", "detailed_network_connection"},
+        {"operating_system_details", "detailed_operating_system"},
+        {"processor_details", "detailed_processor"},
+        {"graphics_details", "detailed_graphics_card"},
+        {"display_details", "detailed_display_monitor"},
+        {"bios_and_motherboard", "detailed_bios_and_motherboard"},
+        {"user_details", "detailed_user_account"},
+        {"performance_monitor", "detailed_resource_usage"},
+        {"audio_and_power", "detailed_audio_and_power"}
     };
 
     auto it = aliases.find(section);
     if (it != aliases.end() && m_config.contains(it->second)) {
         return it->second;
     }
-
     return section;
 }
 
@@ -121,14 +509,10 @@ std::string ConfigManager::resolveSubsectionKey(const std::string& module, const
     if (m_config[module].contains(rawSubsection)) return rawSubsection;
 
     static const std::unordered_map<std::string, std::string> subAliases = {
-        {"time_section", "time"},
-        {"time", "time_section"},
-        {"date_section", "date"},
-        {"date", "date_section"},
-        {"week_section", "week"},
-        {"week", "week_section"},
-        {"leap_section", "leap_year"},
-        {"leap_year", "leap_section"}
+        {"time_section", "time"}, {"time", "time_section"},
+        {"date_section", "date"}, {"date", "date_section"},
+        {"week_section", "week"}, {"week", "week_section"},
+        {"leap_section", "leap_year"}, {"leap_year", "leap_section"}
     };
 
     auto it = subAliases.find(rawSubsection);
@@ -143,13 +527,22 @@ std::string ConfigManager::resolveColor(const std::string& colorName, const std:
     if (it != m_colors.end()) return it->second;
     auto defIt = m_colors.find(defaultColor);
     if (defIt != m_colors.end()) return defIt->second;
+    auto whiteIt = m_colors.find("white");
+    if (whiteIt != m_colors.end()) return whiteIt->second;
     return "\033[37m";
 }
 
+// ===================== ENABLED CHECKS =====================
 bool ConfigManager::isEnabled(const std::string& rawSection) const {
+    if (!m_loaded) return false;
     std::string section = resolveSectionKey(rawSection);
-    if (!m_loaded || !m_config.contains(section)) return true;
+    if (!m_config.contains(section)) return true;
     return m_config[section].value("enabled", true);
+}
+
+bool ConfigManager::isFieldEnabled(const std::string& rawSection, const std::string& fieldPath) const {
+    if (!isEnabled(rawSection)) return false;
+    return getNestedBool(rawSection, fieldPath, true);
 }
 
 bool ConfigManager::isSubEnabled(const std::string& rawSection, const std::string& key) const {
@@ -176,71 +569,99 @@ bool ConfigManager::isNestedEnabled(const std::string& rawModule, const std::str
 bool ConfigManager::getNestedBool(const std::string& rawModule, const std::string& path, bool defaultValue) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultValue;
+
     std::vector<std::string> keys;
     std::stringstream ss(path);
     std::string key;
-    while (std::getline(ss, key, '.')) keys.push_back(key);
-    if (!keys.empty()) keys[0] = resolveSubsectionKey(module, keys[0]);
+    while (std::getline(ss, key, '.')) {
+        keys.push_back(key);
+    }
+    if (!keys.empty()) {
+        keys[0] = resolveSubsectionKey(module, keys[0]);
+    }
+
     nlohmann::json current = m_config[module];
     for (const auto& k : keys) {
         if (!current.contains(k)) return defaultValue;
         current = current[k];
     }
-    return current.is_boolean() ? current.get<bool>() : defaultValue;
+
+    if (current.is_boolean()) {
+        return current.get<bool>();
+    }
+    return defaultValue;
 }
 
 bool ConfigManager::getNestedBool(const std::string& path, bool defaultValue) const {
     if (!m_loaded) return defaultValue;
+
     std::vector<std::string> keys;
     std::stringstream ss(path);
     std::string key;
-    while (std::getline(ss, key, '.')) keys.push_back(key);
+    while (std::getline(ss, key, '.')) {
+        keys.push_back(key);
+    }
+
     nlohmann::json current = m_config;
     for (const auto& k : keys) {
         if (!current.contains(k)) return defaultValue;
         current = current[k];
     }
-    return current.is_boolean() ? current.get<bool>() : defaultValue;
+
+    if (current.is_boolean()) {
+        return current.get<bool>();
+    }
+    return defaultValue;
 }
 
+// ===================== COLOR RESOLUTION =====================
 std::string ConfigManager::getColor(const std::string& rawSection, const std::string& key, const std::string& defaultColor) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return resolveColor(defaultColor, defaultColor);
-    if (m_config[section].contains("colors") && m_config[section]["colors"].contains(key)) {
-        if (m_config[section]["colors"][key].is_string()) {
-            return resolveColor(m_config[section]["colors"][key].get<std::string>(), defaultColor);
+
+    if (key.find('.') != std::string::npos) {
+        return getNestedColor(rawSection, key, defaultColor);
+    }
+
+    const auto& secObj = m_config[section];
+
+    if (secObj.contains("colors") && secObj["colors"].contains(key)) {
+        if (secObj["colors"][key].is_string()) {
+            return resolveColor(secObj["colors"][key].get<std::string>(), defaultColor);
         }
     }
-    if (m_config[section].contains(key) && m_config[section][key].is_string()) {
-        return resolveColor(m_config[section][key].get<std::string>(), defaultColor);
+
+    if (secObj.contains(key) && secObj[key].is_string()) {
+        return resolveColor(secObj[key].get<std::string>(), defaultColor);
     }
-    // Alias fallbacks for colors
+
     if (key == "item") {
         for (const auto& altKey : {"|->", "~", "#"}) {
-            if (m_config[section].contains("colors") && m_config[section]["colors"].contains(altKey) && m_config[section]["colors"][altKey].is_string()) {
-                return resolveColor(m_config[section]["colors"][altKey].get<std::string>(), defaultColor);
+            if (secObj.contains("colors") && secObj["colors"].contains(altKey) && secObj["colors"][altKey].is_string()) {
+                return resolveColor(secObj["colors"][altKey].get<std::string>(), defaultColor);
             }
-            if (m_config[section].contains(altKey) && m_config[section][altKey].is_string()) {
-                return resolveColor(m_config[section][altKey].get<std::string>(), defaultColor);
+            if (secObj.contains(altKey) && secObj[altKey].is_string()) {
+                return resolveColor(secObj[altKey].get<std::string>(), defaultColor);
             }
         }
     } else if (key == "item_alt") {
-        if (m_config[section].contains("colors") && m_config[section]["colors"].contains("#->") && m_config[section]["colors"]["#->"].is_string()) {
-            return resolveColor(m_config[section]["colors"]["#->"].get<std::string>(), defaultColor);
+        if (secObj.contains("colors") && secObj["colors"].contains("#->") && secObj["colors"]["#->"].is_string()) {
+            return resolveColor(secObj["colors"]["#->"].get<std::string>(), defaultColor);
         }
-        if (m_config[section].contains("#->") && m_config[section]["#->"].is_string()) {
-            return resolveColor(m_config[section]["#->"].get<std::string>(), defaultColor);
+        if (secObj.contains("#->") && secObj["#->"].is_string()) {
+            return resolveColor(secObj["#->"].get<std::string>(), defaultColor);
         }
     } else if (key == "header") {
         for (const auto& altKey : {"#-", ">>~"}) {
-            if (m_config[section].contains("colors") && m_config[section]["colors"].contains(altKey) && m_config[section]["colors"][altKey].is_string()) {
-                return resolveColor(m_config[section]["colors"][altKey].get<std::string>(), defaultColor);
+            if (secObj.contains("colors") && secObj["colors"].contains(altKey) && secObj["colors"][altKey].is_string()) {
+                return resolveColor(secObj["colors"][altKey].get<std::string>(), defaultColor);
             }
-            if (m_config[section].contains(altKey) && m_config[section][altKey].is_string()) {
-                return resolveColor(m_config[section][altKey].get<std::string>(), defaultColor);
+            if (secObj.contains(altKey) && secObj[altKey].is_string()) {
+                return resolveColor(secObj[altKey].get<std::string>(), defaultColor);
             }
         }
     }
+
     return resolveColor(defaultColor, defaultColor);
 }
 
@@ -249,158 +670,535 @@ std::string ConfigManager::getNestedColor(const std::string& rawModule, const st
     if (!m_loaded || !m_config.contains(module)) return resolveColor(defaultColor, defaultColor);
     std::string subsection = resolveSubsectionKey(module, rawSubsection);
     if (!m_config[module].contains(subsection)) return resolveColor(defaultColor, defaultColor);
+
     if (m_config[module][subsection].contains("colors") && m_config[module][subsection]["colors"].contains(key)) {
         if (m_config[module][subsection]["colors"][key].is_string()) {
             return resolveColor(m_config[module][subsection]["colors"][key].get<std::string>(), defaultColor);
         }
     }
+
     if (m_config[module][subsection].contains(key) && m_config[module][subsection][key].is_string()) {
         return resolveColor(m_config[module][subsection][key].get<std::string>(), defaultColor);
     }
-    // Alias fallbacks for nested colors
-    if (key == "item") {
-        for (const auto& altKey : {"|->", "~", "#"}) {
-            if (m_config[module][subsection].contains("colors") && m_config[module][subsection]["colors"].contains(altKey) && m_config[module][subsection]["colors"][altKey].is_string()) {
-                return resolveColor(m_config[module][subsection]["colors"][altKey].get<std::string>(), defaultColor);
-            }
-            if (m_config[module][subsection].contains(altKey) && m_config[module][subsection][altKey].is_string()) {
-                return resolveColor(m_config[module][subsection][altKey].get<std::string>(), defaultColor);
-            }
-        }
-    } else if (key == "header") {
-        for (const auto& altKey : {"#-", ">>~"}) {
-            if (m_config[module][subsection].contains("colors") && m_config[module][subsection]["colors"].contains(altKey) && m_config[module][subsection]["colors"][altKey].is_string()) {
-                return resolveColor(m_config[module][subsection]["colors"][altKey].get<std::string>(), defaultColor);
-            }
-            if (m_config[module][subsection].contains(altKey) && m_config[module][subsection][altKey].is_string()) {
-                return resolveColor(m_config[module][subsection][altKey].get<std::string>(), defaultColor);
-            }
-        }
-    }
+
     return resolveColor(defaultColor, defaultColor);
 }
 
 std::string ConfigManager::getNestedColor(const std::string& rawModule, const std::string& path, const std::string& defaultColor) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return resolveColor(defaultColor, defaultColor);
+
     std::vector<std::string> keys;
     std::stringstream ss(path);
     std::string key;
-    while (std::getline(ss, key, '.')) keys.push_back(key);
-    if (!keys.empty()) keys[0] = resolveSubsectionKey(module, keys[0]);
+    while (std::getline(ss, key, '.')) {
+        keys.push_back(key);
+    }
+    if (!keys.empty()) {
+        keys[0] = resolveSubsectionKey(module, keys[0]);
+    }
+
     nlohmann::json current = m_config[module];
     for (const auto& k : keys) {
         if (!current.contains(k)) return resolveColor(defaultColor, defaultColor);
         current = current[k];
     }
-    if (current.is_string()) return resolveColor(current.get<std::string>(), defaultColor);
+
+    if (current.is_string()) {
+        return resolveColor(current.get<std::string>(), defaultColor);
+    }
     return resolveColor(defaultColor, defaultColor);
 }
 
 std::string ConfigManager::getNestedColor(const std::string& path, const std::string& defaultColor) const {
     if (!m_loaded) return resolveColor(defaultColor, defaultColor);
+
     std::vector<std::string> keys;
     std::stringstream ss(path);
     std::string key;
-    while (std::getline(ss, key, '.')) keys.push_back(key);
+    while (std::getline(ss, key, '.')) {
+        keys.push_back(key);
+    }
+
     nlohmann::json current = m_config;
     for (const auto& k : keys) {
         if (!current.contains(k)) return resolveColor(defaultColor, defaultColor);
         current = current[k];
     }
-    if (current.is_string()) return resolveColor(current.get<std::string>(), defaultColor);
+
+    if (current.is_string()) {
+        return resolveColor(current.get<std::string>(), defaultColor);
+    }
     return resolveColor(defaultColor, defaultColor);
 }
 
+std::string ConfigManager::getResetColor() const {
+    return resolveColor("reset", "reset");
+}
+
+int ConfigManager::getNestedInt(
+    const std::string& rawModule,
+    const std::string& path,
+    int defaultValue) const
+{
+    std::string module = resolveSectionKey(rawModule);
+
+    if (!m_loaded || !m_config.contains(module))
+        return defaultValue;
+
+    std::vector<std::string> keys;
+    std::stringstream ss(path);
+    std::string key;
+
+    while (std::getline(ss, key, '.'))
+        keys.push_back(key);
+
+    if (!keys.empty())
+        keys[0] = resolveSubsectionKey(module, keys[0]);
+
+    nlohmann::json current = m_config[module];
+
+    for (const auto& k : keys)
+    {
+        if (!current.contains(k))
+            return defaultValue;
+
+        current = current[k];
+    }
+
+    if (current.is_number_integer())
+        return current.get<int>();
+
+    return defaultValue;
+}
+
+std::string ConfigManager::getNestedStringRaw(
+    const std::string& rawModule,
+    const std::string& path,
+    const std::string& defaultValue) const
+{
+    std::string module = resolveSectionKey(rawModule);
+
+    if (!m_loaded || !m_config.contains(module))
+        return defaultValue;
+
+    std::vector<std::string> keys;
+    std::stringstream ss(path);
+    std::string key;
+
+    while (std::getline(ss, key, '.'))
+    {
+        keys.push_back(key);
+    }
+
+    if (!keys.empty())
+    {
+        keys[0] = resolveSubsectionKey(module, keys[0]);
+    }
+
+    nlohmann::json current = m_config[module];
+
+    for (const auto& k : keys)
+    {
+        if (!current.contains(k))
+            return defaultValue;
+
+        current = current[k];
+    }
+
+    if (current.is_string())
+        return current.get<std::string>();
+
+    return defaultValue;
+}
+
+// ===================== EMOJI STYLE =====================
+namespace {
+
+char32_t decodeUtf8(const std::string& s, size_t i, size_t& len) {
+    unsigned char c0 = static_cast<unsigned char>(s[i]);
+    size_t remaining = s.size() - i;
+
+    auto isCont = [&](size_t idx) {
+        return idx < s.size() && (static_cast<unsigned char>(s[idx]) & 0xC0) == 0x80;
+    };
+
+    if (c0 < 0x80) { len = 1; return c0; }
+
+    if ((c0 & 0xE0) == 0xC0 && remaining >= 2 && isCont(i + 1)) {
+        len = 2;
+        return ((c0 & 0x1F) << 6) | (static_cast<unsigned char>(s[i + 1]) & 0x3F);
+    }
+    if ((c0 & 0xF0) == 0xE0 && remaining >= 3 && isCont(i + 1) && isCont(i + 2)) {
+        len = 3;
+        return ((c0 & 0x0F) << 12)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 2]) & 0x3F);
+    }
+    if ((c0 & 0xF8) == 0xF0 && remaining >= 4 && isCont(i + 1) && isCont(i + 2) && isCont(i + 3)) {
+        len = 4;
+        return ((c0 & 0x07) << 18)
+             | ((static_cast<unsigned char>(s[i + 1]) & 0x3F) << 12)
+             | ((static_cast<unsigned char>(s[i + 2]) & 0x3F) << 6)
+             |  (static_cast<unsigned char>(s[i + 3]) & 0x3F);
+    }
+
+    len = 1;
+    return c0;
+}
+
+void encodeUtf8(char32_t cp, std::string& out) {
+    if (cp < 0x80) {
+        out += static_cast<char>(cp);
+    } else if (cp < 0x800) {
+        out += static_cast<char>(0xC0 | (cp >> 6));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+        out += static_cast<char>(0xE0 | (cp >> 12));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (cp >> 18));
+        out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    }
+}
+
+bool isEmojiEligible(char32_t cp) {
+    return (cp >= 0x2190 && cp <= 0x21FF)
+        || (cp >= 0x2300 && cp <= 0x23FF)
+        || (cp >= 0x25A0 && cp <= 0x25FF)
+        || (cp >= 0x2600 && cp <= 0x27BF)
+        || (cp >= 0x2B00 && cp <= 0x2BFF)
+        || (cp >= 0x1F000 && cp <= 0x1FFFF);
+}
+
+constexpr char32_t VS_TEXT  = 0xFE0E;
+constexpr char32_t VS_EMOJI = 0xFE0F;
+
+} // namespace
+
+void ConfigManager::loadEmojiSettings() {
+    m_emojiEnabled = true;
+    m_emojiStyle   = "auto";
+
+    if (!m_config.contains("emoji") || !m_config["emoji"].is_object())
+        return;
+
+    const auto& e = m_config["emoji"];
+
+    if (e.contains("enabled") && e["enabled"].is_boolean())
+        m_emojiEnabled = e["enabled"].get<bool>();
+
+    if (e.contains("style") && e["style"].is_string()) {
+        std::string s = e["style"].get<std::string>();
+        if (s == "auto" || s == "color" || s == "text") {
+            m_emojiStyle = s;
+        }
+#ifdef _DEBUG
+        else {
+            std::cerr << "Warning: invalid emoji style '" << s << "', defaulting to 'auto'\n";
+        }
+#endif
+    }
+}
+
+std::string ConfigManager::applyEmojiStyle(const std::string& raw) const {
+    if (m_emojiEnabled && m_emojiStyle == "auto") return raw;
+    if (raw.empty()) return raw;
+
+    std::string out;
+    out.reserve(raw.size());
+
+    size_t i = 0;
+    while (i < raw.size()) {
+        size_t len = 1;
+        char32_t cp = decodeUtf8(raw, i, len);
+
+        if (isEmojiEligible(cp)) {
+            size_t next = i + len;
+            size_t vsLen = 0;
+            if (next < raw.size()) {
+                size_t peekLen;
+                char32_t peekCp = decodeUtf8(raw, next, peekLen);
+                if (peekCp == VS_TEXT || peekCp == VS_EMOJI) vsLen = peekLen;
+            }
+
+            if (!m_emojiEnabled) {
+                // Skip glyph
+            } else if (m_emojiStyle == "text") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_TEXT, out);
+            } else if (m_emojiStyle == "color") {
+                out.append(raw, i, len);
+                encodeUtf8(VS_EMOJI, out);
+            } else {
+                out.append(raw, i, len + vsLen);
+            }
+
+            i = next + vsLen;
+            continue;
+        }
+
+        out.append(raw, i, len);
+        i += len;
+    }
+
+    return out;
+}
+
+// ===================== PUBLIC WRAPPERS =====================
 std::string ConfigManager::getLabel(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
-    std::string section = resolveSectionKey(rawSection);
-    if (!m_loaded || !m_config.contains(section)) return defaultLabel;
-    if (m_config[section].contains("labels") && m_config[section]["labels"].contains(key)) {
-        if (m_config[section]["labels"][key].is_string()) return m_config[section]["labels"][key].get<std::string>();
-    }
-    if (m_config[section].contains(key) && m_config[section][key].is_string()) {
-        return m_config[section][key].get<std::string>();
-    }
-    return defaultLabel;
+    return applyEmojiStyle(getLabelRaw(rawSection, key, defaultLabel));
 }
 
 std::string ConfigManager::getNestedLabel(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    return applyEmojiStyle(getNestedLabelRaw(rawModule, rawSection, key, defaultLabel));
+}
+
+std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getPrefixRaw(rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+    return applyEmojiStyle(getNestedPrefixRaw(rawModule, rawSection, key, defaultPrefix));
+}
+
+std::string ConfigManager::getNestedString(const std::string& rawModule, const std::string& path, const std::string& defaultValue) const {
+    return applyEmojiStyle(getNestedStringRaw(rawModule, path, defaultValue));
+}
+
+std::vector<std::string> ConfigManager::getStringArray(
+    const std::string& rawModule,
+    const std::string& path,
+    const std::vector<std::string>& fallback) const
+{
+    if (!m_loaded)
+        return fallback;
+
+    nlohmann::json current;
+
+    if (rawModule.empty()) {
+        current = m_config;
+    } else {
+        std::string module = resolveSectionKey(rawModule);
+        if (!m_config.contains(module))
+            return fallback;
+        current = m_config[module];
+    }
+
+    std::vector<std::string> keys;
+    std::stringstream ss(path);
+    std::string key;
+
+    while (std::getline(ss, key, '.'))
+        keys.push_back(key);
+
+    if (!rawModule.empty() && !keys.empty())
+        keys[0] = resolveSubsectionKey(resolveSectionKey(rawModule), keys[0]);
+
+    for (const auto& k : keys)
+    {
+        if (!current.contains(k))
+            return fallback;
+
+        current = current[k];
+    }
+
+    if (!current.is_array() || current.empty())
+        return fallback;
+
+    std::vector<std::string> result;
+    result.reserve(current.size());
+    for (const auto& item : current) {
+        if (item.is_string()) {
+            result.push_back(item.get<std::string>());
+        }
+    }
+
+    return result.empty() ? fallback : result;
+}
+
+std::vector<std::string> ConfigManager::getLayoutOrder() const
+{
+    static const std::vector<std::string> defaultLayout = {
+        "header_settings",
+        "compact_date_and_time",
+        "compact_operating_system",
+        "compact_processor",
+        "compact_graphics_card",
+        "compact_display_monitor",
+        "compact_system_memory",
+        "compact_audio_devices",
+        "compact_resource_usage",
+        "compact_user_account",
+        "compact_network_connection",
+        "compact_disk_storage",
+        "detailed_system_memory",
+        "detailed_disk_storage",
+        "detailed_network_connection",
+        "detailed_operating_system",
+        "detailed_processor",
+        "detailed_graphics_card",
+        "detailed_display_monitor",
+        "detailed_bios_and_motherboard",
+        "detailed_user_account",
+        "detailed_resource_usage",
+        "detailed_audio_and_power"
+    };
+
+    return getStringArray("", "section_order", defaultLayout);
+}
+
+std::string ConfigManager::getLabelRaw(const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
+    std::string section = resolveSectionKey(rawSection);
+    if (!m_loaded || !m_config.contains(section)) return defaultLabel;
+
+    const auto& secObj = m_config[section];
+
+    if (key.find('.') != std::string::npos) {
+        std::vector<std::string> keys;
+        std::stringstream ss(key);
+        std::string k;
+        while (std::getline(ss, k, '.')) keys.push_back(k);
+
+        nlohmann::json current = secObj;
+        for (const auto& part : keys) {
+            if (!current.contains(part)) return defaultLabel;
+            current = current[part];
+        }
+        if (current.is_string()) return current.get<std::string>();
+        return defaultLabel;
+    }
+
+    if (secObj.contains("labels") && secObj["labels"].contains(key)) {
+        if (secObj["labels"][key].is_string()) {
+            return secObj["labels"][key].get<std::string>();
+        }
+    }
+
+    if (secObj.contains(key) && secObj[key].is_string()) {
+        return secObj[key].get<std::string>();
+    }
+
+    return defaultLabel;
+}
+
+std::string ConfigManager::getNestedLabelRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultLabel) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultLabel;
     std::string section = resolveSubsectionKey(module, rawSection);
     if (!m_config[module].contains(section)) return defaultLabel;
+
     if (m_config[module][section].contains("labels") && m_config[module][section]["labels"].contains(key)) {
-        if (m_config[module][section]["labels"][key].is_string()) return m_config[module][section]["labels"][key].get<std::string>();
+        if (m_config[module][section]["labels"][key].is_string()) {
+            return m_config[module][section]["labels"][key].get<std::string>();
+        }
     }
+
     if (m_config[module][section].contains(key) && m_config[module][section][key].is_string()) {
         return m_config[module][section][key].get<std::string>();
     }
+
     return defaultLabel;
 }
 
-std::string ConfigManager::getPrefix(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getPrefixRaw(const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string section = resolveSectionKey(rawSection);
     if (!m_loaded || !m_config.contains(section)) return defaultPrefix;
-    if (m_config[section].contains("prefixes") && m_config[section]["prefixes"].contains(key)) {
-        if (m_config[section]["prefixes"][key].is_string()) return m_config[section]["prefixes"][key].get<std::string>();
+
+    const auto& secObj = m_config[section];
+
+    if (key.find('.') != std::string::npos) {
+        std::vector<std::string> keys;
+        std::stringstream ss(key);
+        std::string k;
+        while (std::getline(ss, k, '.')) keys.push_back(k);
+
+        nlohmann::json current = secObj;
+        for (const auto& part : keys) {
+            if (!current.contains(part)) return defaultPrefix;
+            current = current[part];
+        }
+        if (current.is_string()) return current.get<std::string>();
+        return defaultPrefix;
     }
-    if (m_config[section].contains("labels") && m_config[section]["labels"].contains(key)) {
-        if (m_config[section]["labels"][key].is_string()) return m_config[section]["labels"][key].get<std::string>();
+
+    if (secObj.contains("prefixes") && secObj["prefixes"].contains(key)) {
+        if (secObj["prefixes"][key].is_string()) {
+            return secObj["prefixes"][key].get<std::string>();
+        }
     }
-    if (m_config[section].contains(key) && m_config[section][key].is_string()) {
-        return m_config[section][key].get<std::string>();
+
+    if (secObj.contains("labels") && secObj["labels"].contains(key)) {
+        if (secObj["labels"][key].is_string()) {
+            return secObj["labels"][key].get<std::string>();
+        }
     }
-    // Alias fallbacks for prefixes
+
+    if (secObj.contains(key) && secObj[key].is_string()) {
+        return secObj[key].get<std::string>();
+    }
+
     if (key == "item") {
         for (const auto& altKey : {"|->", "~", "#"}) {
-            if (m_config[section].contains("prefixes") && m_config[section]["prefixes"].contains(altKey) && m_config[section]["prefixes"][altKey].is_string()) {
-                return m_config[section]["prefixes"][altKey].get<std::string>();
+            if (secObj.contains("prefixes") && secObj["prefixes"].contains(altKey) && secObj["prefixes"][altKey].is_string()) {
+                return secObj["prefixes"][altKey].get<std::string>();
             }
-            if (m_config[section].contains(altKey) && m_config[section][altKey].is_string()) {
-                return m_config[section][altKey].get<std::string>();
+            if (secObj.contains(altKey) && secObj[altKey].is_string()) {
+                return secObj[altKey].get<std::string>();
             }
         }
     } else if (key == "item_alt") {
-        if (m_config[section].contains("prefixes") && m_config[section]["prefixes"].contains("#->") && m_config[section]["prefixes"]["#->"].is_string()) {
-            return m_config[section]["prefixes"]["#->"].get<std::string>();
+        if (secObj.contains("prefixes") && secObj["prefixes"].contains("#->") && secObj["prefixes"]["#->"].is_string()) {
+            return secObj["prefixes"]["#->"].get<std::string>();
         }
-        if (m_config[section].contains("#->") && m_config[section]["#->"].is_string()) {
-            return m_config[section]["#->"].get<std::string>();
+        if (secObj.contains("#->") && secObj["#->"].is_string()) {
+            return secObj["#->"].get<std::string>();
         }
     } else if (key == "header") {
         for (const auto& altKey : {"#-", ">>~"}) {
-            if (m_config[section].contains("prefixes") && m_config[section]["prefixes"].contains(altKey) && m_config[section]["prefixes"][altKey].is_string()) {
-                return m_config[section]["prefixes"][altKey].get<std::string>();
+            if (secObj.contains("prefixes") && secObj["prefixes"].contains(altKey) && secObj["prefixes"][altKey].is_string()) {
+                return secObj["prefixes"][altKey].get<std::string>();
             }
-            if (m_config[section].contains(altKey) && m_config[section][altKey].is_string()) {
-                return m_config[section][altKey].get<std::string>();
+            if (secObj.contains(altKey) && secObj[altKey].is_string()) {
+                return secObj[altKey].get<std::string>();
             }
         }
     }
+
     return defaultPrefix;
 }
 
-std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
+std::string ConfigManager::getNestedPrefixRaw(const std::string& rawModule, const std::string& rawSection, const std::string& key, const std::string& defaultPrefix) const {
     std::string module = resolveSectionKey(rawModule);
     if (!m_loaded || !m_config.contains(module)) return defaultPrefix;
     std::string section = resolveSubsectionKey(module, rawSection);
     if (!m_config[module].contains(section)) return defaultPrefix;
+
     if (m_config[module][section].contains("prefixes") && m_config[module][section]["prefixes"].contains(key)) {
-        if (m_config[module][section]["prefixes"][key].is_string()) return m_config[module][section]["prefixes"][key].get<std::string>();
+        if (m_config[module][section]["prefixes"][key].is_string()) {
+            return m_config[module][section]["prefixes"][key].get<std::string>();
+        }
     }
+
     if (m_config[module][section].contains("labels") && m_config[module][section]["labels"].contains(key)) {
-        if (m_config[module][section]["labels"][key].is_string()) return m_config[module][section]["labels"][key].get<std::string>();
+        if (m_config[module][section]["labels"][key].is_string()) {
+            return m_config[module][section]["labels"][key].get<std::string>();
+        }
     }
+
     if (m_config[module][section].contains(key) && m_config[module][section][key].is_string()) {
         return m_config[module][section][key].get<std::string>();
     }
-    // Alias fallbacks for nested prefixes
+
     if (key == "item") {
         for (const auto& altKey : {"|->", "~", "#"}) {
             if (m_config[module][section].contains("prefixes") && m_config[module][section]["prefixes"].contains(altKey) && m_config[module][section]["prefixes"][altKey].is_string()) {
                 return m_config[module][section]["prefixes"][altKey].get<std::string>();
             }
-            if (m_config[module][section].contains(altKey) && m_config[module][section][altKey].is_string()) {
+            if (m_config[module][section].contains(altKey) && m_config[module][section][key].is_string()) {
                 return m_config[module][section][altKey].get<std::string>();
             }
         }
@@ -414,5 +1212,10 @@ std::string ConfigManager::getNestedPrefix(const std::string& rawModule, const s
             }
         }
     }
+
     return defaultPrefix;
+}
+
+const nlohmann::json& ConfigManager::getJson() const {
+    return m_config;
 }
