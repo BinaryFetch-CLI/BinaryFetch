@@ -118,6 +118,7 @@ set(BINARYFETCH_HEADERS
     "${BINARYFETCH_INCLUDE}/core/resource.h"
     "${BINARYFETCH_INCLUDE}/core/config_management.h"
     "${BINARYFETCH_INCLUDE}/core/Image.h"
+    "${BINARYFETCH_INCLUDE}/core/linux_ascii_database.h"
     "${BINARYFETCH_STB_IMAGE}/stb_image.h"
 
     # --------------------------------------------------------
@@ -266,7 +267,7 @@ elseif(UNIX AND NOT APPLE)
         "${BINARYFETCH_CPP}/Linux/core/AsciiArt.cpp"
         "${BINARYFETCH_CPP}/Linux/core/config_management.cpp"
         "${BINARYFETCH_CPP}/Linux/core/Image.cpp"
-
+        "${BINARYFETCH_CPP}/Linux/core/linux_ascii_database.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------

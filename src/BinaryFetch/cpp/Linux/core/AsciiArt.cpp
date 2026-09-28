@@ -2,6 +2,7 @@
 // Linux implementation
 
 #include "core/AsciiArt.h"
+#include "core/linux_ascii_database.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -15,6 +16,7 @@
 #include <cstdlib>
 #include <pwd.h>
 #include <errno.h>
+#include <algorithm>
 
 // ---------------- Helper path utilities ----------------
 
@@ -38,6 +40,68 @@ static std::string getLinuxConfigDir() {
     return getHomeDir() + "/.config/binaryfetch";
 }
 
+// ---------------- Distro Detection (/etc/os-release) ----------------
+
+static std::string readOSReleaseValue(const std::string& key) {
+    std::ifstream file("/etc/os-release");
+    if (!file.is_open()) return "";
+
+    std::string line;
+    const std::string prefix = key + "=";
+    while (std::getline(file, line)) {
+        if (line.rfind(prefix, 0) != 0) continue;
+
+        std::string value = line.substr(prefix.size());
+        if (!value.empty() && (value.front() == '"' || value.front() == '\'')) {
+            value.erase(0, 1);
+        }
+        if (!value.empty() && (value.back() == '"' || value.back() == '\'')) {
+            value.pop_back();
+        }
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        return value;
+    }
+    return "";
+}
+
+static std::vector<std::string> splitIdLikeChain(const std::string& raw) {
+    std::vector<std::string> chain;
+    std::stringstream ss(raw);
+    std::string token;
+    while (ss >> token) chain.push_back(token);
+    return chain;
+}
+
+// Resolves the correct art for THIS system:
+//   1. Direct ID= match (key or alias) in the database.
+//   2. Walk ID_LIKE= chain, same key-or-alias lookup, in order.
+//   3. Database's mandatory "linux" fallback entry.
+static std::string resolveDistroArt() {
+    const std::map<std::string, DistroArt>& db = getDistroArtDatabase();
+
+    auto lookup = [&](const std::string& id) -> const std::string* {
+        if (id.empty()) return nullptr;
+        auto it = db.find(id);
+        if (it != db.end()) return &it->second.art;
+        for (const auto& [dbKey, entry] : db) {
+            for (const auto& alias : entry.aliases) {
+                if (alias == id) return &entry.art;
+            }
+        }
+        return nullptr;
+    };
+
+    std::string id = readOSReleaseValue("ID");
+    if (const std::string* art = lookup(id)) return *art;
+
+    for (const auto& likeId : splitIdLikeChain(readOSReleaseValue("ID_LIKE"))) {
+        if (const std::string* art = lookup(likeId)) return *art;
+    }
+
+    auto fallback = db.find("linux");
+    return (fallback != db.end()) ? fallback->second.art : std::string();
+}
+
 // ---------------- Default Color Map ----------------
 static const std::map<int, std::string> kDefaultColorMap = {
     {1, "\033[31m"}, {2, "\033[32m"}, {3, "\033[33m"},
@@ -47,29 +111,7 @@ static const std::map<int, std::string> kDefaultColorMap = {
     {13, "\033[96m"}, {14, "\033[97m"}, {15, "\033[0m"}
 };
 
-// ---------------- Default ASCII Art (Placeholder Logo) ----------------
-static const std::string kDefaultAsciiArt =
-R"ASCIIART(                             ....
-              $14.',:clooo:  $1.:looooo:.
-           $14.;looooooooc  $1.oooooooooo'
-        $14.;looooool:,''.  $1:ooooooooooc
-       $14;looool;.         $1'oooooooooo,
-      $14;clool'             $1.cooooooc.  $14,,
-         $14...                $1......  $14.:oo,
-  $1.;clol:,.                        $14.loooo'
- $1:ooooooooo,                        $14'ooool
-$1'ooooooooooo.                        $14loooo.
-$1'ooooooooool                         $14coooo.
- $1,loooooooc.                        $14.loooo.
-   $1.,;;;'.                          $14;ooooc
-       $14...                         $14,ooool.
-    $14.cooooc.              $1..',,'.  $14.cooo.
-      $14;ooooo:.           $1;oooooooc.  $14:l.
-       $14.coooooc,..      $1coooooooooo.
-         $14.:ooooooolc:. $1.ooooooooooo'
-           $14.':loooooo;  $1,oooooooooc
-               $14..';::c'  $1.;loooo:'
-)ASCIIART";
+
 
 // ---------------- Utility Functions ----------------
 
@@ -161,7 +203,13 @@ bool AsciiArt::copyDefaultArt(const std::string& destPath) const {
     std::ofstream dest(destPath, std::ios::binary);
     if (!dest.is_open()) return false;
 
-    dest << kDefaultAsciiArt;
+    std::string art = resolveDistroArt();
+    if (art.empty()) {
+        std::cerr << "Warning: resolveDistroArt() returned empty — "
+                     "database missing its mandatory 'linux' fallback entry.\n";
+        return false;
+    }
+    dest << art;
     dest.close();
     return true;
 }
@@ -200,7 +248,14 @@ bool AsciiArt::loadArtFromEmbedded() {
 
     const std::map<int, std::string>& activeColorMap = colorMap.empty() ? kDefaultColorMap : colorMap;
 
-    std::istringstream stream(kDefaultAsciiArt);
+    std::string art = resolveDistroArt();
+    if (art.empty()) {
+        std::cerr << "Warning: resolveDistroArt() returned empty — "
+                     "database missing its mandatory 'linux' fallback entry.\n";
+        enabled = false;
+        return false;
+    }
+    std::istringstream stream(art);
     std::string line;
     maxWidth = 0;
     bool isFirstLine = true;
