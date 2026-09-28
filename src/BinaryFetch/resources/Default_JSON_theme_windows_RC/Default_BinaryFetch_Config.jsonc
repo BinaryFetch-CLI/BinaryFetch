@@ -349,7 +349,7 @@
 "compact_processor": {
     "enabled": true,
     "top_line_spacing": 0,
-    "order": ["cores", "threads", " ", "name", " ", "clock"],
+    "order": [ "name"," ","cores", "threads", " ", "clock"],
 
     "prefix": "│⚙️ ",
     "prefix_color": "red",
