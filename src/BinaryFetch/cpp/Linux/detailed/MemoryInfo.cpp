@@ -14,9 +14,19 @@
 #include <iostream>
 using namespace std;
 
+// Set to true only when debugging module-detection issues.
+// Wire this up to a CLI flag (e.g. --verbose) via setVerboseLogging().
+static bool g_verbose = false;
+
+#define LOG_WARN(x) do { if (g_verbose) cerr << x; } while (0)
+
 MemoryInfo::MemoryInfo() {
     fetchSystemMemory();
     fetchModulesInfo();
+}
+
+void MemoryInfo::setVerboseLogging(bool v) {
+    g_verbose = v;
 }
 
 // ---------- helpers ----------
@@ -57,7 +67,7 @@ void MemoryInfo::fetchSystemMemory() {
 
     ifstream meminfo("/proc/meminfo");
     if (!meminfo.is_open()) {
-        cerr << "[MemoryInfo] ERROR: could not open /proc/meminfo\n";
+        LOG_WARN("[MemoryInfo] ERROR: could not open /proc/meminfo\n");
         return;
     }
 
@@ -111,18 +121,18 @@ static bool fetchModulesViaDmidecode(vector<MemoryModule>& outModules) {
     }
 
     if (!ran) {
-        cerr << "[MemoryInfo] dmidecode: popen() failed entirely (shell unavailable?)\n";
+        LOG_WARN("[MemoryInfo] dmidecode: popen() failed entirely (shell unavailable?)\n");
         return false;
     }
 
     if (exitCode != 0) {
-        cerr << "[MemoryInfo] dmidecode exited with code " << exitCode
-             << ". Output was:\n" << output << "\n";
+        LOG_WARN("[MemoryInfo] dmidecode exited with code " << exitCode
+             << ". Output was:\n" << output << "\n");
         if (output.find("Permission denied") != string::npos || !isRoot()) {
-            cerr << "[MemoryInfo] Likely cause: not running as root. Try: sudo ./yourprogram\n";
+            LOG_WARN("[MemoryInfo] Likely cause: not running as root. Try: sudo ./yourprogram\n");
         }
         else if (output.find("not found") != string::npos) {
-            cerr << "[MemoryInfo] Likely cause: dmidecode is not installed. Try: sudo apt install dmidecode\n";
+            LOG_WARN("[MemoryInfo] Likely cause: dmidecode is not installed. Try: sudo apt install dmidecode\n");
         }
         return false;
     }
@@ -189,7 +199,7 @@ static bool fetchModulesViaDmidecode(vector<MemoryModule>& outModules) {
     flush();
 
     if (outModules.empty()) {
-        cerr << "[MemoryInfo] dmidecode ran successfully but reported no populated memory slots.\n";
+        LOG_WARN("[MemoryInfo] dmidecode ran successfully but reported no populated memory slots.\n");
     }
     return !outModules.empty();
 }
@@ -216,8 +226,8 @@ static bool fetchModulesViaSysfsDMI(vector<MemoryModule>& outModules) {
     const char* path = "/sys/firmware/dmi/tables/DMI";
     ifstream file(path, ios::binary);
     if (!file.is_open()) {
-        cerr << "[MemoryInfo] Could not open " << path
-             << " (need root, or kernel does not expose it on this system)\n";
+        LOG_WARN("[MemoryInfo] Could not open " << path
+             << " (need root, or kernel does not expose it on this system)\n");
         return false;
     }
 
@@ -228,7 +238,7 @@ static bool fetchModulesViaSysfsDMI(vector<MemoryModule>& outModules) {
     file.close();
 
     if (data.empty()) {
-        cerr << "[MemoryInfo] " << path << " was empty (likely no read permission)\n";
+        LOG_WARN("[MemoryInfo] " << path << " was empty (likely no read permission)\n");
         return false;
     }
 
@@ -254,10 +264,6 @@ static bool fetchModulesViaSysfsDMI(vector<MemoryModule>& outModules) {
                     break;
                 }
                 pos += 1;
-                if (pos < data.size() && data[pos - 1] == 0 &&
-                    (strings.empty() || true)) {
-                    // check for double-null terminator
-                }
                 if (pos < data.size() && data[pos] == 0) {
                     pos += 1;
                     break;
@@ -335,7 +341,7 @@ static bool fetchModulesViaSysfsDMI(vector<MemoryModule>& outModules) {
     }
 
     if (outModules.empty()) {
-        cerr << "[MemoryInfo] Parsed SMBIOS table but found no populated memory slots.\n";
+        LOG_WARN("[MemoryInfo] Parsed SMBIOS table but found no populated memory slots.\n");
     }
     return !outModules.empty();
 }
@@ -345,24 +351,24 @@ void MemoryInfo::fetchModulesInfo() {
     modules.clear();
 
     if (!isRoot()) {
-        cerr << "[MemoryInfo] WARNING: not running as root. "
+        LOG_WARN("[MemoryInfo] WARNING: not running as root. "
                 "Memory module details require root (SMBIOS/DMI tables are protected). "
-                "Re-run with sudo.\n";
+                "Re-run with sudo.\n");
     }
 
     if (fetchModulesViaDmidecode(modules)) {
         return;
     }
 
-    cerr << "[MemoryInfo] Falling back to direct SMBIOS table parsing...\n";
+    LOG_WARN("[MemoryInfo] Falling back to direct SMBIOS table parsing...\n");
 
     if (fetchModulesViaSysfsDMI(modules)) {
         return;
     }
 
-    cerr << "[MemoryInfo] Both methods failed. No module data available. "
+    LOG_WARN("[MemoryInfo] Both methods failed. No module data available. "
             "Make sure you are running as root (sudo) and that either dmidecode "
-            "is installed or /sys/firmware/dmi/tables/DMI is readable.\n";
+            "is installed or /sys/firmware/dmi/tables/DMI is readable.\n");
 }
 
 // ---------- accessors ----------

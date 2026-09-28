@@ -22,6 +22,8 @@ private:
 public:
     MemoryInfo();
 
+    void setVerboseLogging(bool v);  // enable/disable [MemoryInfo] debug warnings
+
     int getTotal() const;
     int getFree() const;
     int getUsedPercentage() const;
