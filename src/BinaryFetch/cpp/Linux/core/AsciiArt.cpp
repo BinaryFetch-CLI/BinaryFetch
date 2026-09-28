@@ -35,9 +35,9 @@ static std::string getHomeDir() {
 static std::string getLinuxConfigDir() {
     const char* xdg = std::getenv("XDG_CONFIG_HOME");
     if (xdg && *xdg != '\0') {
-        return std::string(xdg) + "/binaryfetch";
+        return std::string(xdg) + "/BinaryFetch";
     }
-    return getHomeDir() + "/.config/binaryfetch";
+    return getHomeDir() + "/.config/BinaryFetch";
 }
 
 // ---------------- Distro Detection (/etc/os-release) ----------------
