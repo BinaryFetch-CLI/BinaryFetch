@@ -22,10 +22,11 @@
      #include <Wbemidl.h>      // WMI (Windows Management Instrumentation) interfaces 
 #endif 
 
-// ASCII Art & image functionality
+// ASCII Art,image & gif functionality
 #include "AsciiArt.h" 
 #include "core/config_management.h"
 #include "Image.h"  
+#include "Gif.h"
 
 
 // ------------------ Full System Info Modules ------------------
@@ -154,12 +155,19 @@ void runOrderedFields(const std::vector<std::string>& order,
 
 
 
-enum class ArtMode { ASCII, IMAGE, NONE };
+enum class ArtMode { ASCII, IMAGE, GIF, NONE };
 
 class LivePrinter {
 public:
-    LivePrinter(const AsciiArt& artRef, const TerminalImage& imageRef, ArtMode m)
-        : art(artRef), image(imageRef), mode(m), index(0), imageDrawn(false) {}
+    LivePrinter(const AsciiArt& artRef, const TerminalImage& imageRef,
+                const TerminalGif& gifRef, ArtMode m)
+        : art(artRef), image(imageRef), gif(gifRef), mode(m), index(0),
+          imageDrawn(false), gifFrame0Drawn(false) {}
+
+    // Rows printed so far — used by main() after finish() to compute
+    // how far the final cursor position is from the top of the art
+    // block, so the GIF animation loop can hop back up to it.
+    int getCursorRow() const { return index; }
 
     void push(const std::string& infoLine) {
         printAndPad();
@@ -181,20 +189,24 @@ public:
             std::cout << "\033[K" << '\n';
             index++;
         }
-        if (mode == ArtMode::IMAGE) drawImageIfDue(); // safety net if info was shorter than the art
+        if (mode == ArtMode::IMAGE) drawImageIfDue();      // safety net if info was shorter than the art
+        else if (mode == ArtMode::GIF) drawGifFrame0IfDue(); // same safety net, GIF's first frame
     }
 
 private:
     const AsciiArt& art;
     const TerminalImage& image;
+    const TerminalGif& gif;
     ArtMode mode;
     int index;
     bool imageDrawn;
+    bool gifFrame0Drawn;
 
     int artHeight() const {
         switch (mode) {
             case ArtMode::ASCII: return art.getPaddingUp() + art.getHeight();
             case ArtMode::IMAGE: return image.getPaddingUp() + image.getRowSpan();
+            case ArtMode::GIF:   return gif.getPaddingUp() + gif.getRowSpan();
             default: return 0;
         }
     }
@@ -202,6 +214,7 @@ private:
     void printAndPad() {
         if (mode == ArtMode::ASCII) printAsciiAndPad();
         else if (mode == ArtMode::IMAGE) printImageAndPad();
+        else if (mode == ArtMode::GIF) printGifAndPad();
     }
 
     void printAsciiAndPad() {
@@ -309,8 +322,44 @@ private:
         std::cout << "\0338";                            // DECRC: restore cursor
         std::cout.flush();
     }
-};
 
+    // Identical layout mechanics to printImageAndPad() — same gap-width
+    // reasoning applies (GIF frames are rasterized to an exact pixel
+    // width, so no extra spacing term beyond padding/colSpan).
+    void printGifAndPad() {
+        int upPad    = gif.getPaddingUp();
+        int rows     = gif.getRowSpan();
+        int gapEnd   = upPad + rows;
+        int gapWidth = gif.getPaddingLeft() + gif.getColSpan()
+                     + gif.getPaddingRight();
+
+        if (index >= gapEnd) {
+            drawGifFrame0IfDue();
+        }
+
+        if (gapWidth > 0) std::cout << std::string(gapWidth, ' ');
+    }
+
+    // Draws only frame 0 — this is the static placeholder shown while
+    // info text prints. The real animation loop (in main(), after
+    // finish()) takes over afterwards and redraws subsequent frames
+    // at this exact same screen position.
+    void drawGifFrame0IfDue() {
+        if (gifFrame0Drawn || !gif.isLoaded()) return;
+        gifFrame0Drawn = true;
+
+        int rows = gif.getRowSpan();
+        if (rows <= 0) return;
+
+        std::cout << "\0337";
+        std::cout << "\033[" << rows << "A" << '\r';
+        int leftPad = gif.getPaddingLeft();
+        if (leftPad > 0) std::cout << std::string(leftPad, ' ');
+        gif.drawFrame(0);
+        std::cout << "\0338";
+        std::cout.flush();
+    }
+};
 
 //  ███╗   ███╗ █████╗ ██╗███╗   ██╗    ██████╗██████╗ ██████╗ 
 //  ████╗ ████║██╔══██╗██║████╗  ██║   ██╔════╝██╔══██╗██╔══██╗
@@ -360,17 +409,38 @@ int main(){
     // cout << u8"😄 ❤️ 🎉 🚀 ⭐ 🐱 🍕 🎮 😭 🌈\n"; 
 
 
-    // ART / IMAGE LOADING:
-    // Image mode is tried first (if enabled); ASCII is the fallback,
-    // both for a failed image load and for anyone who hasn't opted in.
+    // ART LOADING, priority order: GIF > Image > ASCII.
+    // If more than one of Gif/Image/Ascii_Art is enabled in JSON, only
+    // the highest-priority one that successfully loads is used — the
+    // others are never even attempted, matching the existing
+    // Image-then-ASCII fallback chain already in place below.
     AsciiArt art;
     TerminalImage image;
+    TerminalGif gif;
     ArtMode mode = ArtMode::NONE;
 
+    bool gifEnabled   = config.getNestedBool("art", "Gif.enabled", false);
     bool imageEnabled = config.getNestedBool("art", "Image.enabled", false);
     bool asciiEnabled = config.getNestedBool("art", "Ascii_Art.enabled", true);
 
-    if (imageEnabled) {
+    if (gifEnabled) {
+        gif.setPadding(
+            config.getNestedInt("art", "Gif.padding_up", 0),
+            config.getNestedInt("art", "Gif.padding_left", 0),
+            config.getNestedInt("art", "Gif.padding_right", 0));
+
+        bool ok = gif.load(
+            config.getNestedString("art", "Gif.gif_path", ""),
+            config.getNestedInt("art", "Gif.image_size_percentage", 100));
+
+        if (ok) {
+            mode = ArtMode::GIF;
+        } else {
+            cout << "Warning: GIF could not be loaded. Falling back.\n";
+        }
+    }
+
+    if (mode == ArtMode::NONE && imageEnabled) {
         image.setPadding(
             config.getNestedInt("art", "Image.padding_up", 0),
             config.getNestedInt("art", "Image.padding_left", 0),
@@ -407,7 +477,7 @@ int main(){
     }
 
     // Create LivePrinter
-    LivePrinter lp(art, image, mode);
+    LivePrinter lp(art, image, gif, mode);
 
 
     // create objects of all classes here 
@@ -3051,10 +3121,49 @@ for (const auto& key : config.getLayoutOrder()) {
 
     cout << endl;
 
+    // GIF ANIMATION LOOP — only runs when GIF mode actually won the
+    // priority fallback above and has more than a single frame. Does
+    // not touch anything printed by the info sections; it only redraws
+    // the same reserved image block repeatedly, using the same relative
+    // DECSC/hop/DECRC trick drawGifFrame0IfDue() already used once.
+    if (mode == ArtMode::GIF && gif.isLoaded() && gif.getFrameCount() > 1) {
+        bool loop = config.getNestedBool("art", "Gif.loop", true);
+        double speedMultiplier = 1.0;
+        {
+            // getNestedInt truncates to int; pull the raw JSON value as
+            // a string path fallback would be overkill here — a plain
+            // double isn't exposed by ConfigManager, so we read it as
+            // an int-friendly approximation via two int reads is wrong
+            // for e.g. 0.5. Simplest safe option: treat the configured
+            // value as a string and parse it, falling back to 1.0.
+            std::string raw = config.getNestedString("art", "Gif.speed_multiplier", "1.0");
+            try { speedMultiplier = std::stod(raw); } catch (...) { speedMultiplier = 1.0; }
+            if (speedMultiplier <= 0.0) speedMultiplier = 1.0;
+        }
 
+        int maxFrames = config.getNestedInt("art", "Gif.max_frames", 0);
+        size_t frameLimit = (maxFrames > 0)
+            ? std::min((size_t)maxFrames, gif.getFrameCount())
+            : gif.getFrameCount();
 
+        int hopAmount = lp.getCursorRow() + 1 - gif.getPaddingUp();
+        int leftPad = gif.getPaddingLeft();
 
+        do {
+            for (size_t f = 0; f < frameLimit; ++f) {
+                std::cout << "\0337";
+                if (hopAmount > 0) std::cout << "\033[" << hopAmount << "A\r";
+                if (leftPad > 0) std::cout << std::string(leftPad, ' ');
+                gif.drawFrame(f);
+                std::cout << "\0338";
+                std::cout.flush();
 
+                int delay = (int)(gif.getFrameDelayMs(f) / speedMultiplier);
+                if (delay < 1) delay = 1;
+                Sleep((DWORD)delay);
+            }
+        } while (loop);
+    }
 
     return 0;
 }
