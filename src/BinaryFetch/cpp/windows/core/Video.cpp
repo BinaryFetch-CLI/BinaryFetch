@@ -1,15 +1,16 @@
 // Video.cpp
-// Windows-only. Decodes via an ffmpeg pipe, Sixel-encodes frame by frame.
+// Windows-only. Windows Media Foundation source reader -> scale -> Sixel.
 
 #include "Video.h"
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <regex>
 #include <sstream>
 #include <vector>
 
@@ -17,6 +18,18 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <mferror.h>
+#include <wrl/client.h>
+
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "mfreadwrite.lib")
+#pragma comment(lib, "mfuuid.lib")
+#pragma comment(lib, "ole32.lib")
+
+using Microsoft::WRL::ComPtr;
 
 namespace {
 
@@ -145,7 +158,6 @@ inline void writeRun(std::ostringstream& out, char value, int count) {
     else for (int i = 0; i < count; ++i) out << value;
 }
 
-// Video frames are fully opaque, so there is no alpha mask here.
 void encodeBand(std::ostringstream& out, const std::vector<uint8_t>& indexed,
                 int width, int height, int startY) {
     const int bandHeight = std::min(6, height - startY);
@@ -208,61 +220,24 @@ bool encodeFrame(const unsigned char* pixels, int width, int height, std::string
     return true;
 }
 
-// ---- ffmpeg helpers ----
-HANDLE openNul(SECURITY_ATTRIBUTES& sa) {
-    return CreateFileA("NUL", GENERIC_READ | GENERIC_WRITE,
-                       FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, nullptr);
-}
-
-// Runs "ffmpeg -i file", reads its banner from stderr, parses "WxH".
-bool probeVideoSize(const std::string& ffmpeg, const std::string& path, int& outW, int& outH) {
-    SECURITY_ATTRIBUTES sa{ sizeof(sa), nullptr, TRUE };
-    HANDLE rd = nullptr, wr = nullptr;
-    if (!CreatePipe(&rd, &wr, &sa, 0)) return false;
-    SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
-    HANDLE nul = openNul(sa);
-
-    STARTUPINFOA si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = nul;
-    si.hStdOutput = wr;
-    si.hStdError = wr;
-
-    std::string cmd = "\"" + ffmpeg + "\" -hide_banner -nostdin -i \"" + path + "\"";
-    std::vector<char> buf(cmd.begin(), cmd.end());
-    buf.push_back('\0');
-
-    PROCESS_INFORMATION pi{};
-    BOOL ok = CreateProcessA(nullptr, buf.data(), nullptr, nullptr, TRUE,
-                             CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
-    CloseHandle(wr);
-    if (nul != INVALID_HANDLE_VALUE) CloseHandle(nul);
-    if (!ok) { CloseHandle(rd); return false; }
-    CloseHandle(pi.hThread);
-
-    std::string text;
-    char chunk[4096];
-    DWORD got = 0;
-    while (ReadFile(rd, chunk, sizeof(chunk), &got, nullptr) && got > 0) text.append(chunk, got);
-    WaitForSingleObject(pi.hProcess, 5000);
-    CloseHandle(pi.hProcess);
-    CloseHandle(rd);
-
-    size_t v = text.find("Video:");
-    if (v == std::string::npos) return false;
-    size_t eol = text.find('\n', v);
-    std::string line = text.substr(v, eol == std::string::npos ? std::string::npos : eol - v);
-
-    static const std::regex re("\\s(\\d{2,5})x(\\d{2,5})[\\s,\\[]");
-    std::smatch m;
-    if (!std::regex_search(line, m, re)) return false;
-    outW = std::stoi(m[1].str());
-    outH = std::stoi(m[2].str());
-    return outW > 0 && outH > 0;
-}
-
 } // anonymous namespace
+
+// ============================================================
+// Media Foundation state (private to this file)
+// ============================================================
+
+struct TerminalVideo::MFState {
+    ComPtr<IMFSourceReader> reader;
+    bool mfStarted = false;
+    bool comInited = false;
+    int srcW = 0, srcH = 0;
+    LONG stride = 0;              // bytes per row; negative = bottom-up in memory
+    double nativeFps = 0.0;
+    LONGLONG targetTime = 0;      // 100 ns units
+    bool needAnchor = true;
+    HRESULT lastHr = S_OK;
+    std::vector<int> xmap;        // dest x -> source x
+};
 
 // ============================================================
 // TerminalVideo
@@ -270,10 +245,15 @@ bool probeVideoSize(const std::string& ffmpeg, const std::string& path, int& out
 
 TerminalVideo::TerminalVideo()
     : rowSpan(0), colSpan(0), paddingUp(0), paddingLeft(0), paddingRight(0),
-      cellHeightPx(0), cellWidthPx(0), fps(15), outW(0), outH(0), loaded(false),
-      ffmpegPath("ffmpeg"), hProcess(nullptr), hPipe(nullptr) {}
+      cellHeightPx(0), cellWidthPx(0), fps(15), outW(0), outH(0),
+      loaded(false), flipVertical(false), mf(new MFState()) {}
 
-TerminalVideo::~TerminalVideo() { close(); }
+TerminalVideo::~TerminalVideo() {
+    close();
+    if (mf->mfStarted) MFShutdown();
+    if (mf->comInited) CoUninitialize();
+    delete mf;
+}
 
 void TerminalVideo::setPadding(int up, int left, int right) {
     paddingUp = up; paddingLeft = left; paddingRight = right;
@@ -288,55 +268,67 @@ void TerminalVideo::setCellHeightPx(int px) { cellHeightPx = px; }
 void TerminalVideo::setCellWidthPx(int px)  { cellWidthPx = px; }
 void TerminalVideo::setFps(int f)           { fps = std::clamp(f, 1, 60); }
 int  TerminalVideo::getFps() const          { return fps; }
-void TerminalVideo::setFfmpegPath(const std::string& p) { ffmpegPath = p.empty() ? "ffmpeg" : p; }
+void TerminalVideo::setFlipVertical(bool f) { flipVertical = f; }
 
 void TerminalVideo::close() {
-    if (hProcess) {
-        TerminateProcess((HANDLE)hProcess, 0);
-        CloseHandle((HANDLE)hProcess);
-        hProcess = nullptr;
-    }
-    if (hPipe) {
-        CloseHandle((HANDLE)hPipe);
-        hPipe = nullptr;
-    }
+    mf->reader.Reset();
 }
 
-bool TerminalVideo::startStream() {
-    close();
+bool TerminalVideo::openReader() {
+    mf->reader.Reset();
 
-    SECURITY_ATTRIBUTES sa{ sizeof(sa), nullptr, TRUE };
-    HANDLE rd = nullptr, wr = nullptr;
-    size_t frameBytes = rgba.size();
-    DWORD pipeSize = (DWORD)std::min<size_t>(frameBytes * 4, (size_t)1 << 26);
-    if (!CreatePipe(&rd, &wr, &sa, pipeSize)) return false;
-    SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
-    HANDLE nul = openNul(sa);
+    int n = MultiByteToWideChar(CP_UTF8, 0, videoPath.c_str(), -1, nullptr, 0);
+    if (n <= 0) { mf->lastHr = E_INVALIDARG; return false; }
+    std::wstring wpath((size_t)n, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, videoPath.c_str(), -1, &wpath[0], n);
 
-    STARTUPINFOA si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput = nul;
-    si.hStdOutput = wr;
-    si.hStdError = nul;
+    HRESULT hr;
+    ComPtr<IMFAttributes> attrs;
+    hr = MFCreateAttributes(&attrs, 1);
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
+    attrs->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
 
-    std::string cmd = "\"" + ffmpegPath + "\" -nostdin -loglevel quiet -i \"" + videoPath +
-                      "\" -an -sn -vf \"fps=" + std::to_string(fps) +
-                      ",scale=" + std::to_string(outW) + ":" + std::to_string(outH) +
-                      "\" -f rawvideo -pix_fmt rgba -";
-    std::vector<char> buf(cmd.begin(), cmd.end());
-    buf.push_back('\0');
+    ComPtr<IMFSourceReader> reader;
+    hr = MFCreateSourceReaderFromURL(wpath.c_str(), attrs.Get(), &reader);
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
 
-    PROCESS_INFORMATION pi{};
-    BOOL ok = CreateProcessA(nullptr, buf.data(), nullptr, nullptr, TRUE,
-                             CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
-    CloseHandle(wr);
-    if (nul != INVALID_HANDLE_VALUE) CloseHandle(nul);
-    if (!ok) { CloseHandle(rd); return false; }
+    // Video only: audio streams are never selected, so never decoded.
+    reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+    hr = reader->SetStreamSelection(MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
 
-    CloseHandle(pi.hThread);
-    hProcess = pi.hProcess;
-    hPipe = rd;
+    ComPtr<IMFMediaType> want;
+    hr = MFCreateMediaType(&want);
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
+    want->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+    want->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
+    hr = reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, want.Get());
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
+
+    ComPtr<IMFMediaType> got;
+    hr = reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &got);
+    if (FAILED(hr)) { mf->lastHr = hr; return false; }
+
+    UINT32 w = 0, h = 0;
+    hr = MFGetAttributeSize(got.Get(), MF_MT_FRAME_SIZE, &w, &h);
+    if (FAILED(hr) || w == 0 || h == 0) { mf->lastHr = FAILED(hr) ? hr : E_FAIL; return false; }
+
+    UINT32 st = 0;
+    LONG stride = SUCCEEDED(got->GetUINT32(MF_MT_DEFAULT_STRIDE, &st)) ? (LONG)st : (LONG)(w * 4);
+    if (stride == 0) stride = (LONG)(w * 4);
+
+    UINT32 num = 0, den = 0;
+    double nativeFps = 0.0;
+    if (SUCCEEDED(MFGetAttributeRatio(got.Get(), MF_MT_FRAME_RATE, &num, &den)) && den != 0)
+        nativeFps = (double)num / (double)den;
+
+    mf->reader = reader;
+    mf->srcW = (int)w;
+    mf->srcH = (int)h;
+    mf->stride = stride;
+    mf->nativeFps = nativeFps;
+    mf->targetTime = 0;
+    mf->needAnchor = true;
     return true;
 }
 
@@ -345,24 +337,41 @@ bool TerminalVideo::load(const std::string& path, int sizePercent) {
     close();
     videoPath = path;
 
-    int srcW = 0, srcH = 0;
-    if (!probeVideoSize(ffmpegPath, path, srcW, srcH)) {
-        std::cerr << "Warning: could not read video (is ffmpeg installed, or is "
-                     "Video.ffmpeg_path set?): " << path << "\n";
+    if (!mf->mfStarted) {
+        HRESULT hrc = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        mf->comInited = SUCCEEDED(hrc);   // RPC_E_CHANGED_MODE: COM already up, fine
+        HRESULT hr = MFStartup(MF_VERSION);
+        if (FAILED(hr)) {
+            std::cerr << "Warning: Media Foundation could not start (0x"
+                      << std::hex << (unsigned long)hr << std::dec << ").\n";
+            return false;
+        }
+        mf->mfStarted = true;
+    }
+
+    if (!openReader()) {
+        std::cerr << "Warning: could not open video: " << path << " (HRESULT 0x"
+                  << std::hex << (unsigned long)mf->lastHr << std::dec << ")\n"
+                  << "  Check the path, and that Windows can play this format "
+                     "(MP4/H.264 is the safe choice).\n";
         return false;
     }
 
-    outW = srcW; outH = srcH;
+    outW = mf->srcW;
+    outH = mf->srcH;
     if (sizePercent > 0 && sizePercent != 100) {
-        outW = std::max(1, (int)(srcW * (sizePercent / 100.0)));
-        outH = std::max(1, (int)(srcH * (sizePercent / 100.0)));
+        outW = std::max(1, (int)(mf->srcW * (sizePercent / 100.0)));
+        outH = std::max(1, (int)(mf->srcH * (sizePercent / 100.0)));
     }
-
     rgba.assign((size_t)outW * outH * 4, 0);
-    if (!startStream()) {
-        std::cerr << "Warning: could not start ffmpeg.\n";
-        return false;
-    }
+
+    mf->xmap.assign((size_t)outW, 0);
+    for (int x = 0; x < outW; ++x)
+        mf->xmap[(size_t)x] = (int)((long long)x * mf->srcW / outW);
+
+    // fps can't exceed the video's own frame rate
+    if (mf->nativeFps > 0.5)
+        fps = std::max(1, std::min(fps, (int)std::floor(mf->nativeFps + 0.5)));
 
     COORD cell = getTerminalCellSizeVideo();
     int cw = (cellWidthPx > 0) ? cellWidthPx : cell.X;
@@ -377,18 +386,77 @@ bool TerminalVideo::load(const std::string& path, int sizePercent) {
 }
 
 bool TerminalVideo::nextFrame(std::string& out) {
-    if (!hPipe) return false;
-    size_t total = 0;
-    while (total < rgba.size()) {
-        DWORD got = 0;
-        DWORD want = (DWORD)std::min<size_t>(rgba.size() - total, (size_t)1 << 20);
-        if (!ReadFile((HANDLE)hPipe, rgba.data() + total, want, &got, nullptr) || got == 0)
-            return false;   // end of video (or ffmpeg died)
-        total += got;
+    if (!mf->reader) return false;
+
+    const LONGLONG interval = 10000000LL / std::max(1, fps);
+    LONGLONG target = mf->targetTime;
+
+    for (;;) {
+        DWORD flags = 0;
+        LONGLONG ts = 0;
+        ComPtr<IMFSample> sample;
+        HRESULT hr = mf->reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0,
+                                            nullptr, &flags, &ts, &sample);
+        if (FAILED(hr)) return false;
+        if (flags & (MF_SOURCE_READERF_ENDOFSTREAM | MF_SOURCE_READERF_ERROR)) return false;
+        if (!sample) continue;
+
+        if (mf->needAnchor) {          // first frame after open/seek sets the clock
+            target = ts;
+            mf->needAnchor = false;
+        }
+        if (ts + interval / 2 < target) continue;   // running behind: drop this frame
+
+        ComPtr<IMFMediaBuffer> buf;
+        if (FAILED(sample->ConvertToContiguousBuffer(&buf))) return false;
+
+        BYTE* data = nullptr;
+        DWORD maxLen = 0, curLen = 0;
+        if (FAILED(buf->Lock(&data, &maxLen, &curLen))) return false;
+
+        const int srcW = mf->srcW, srcH = mf->srcH;
+        LONG rowBytes = std::abs(mf->stride);
+        if (rowBytes < srcW * 4) rowBytes = srcW * 4;
+
+        bool ok = (size_t)curLen >= (size_t)rowBytes * (srcH - 1) + (size_t)srcW * 4;
+        if (ok) {
+            // RGB32 in memory is B,G,R,X. Negative stride = bottom-up.
+            bool invert = ((mf->stride < 0) != flipVertical);
+            for (int y = 0; y < outH; ++y) {
+                int sy = (int)((long long)y * srcH / outH);
+                int row = invert ? (srcH - 1 - sy) : sy;
+                const BYTE* srow = data + (size_t)row * rowBytes;
+                unsigned char* d = rgba.data() + (size_t)y * outW * 4;
+                for (int x = 0; x < outW; ++x) {
+                    const BYTE* s = srow + (size_t)mf->xmap[(size_t)x] * 4;
+                    d[0] = s[2];
+                    d[1] = s[1];
+                    d[2] = s[0];
+                    d[3] = 255;
+                    d += 4;
+                }
+            }
+        }
+        buf->Unlock();
+        if (!ok) return false;
+
+        mf->targetTime = target + interval;
+        return encodeFrame(rgba.data(), outW, outH, out);
     }
-    return encodeFrame(rgba.data(), outW, outH, out);
 }
 
 bool TerminalVideo::restart() {
-    return startStream();
+    if (!mf->reader) return openReader();
+
+    const GUID nullGuid = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
+    PROPVARIANT v;
+    PropVariantInit(&v);
+    v.vt = VT_I8;
+    v.hVal.QuadPart = 0;
+    HRESULT hr = mf->reader->SetCurrentPosition(nullGuid, v);
+    PropVariantClear(&v);
+
+    if (FAILED(hr)) return openReader();   // can't seek: reopen from the start
+    mf->needAnchor = true;
+    return true;
 }

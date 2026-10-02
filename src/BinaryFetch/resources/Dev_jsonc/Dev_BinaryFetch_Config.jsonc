@@ -115,7 +115,7 @@
     "Video": {
     "enabled": true,
     "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
-    "ffmpeg_path": "ffmpeg",
+    "flip_vertical": false,
     "fps": 60,
     "image_size_percentage": 70,
     "padding_up": 1,

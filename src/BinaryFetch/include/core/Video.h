@@ -1,6 +1,6 @@
 // Video.h
-// Windows-only. Streams frames from an ffmpeg pipe, Sixel-encoding one
-// frame at a time (no pre-encoding, so long videos don't eat memory).
+// Windows-only. Decodes via Windows Media Foundation (built into Windows,
+// no external dependency) and Sixel-encodes one frame at a time.
 #pragma once
 #include <string>
 #include <vector>
@@ -23,20 +23,18 @@ public:
     void setCellHeightPx(int px);
     void setCellWidthPx(int px);
 
-    void setFps(int fps);          // clamped to 1..60
+    void setFps(int fps);          // clamped to 1..60 (and to the video's own fps)
     int  getFps() const;
-    void setFfmpegPath(const std::string& p);
+    void setFlipVertical(bool f);  // use if the video appears upside down
 
-    // Probes the video size, computes the scaled size, starts ffmpeg.
     bool load(const std::string& path, int sizePercent);
-    // Reads + Sixel-encodes the next frame. False at end of video.
-    bool nextFrame(std::string& outEncoded);
-    // Restarts the stream from the beginning (used for looping).
-    bool restart();
+    bool nextFrame(std::string& outEncoded);   // false at end of video
+    bool restart();                            // back to the start (looping)
     void close();
 
 private:
-    bool startStream();
+    struct MFState;
+    bool openReader();
 
     int rowSpan, colSpan;
     int paddingUp, paddingLeft, paddingRight;
@@ -44,9 +42,8 @@ private:
     int fps;
     int outW, outH;
     bool loaded;
+    bool flipVertical;
     std::string videoPath;
-    std::string ffmpegPath;
     std::vector<unsigned char> rgba;
-    void* hProcess;
-    void* hPipe;
+    MFState* mf;
 };

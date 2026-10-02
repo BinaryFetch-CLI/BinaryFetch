@@ -717,8 +717,8 @@ int main(){
 
         video.setCellWidthPx(config.getNestedInt("art", "Video.cell_width_px", 0));
         video.setCellHeightPx(config.getNestedInt("art", "Video.cell_height_px", 0));
-        video.setFps(config.getNestedInt("art", "Video.fps", 15));
-        video.setFfmpegPath(config.getNestedString("art", "Video.ffmpeg_path", "ffmpeg"));
+        video.setFps(config.getNestedInt("art", "Video.fps", 60));
+        video.setFlipVertical(config.getNestedBool("art", "Video.flip_vertical", false));
 
         bool ok = video.load(
             config.getNestedString("art", "Video.video_path", ""),
