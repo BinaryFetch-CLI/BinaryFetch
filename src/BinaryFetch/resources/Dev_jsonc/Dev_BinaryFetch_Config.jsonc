@@ -105,7 +105,7 @@
     // "G:\\screenshot\\sky.jpg"   -> valid
     // "G:\screenshot\sky.jpg"     -> invalid
     "Image": {
-      "enabled": false,
+      "enabled": true,
       "image_path": "G:\\screenshot\\hisky.jpg",
       "image_size_percentage": 47,
       "padding_up": 1,
@@ -113,7 +113,7 @@
       "padding_right": 1
     },
     "Video": {
-    "enabled": true,
+    "enabled": false,
     "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
     "flip_vertical": false,
     "fps": 60,

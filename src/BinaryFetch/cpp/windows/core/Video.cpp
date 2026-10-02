@@ -95,18 +95,19 @@ COORD getTerminalCellSizeVideo() {
     return { 8, 16 };
 }
 
-// ---- Sixel encoder (same palette scheme as Image.cpp / Gif.cpp) ----
+// 6 x 7 x 6 = 252-colour cube (green gets the extra level because the eye
+// is most sensitive to it). Index = (r * 7 + g) * 6 + b. The last 4 entries
+// are unused. No separate gray ramp: dithering handles grays fine, and a
+// mixed palette would make the dither noisy on gray areas.
 std::array<RGB, PALETTE_SIZE> createPalette() {
     std::array<RGB, PALETTE_SIZE> palette{};
     int index = 0;
     for (int r = 0; r < 6; ++r)
-        for (int g = 0; g < 6; ++g)
+        for (int g = 0; g < 7; ++g)
             for (int b = 0; b < 6; ++b)
-                palette[index++] = { (uint8_t)(r * 51), (uint8_t)(g * 51), (uint8_t)(b * 51) };
-    for (int i = 216; i < 256; ++i) {
-        int gray = static_cast<int>(((i - 216) * 255.0) / 39.0);
-        palette[i] = { (uint8_t)gray, (uint8_t)gray, (uint8_t)gray };
-    }
+                palette[index++] = { (uint8_t)(r * 255 / 5),
+                                     (uint8_t)(g * 255 / 6),
+                                     (uint8_t)(b * 255 / 5) };
     return palette;
 }
 
@@ -200,12 +201,33 @@ void encodeBand(std::ostringstream& out, const std::vector<uint8_t>& indexed,
 bool encodeFrame(const unsigned char* pixels, int width, int height, std::string& outEncoded) {
     if (!pixels || width <= 0 || height <= 0) return false;
     const auto& palette = getSharedPalette();
-    const auto& lookup  = getSharedLookup();
+
+    // 8x8 ordered (Bayer) dithering against the 6x7x6 cube. The pattern is
+    // fixed to screen position, so it doesn't shimmer between video frames.
+    // DITHER: 1.0 = full strength, 0.0 = off (plain rounding, banding returns).
+    constexpr float DITHER = 1.0f;
+    static const uint8_t bayer[64] = {
+         0, 32,  8, 40,  2, 34, 10, 42,
+        48, 16, 56, 24, 50, 18, 58, 26,
+        12, 44,  4, 36, 14, 46,  6, 38,
+        60, 28, 52, 20, 62, 30, 54, 22,
+         3, 35, 11, 43,  1, 33,  9, 41,
+        51, 19, 59, 27, 49, 17, 57, 25,
+        15, 47,  7, 39, 13, 45,  5, 37,
+        63, 31, 55, 23, 61, 29, 53, 21
+    };
 
     std::vector<uint8_t> indexed((size_t)width * height);
-    for (size_t i = 0, n = (size_t)width * height; i < n; ++i) {
-        const unsigned char* p = pixels + i * 4;
-        indexed[i] = getPaletteIndex(p[0], p[1], p[2], lookup);
+    for (int y = 0; y < height; ++y) {
+        const unsigned char* row = pixels + (size_t)y * width * 4;
+        for (int x = 0; x < width; ++x) {
+            const unsigned char* p = row + (size_t)x * 4;
+            float t = 0.5f + (((bayer[((y & 7) << 3) | (x & 7)] + 0.5f) / 64.0f) - 0.5f) * DITHER;
+            int r = std::min(5, (int)(p[0] * (5.0f / 255.0f) + t));
+            int g = std::min(6, (int)(p[1] * (6.0f / 255.0f) + t));
+            int b = std::min(5, (int)(p[2] * (5.0f / 255.0f) + t));
+            indexed[(size_t)y * width + x] = (uint8_t)((r * 7 + g) * 6 + b);
+        }
     }
 
     std::ostringstream out;
