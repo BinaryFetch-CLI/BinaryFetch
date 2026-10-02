@@ -121,13 +121,13 @@
     "Gif": {
       // Gif uses Live render, use Ctrl + c to escape
       "enabled": true,
-      "gif_path": "G:\\gif\\tong.gif",
-      "image_size_percentage": 200,
+      "gif_path": "G:\\gif\\benchodstikk.gif",
+      "image_size_percentage": 90,
       "padding_up": 1,
       "padding_left": 0,
       "padding_right": 1,
       "loop": true,
-      "viewer_mode": true,
+      "viewer_mode": true, // must be true if you want the gif animated
       "speed_multiplier": 1.0,
       "max_frames": 0
     }

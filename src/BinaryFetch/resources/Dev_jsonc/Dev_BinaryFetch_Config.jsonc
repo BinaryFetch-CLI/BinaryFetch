@@ -91,7 +91,7 @@
   "art": {
     //Note: if you enable all three of them (gif,image,ascii) together
     //      it won't work, BinaryFetch will render them based on priority
-    //      priority:  (Gif > Image > Ascii Art)
+    //      priority:  (Video > Gif > Image > Ascii Art)
     "Ascii_Art": {
       "enabled": false,
       "padding_up": 0,
@@ -112,9 +112,22 @@
       "padding_left": 0,
       "padding_right": 1
     },
+    "Video": {
+    "enabled": true,
+    "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
+    "ffmpeg_path": "ffmpeg",
+    "fps": 60,
+    "image_size_percentage": 70,
+    "padding_up": 1,
+    "padding_left": 0,
+    "padding_right": 1,
+    "loop": true,
+    "cell_width_px": 0,
+    "cell_height_px": 0
+   },
     "Gif": {
       // Gif uses Live render, use Ctrl + c to escape
-      "enabled": true,
+      "enabled": false,
       "gif_path": "G:\\gif\\tong.gif",
       "image_size_percentage": 200,
       "padding_up": 1,
