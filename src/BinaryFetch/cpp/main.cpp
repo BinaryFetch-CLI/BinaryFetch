@@ -361,6 +361,157 @@ private:
     }
 };
 
+#ifdef _WIN32
+// Full-screen viewer: alternate screen (no scrollback), GIF pinned at the
+// top-left and always animating, info text scrollable beside it.
+// Keys: q / Esc / Ctrl+C = quit, Up/Down, PgUp/PgDn, Home/End, mouse wheel.
+static void runGifViewer(const std::string& captured, const TerminalGif& gif,
+                         const ConfigManager& config)
+{
+    // ---- split the captured info output into lines ----
+    std::vector<std::string> lines;
+    {
+        std::istringstream in(captured);
+        std::string ln;
+        while (std::getline(in, ln)) {
+            if (!ln.empty() && ln.back() == '\r') ln.pop_back();
+            size_t k;
+            while ((k = ln.find("\033[K")) != std::string::npos) ln.erase(k, 3);
+            lines.push_back(ln);
+        }
+        while (!lines.empty() && lines.back().empty()) lines.pop_back();
+    }
+
+    // ---- GIF settings (same keys the normal loop uses) ----
+    bool loop = config.getNestedBool("art", "Gif.loop", true);
+    double speed = 1.0;
+    try { speed = std::stod(config.getNestedString("art", "Gif.speed_multiplier", "1.0")); }
+    catch (...) { speed = 1.0; }
+    if (speed <= 0.0) speed = 1.0;
+
+    int maxFrames = config.getNestedInt("art", "Gif.max_frames", 0);
+    size_t frameLimit = (maxFrames > 0 && (size_t)maxFrames < gif.getFrameCount())
+                            ? (size_t)maxFrames : gif.getFrameCount();
+
+    int padUp    = gif.getPaddingUp();
+    int padLeft  = gif.getPaddingLeft();
+    int gapWidth = padLeft + gif.getColSpan() + gif.getPaddingRight();
+
+    // ---- console setup ----
+    HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD oldIn = 0;
+    bool haveIn = GetConsoleMode(hIn, &oldIn) != 0;
+    if (haveIn) SetConsoleMode(hIn, ENABLE_VIRTUAL_TERMINAL_INPUT);
+    FlushConsoleInputBuffer(hIn);
+
+    // alt screen, hide cursor, no auto-wrap, mouse wheel reporting (SGR)
+    std::cout << "\033[?1049h\033[?25l\033[?7l\033[?1000h\033[?1006h\033[2J";
+    std::cout.flush();
+
+    auto countOf = [](const std::string& s, const std::string& pat) {
+        long n = 0; size_t p = 0;
+        while ((p = s.find(pat, p)) != std::string::npos) { ++n; p += pat.size(); }
+        return n;
+    };
+
+    int rows = 0, cols = 0;
+    long scroll = 0, maxScroll = 0;
+    bool dirty = true, quit = false;
+    size_t f = 0;
+    bool playing = true;
+
+    while (!quit) {
+        // window size (handles resize)
+        CONSOLE_SCREEN_BUFFER_INFO csbi{};
+        if (GetConsoleScreenBufferInfo(hOut, &csbi)) {
+            int r = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+            int c = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+            if (r != rows || c != cols) {
+                rows = r; cols = c; dirty = true;
+                std::cout << "\033[2J";
+            }
+        }
+        if (rows <= 0) rows = 24;
+
+        maxScroll = (long)lines.size() - rows;
+        if (maxScroll < 0) maxScroll = 0;
+        if (scroll > maxScroll) scroll = maxScroll;
+        if (scroll < 0) scroll = 0;
+
+        // info text (only redrawn when scrolled/resized)
+        if (dirty) {
+            for (int row = 0; row < rows; ++row) {
+                std::cout << "\033[" << (row + 1) << ';' << (gapWidth + 1) << 'H';
+                size_t idx = (size_t)(scroll + row);
+                if (idx < lines.size()) std::cout << lines[idx];
+                std::cout << "\033[0m\033[K";
+            }
+            dirty = false;
+        }
+
+        // GIF frame, pinned at the top-left
+        std::cout << "\033[" << (padUp + 1) << ';' << (padLeft + 1) << 'H';
+        gif.drawFrame(f);
+        std::cout.flush();
+
+        int delay = playing ? (int)(gif.getFrameDelayMs(f) / speed) : 100;
+        if (delay < 1) delay = 1;
+
+        if (playing) {
+            ++f;
+            if (f >= frameLimit) {
+                if (loop) f = 0;
+                else { f = frameLimit - 1; playing = false; }
+            }
+        }
+
+        // wait for the next frame, but wake up immediately on a key press
+        ULONGLONG end = GetTickCount64() + (ULONGLONG)delay;
+        while (!quit) {
+            ULONGLONG now = GetTickCount64();
+            if (now >= end) break;
+            if (WaitForSingleObject(hIn, (DWORD)(end - now)) != WAIT_OBJECT_0) break;
+
+            char buf[64]; DWORD n = 0;
+            if (!ReadFile(hIn, buf, sizeof(buf), &n, nullptr) || n == 0) break;
+            std::string in(buf, n);
+
+            if (in == "\033" || in.find('q') != std::string::npos ||
+                in.find('Q') != std::string::npos || in.find('\x03') != std::string::npos) {
+                quit = true; break;
+            }
+
+            long target = scroll;
+            target += 3 * (countOf(in, "\033[<65;") - countOf(in, "\033[<64;"));
+            target += countOf(in, "\033[B") - countOf(in, "\033[A");
+            target += (long)rows * (countOf(in, "\033[6~") - countOf(in, "\033[5~"));
+            if (in.find("\033[H") != std::string::npos || in.find("\033[1~") != std::string::npos) target = 0;
+            if (in.find("\033[F") != std::string::npos || in.find("\033[4~") != std::string::npos) target = maxScroll;
+            if (target < 0) target = 0;
+            if (target > maxScroll) target = maxScroll;
+
+            if (target != scroll) { scroll = target; dirty = true; break; }
+        }
+    }
+
+    // ---- restore the normal screen ----
+    std::cout << "\033[?1006l\033[?1000l\033[?7h\033[?25h\033[?1049l";
+    std::cout.flush();
+    if (haveIn) SetConsoleMode(hIn, oldIn);
+}
+#endif
+
+#ifdef _WIN32
+// Rows between the top of the visible window and the cursor (-1 if unknown).
+static int rowsAboveCursorInViewport() {
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi{};
+    if (!GetConsoleScreenBufferInfo(h, &csbi)) return -1;
+    return csbi.dwCursorPosition.Y - csbi.srWindow.Top;
+}
+#endif
+
 //  ███╗   ███╗ █████╗ ██╗███╗   ██╗    ██████╗██████╗ ██████╗ 
 //  ████╗ ████║██╔══██╗██║████╗  ██║   ██╔════╝██╔══██╗██╔══██╗
 //  ██╔████╔██║███████║██║██╔██╗ ██║   ██║     ██████╔╝██████╔╝
@@ -397,7 +548,7 @@ int main(){
     //                              (self-heals from embedded EXE resource 101 if missing.
     //                              NEVER overwrites an existing user config.)
 
-    ConfigMode CONFIG_MODE = ConfigMode::Dev; // ← switch as needed, set to Production before shipping
+    ConfigMode CONFIG_MODE = ConfigMode::ReleaseSource; // ← switch as needed, set to Production before shipping
     ConfigManager config(CONFIG_MODE);
 
 
@@ -428,6 +579,9 @@ int main(){
             config.getNestedInt("art", "Gif.padding_up", 0),
             config.getNestedInt("art", "Gif.padding_left", 0),
             config.getNestedInt("art", "Gif.padding_right", 0));
+
+        gif.setCellWidthPx(config.getNestedInt("art", "Gif.cell_width_px", 0));
+        gif.setCellHeightPx(config.getNestedInt("art", "Gif.cell_height_px", 0));
 
         bool ok = gif.load(
             config.getNestedString("art", "Gif.gif_path", ""),
@@ -476,8 +630,18 @@ int main(){
         }
     }
 
-    // Create LivePrinter
-    LivePrinter lp(art, image, gif, mode);
+    // Viewer mode: only for animated GIFs, opt-in via art.Gif.viewer_mode
+    bool viewerMode = (mode == ArtMode::GIF) && gif.isLoaded() &&
+                      gif.getFrameCount() > 1 &&
+                      config.getNestedBool("art", "Gif.viewer_mode", false);
+
+    // In viewer mode the printer lays out no art (the viewer places the GIF
+    // itself) and all info output is captured instead of printed.
+    LivePrinter lp(art, image, gif, viewerMode ? ArtMode::NONE : mode);
+
+    std::ostringstream viewerCapture;
+    std::streambuf* savedCoutBuf = nullptr;
+    if (viewerMode) savedCoutBuf = cout.rdbuf(viewerCapture.rdbuf());
 
 
     // create objects of all classes here 
@@ -3115,6 +3279,11 @@ for (const auto& key : config.getLayoutOrder()) {
 
 
 
+    if (viewerMode) {
+        cout.rdbuf(savedCoutBuf);                       // stop capturing
+        runGifViewer(viewerCapture.str(), gif, config);
+        return 0;
+    }
 
     // Print remaining ASCII art lines (if art is taller than info)
     lp.finish();
@@ -3149,7 +3318,12 @@ for (const auto& key : config.getLayoutOrder()) {
         int hopAmount = lp.getCursorRow() + 1 - gif.getPaddingUp();
         int leftPad = gif.getPaddingLeft();
 
-        do {
+        // Animate only if the GIF block is still on screen. Otherwise keep
+        // the static frame 0 (same as fastfetch's static logo).
+        int reachable = rowsAboveCursorInViewport();
+        bool fits = (hopAmount > 0) && (reachable < 0 || hopAmount <= reachable);
+
+        if (fits) do {
             for (size_t f = 0; f < frameLimit; ++f) {
                 std::cout << "\0337";
                 if (hopAmount > 0) std::cout << "\033[" << hopAmount << "A\r";

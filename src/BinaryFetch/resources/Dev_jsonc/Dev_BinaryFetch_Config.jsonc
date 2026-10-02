@@ -121,6 +121,7 @@
       "padding_left": 0,
       "padding_right": 1,
       "loop": true,
+      "viewer_mode": true,
       "speed_multiplier": 1.0,
       "max_frames": 0
     }

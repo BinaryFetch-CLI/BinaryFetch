@@ -54,7 +54,59 @@ constexpr uint8_t ALPHA_THRESHOLD = 128;
 
 struct RGB { uint8_t r, g, b; };
 
+bool queryCellSizeFromTerminalGif(int& outW, int& outH) {
+    HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hIn == INVALID_HANDLE_VALUE || hOut == INVALID_HANDLE_VALUE) return false;
+    if (hIn == nullptr || hOut == nullptr) return false;
+
+    DWORD oldMode = 0;
+    if (!GetConsoleMode(hIn, &oldMode)) return false;
+
+    SetConsoleMode(hIn, ENABLE_VIRTUAL_TERMINAL_INPUT);
+    FlushConsoleInputBuffer(hIn);
+
+    const char* query = "\033[16t";
+    DWORD written = 0;
+    BOOL wrote = WriteFile(hOut, query, (DWORD)strlen(query), &written, nullptr);
+
+    std::string response;
+    if (wrote) {
+        char buf[64];
+        for (int tries = 0; tries < 10; ++tries) {
+            if (WaitForSingleObject(hIn, 20) != WAIT_OBJECT_0) {
+                if (!response.empty()) break;
+                continue;
+            }
+            DWORD read = 0;
+            if (!ReadFile(hIn, buf, sizeof(buf) - 1, &read, nullptr) || read == 0) break;
+            buf[read] = '\0';
+            response += buf;
+            if (response.find('t') != std::string::npos) break;
+        }
+    }
+
+    SetConsoleMode(hIn, oldMode);
+
+    int h = 0, w = 0;
+    size_t pos = response.find("[6;");
+    if (pos != std::string::npos &&
+        sscanf(response.c_str() + pos, "[6;%d;%dt", &h, &w) == 2 &&
+        h > 0 && w > 0) {
+        outW = w;
+        outH = h;
+        return true;
+    }
+    return false;
+}
+
 COORD getTerminalCellSizeGif() {
+    int qw = 0, qh = 0;
+    if (queryCellSizeFromTerminalGif(qw, qh) &&
+        qw >= 4 && qw <= 64 && qh >= 8 && qh <= 128) {
+        return { (SHORT)qw, (SHORT)qh };
+    }
+
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_FONT_INFOEX fi{};
     fi.cbSize = sizeof(fi);
