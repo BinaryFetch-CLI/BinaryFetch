@@ -2,9 +2,14 @@
 ;  BinaryFetch Installer
 ;  Author: BinaryFetch-CLI
 ;  Publisher: BinaryFetch-CLI
-;  Version: 1.6
+;  Version: 1.8
 ;
 ;  Installs BinaryFetch.exe and adds it to the system PATH.
+;
+;  New in 1.8: before installing, any existing
+;  C:\Users\Public\BinaryFetch folder (old config, ASCII art, etc.)
+;  is deleted so that stale settings can't conflict with the new
+;  version. BinaryFetch recreates its defaults on first run.
 ; -----------------------------------------------------------
 
 
@@ -12,8 +17,15 @@
 AppId={{9F6E2C2A-8A7B-4C6F-9A2D-3F6A0C91E4A1}}
 
 AppName=BinaryFetch
-AppVersion=1.6
+AppVersion=1.8
 AppPublisher=BinaryFetch-CLI
+
+; Version shown in the Setup .exe's Properties > Details tab
+VersionInfoVersion=1.8.0.0
+VersionInfoProductVersion=1.8.0.0
+VersionInfoProductName=BinaryFetch
+VersionInfoCompany=BinaryFetch-CLI
+VersionInfoDescription=BinaryFetch Setup
 
 AppPublisherURL=https://github.com/BinaryFetch-CLI
 AppSupportURL=https://github.com/BinaryFetch-CLI/BinaryFetch
@@ -28,7 +40,7 @@ LicenseFile=H:\programming\git_and_github\BinaryFetch\build files\Build-License\
 SetupIconFile=H:\programming\git_and_github\BinaryFetch\build files\Icon & Banners\BinaryFetch.ico
 
 OutputDir=C:\Users\OBITO\Downloads
-OutputBaseFilename=BinaryFetch-v1.6-Setup
+OutputBaseFilename=BinaryFetch-v1.8-Setup
 
 Compression=lzma
 SolidCompression=yes
@@ -56,6 +68,11 @@ const
   WM_SETTINGCHANGE = $001A;
   SMTO_ABORTIFHUNG = $0002;
 
+  // Where BinaryFetch keeps its config (BinaryFetch_Config.jsonc),
+  // BinaryArt.txt and other user files. Windows paths are
+  // case-insensitive, so this also matches "binaryfetch".
+  BF_DATA_DIR = 'C:\Users\Public\BinaryFetch';
+
 function SendMessageTimeoutA(
   hWnd: Longint; Msg: Longint; wParam: Longint; lParam: AnsiString;
   fuFlags: Longint; uTimeout: Longint; var lpdwResult: Longint
@@ -75,6 +92,24 @@ begin
     HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment',
     SMTO_ABORTIFHUNG, 5000, dwResult
   );
+end;
+
+// Deletes the old BinaryFetch data folder (if it exists) so an old
+// config can't conflict with the new version. Runs silently, also in
+// /SILENT and /VERYSILENT installs. Failure is logged but never aborts
+// the install.
+procedure RemoveOldDataFolder();
+begin
+  if DirExists(BF_DATA_DIR) then
+  begin
+    Log('Old BinaryFetch data folder found: ' + BF_DATA_DIR);
+    if DelTree(BF_DATA_DIR, True, True, True) then
+      Log('Old BinaryFetch data folder deleted.')
+    else
+      Log('Could not fully delete old BinaryFetch data folder (a file may be in use).');
+  end
+  else
+    Log('No old BinaryFetch data folder found. Nothing to delete.');
 end;
 
 function NeedsAddPath(): Boolean;
@@ -180,6 +215,11 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
+  // ssInstall runs right before the files are copied, so the old data
+  // folder is gone before the new BinaryFetch.exe is put in place.
+  if CurStep = ssInstall then
+    RemoveOldDataFolder();
+
   if CurStep = ssPostInstall then
   begin
     if NeedsAddPath() then
@@ -188,7 +228,7 @@ begin
     if not WizardSilent() then
     begin
       MsgBox(
-        'BinaryFetch v1.6 installed successfully.'#13#13 +
+        'BinaryFetch v1.8 installed successfully.'#13#13 +
         'Open a NEW terminal and type:'#13 +
         'binaryfetch'#13#13 +
         'If it still doesn''t work, sign out and back in (or restart).',
