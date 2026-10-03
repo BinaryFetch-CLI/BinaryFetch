@@ -21,9 +21,9 @@
   "compact_user_account",
   "compact_network_connection",
   "compact_disk_storage",
-  "detailed_resource_usage",
+  "detailed_resource_usage"
   //"detailed_system_memory",
-  "detailed_disk_storage"
+  //"detailed_disk_storage"
   //"detailed_operating_system",
   //"detailed_processor",
   //"detailed_graphics_card",
@@ -123,10 +123,10 @@
     },
     "Video": {
     "enabled": true,
-    "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
+    "video_path": "H:\\H_downloads\\test.mkv",
     "flip_vertical": false,
     "fps": 60,
-    "image_size_percentage": 70,
+    "image_size_percentage": 100,
     "padding_up": 1,
     "padding_left": 0,
     "padding_right": 1,
@@ -137,7 +137,7 @@
     "Gif": {
       // Gif uses Live render, use Ctrl + c to escape
       "enabled": false,
-      "gif_path": "G:\\gif\\tong.gif",
+      "gif_path": "G:\\gif\\test.gif",
       "image_size_percentage": 200,
       "padding_up": 1,
       "padding_left": 0,
@@ -1072,7 +1072,7 @@
   }
 },
 "detailed_disk_storage": {
-    "enabled": false,
+    "enabled": true,
     "sections": {
         "storage_summary": true,
         "disk_performance": true

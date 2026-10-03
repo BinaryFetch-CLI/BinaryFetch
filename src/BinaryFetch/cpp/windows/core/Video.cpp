@@ -259,6 +259,43 @@ struct TerminalVideo::MFState {
     bool needAnchor = true;
     HRESULT lastHr = S_OK;
     std::vector<int> xmap;        // dest x -> source x
+
+    // Visible picture area inside the decoded frame (see computeCrop).
+    int cropX = 0, cropY = 0, cropW = 0, cropH = 0;
+
+    // Decoders pad frames to block sizes; the padding can hold garbage that
+    // shows up as a green line. Use the display aperture if the decoder gives
+    // one, then also stay EDGE_TRIM pixels away from the right/bottom edge.
+    // Set EDGE_TRIM to 0 to disable the extra margin.
+    void computeCrop(IMFMediaType* t) {
+        cropX = 0; cropY = 0; cropW = srcW; cropH = srcH;
+        MFVideoArea area{};
+        if (SUCCEEDED(t->GetBlob(MF_MT_MINIMUM_DISPLAY_APERTURE,
+                                 reinterpret_cast<UINT8*>(&area), sizeof(area), nullptr))) {
+            int x = (int)area.OffsetX.value, y = (int)area.OffsetY.value;
+            int w = (int)area.Area.cx,       h = (int)area.Area.cy;
+            if (w > 0 && h > 0 && x >= 0 && y >= 0 && x + w <= srcW && y + h <= srcH) {
+                cropX = x; cropY = y; cropW = w; cropH = h;
+            }
+        }
+        constexpr int EDGE_TRIM = 2;
+        if (cropW > EDGE_TRIM * 4) cropW -= EDGE_TRIM;
+        if (cropH > EDGE_TRIM * 4) cropH -= EDGE_TRIM;
+    }
+
+    // Re-reads frame size and stride from the reader's current output type.
+    bool refresh() {
+        ComPtr<IMFMediaType> t;
+        if (FAILED(reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &t))) return false;
+        UINT32 w = 0, h = 0;
+        if (FAILED(MFGetAttributeSize(t.Get(), MF_MT_FRAME_SIZE, &w, &h)) || w == 0 || h == 0) return false;
+        UINT32 st = 0;
+        LONG s = SUCCEEDED(t->GetUINT32(MF_MT_DEFAULT_STRIDE, &st)) ? (LONG)st : (LONG)(w * 4);
+        if (s == 0) s = (LONG)(w * 4);
+        srcW = (int)w; srcH = (int)h; stride = s;
+        computeCrop(t.Get());
+        return true;
+    }
 };
 
 // ============================================================
@@ -351,6 +388,7 @@ bool TerminalVideo::openReader() {
     mf->nativeFps = nativeFps;
     mf->targetTime = 0;
     mf->needAnchor = true;
+    mf->computeCrop(got.Get());
     return true;
 }
 
@@ -389,7 +427,7 @@ bool TerminalVideo::load(const std::string& path, int sizePercent) {
 
     mf->xmap.assign((size_t)outW, 0);
     for (int x = 0; x < outW; ++x)
-        mf->xmap[(size_t)x] = (int)((long long)x * mf->srcW / outW);
+        mf->xmap[(size_t)x] = mf->cropX + (int)((long long)x * mf->cropW / outW);
 
     // fps can't exceed the video's own frame rate
     if (mf->nativeFps > 0.5)
@@ -421,6 +459,15 @@ bool TerminalVideo::nextFrame(std::string& out) {
                                             nullptr, &flags, &ts, &sample);
         if (FAILED(hr)) return false;
         if (flags & (MF_SOURCE_READERF_ENDOFSTREAM | MF_SOURCE_READERF_ERROR)) return false;
+
+        // The decoder can change frame size / stride mid-stream. Re-read them,
+        // otherwise rows are read with the wrong width and the picture shears.
+        if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED) {
+            if (!mf->refresh()) return false;
+            mf->xmap.assign((size_t)outW, 0);
+            for (int x = 0; x < outW; ++x)
+                mf->xmap[(size_t)x] = mf->cropX + (int)((long long)x * mf->cropW / outW);
+        }
         if (!sample) continue;
 
         if (mf->needAnchor) {          // first frame after open/seek sets the clock
@@ -432,22 +479,45 @@ bool TerminalVideo::nextFrame(std::string& out) {
         ComPtr<IMFMediaBuffer> buf;
         if (FAILED(sample->ConvertToContiguousBuffer(&buf))) return false;
 
-        BYTE* data = nullptr;
-        DWORD maxLen = 0, curLen = 0;
-        if (FAILED(buf->Lock(&data, &maxLen, &curLen))) return false;
-
         const int srcW = mf->srcW, srcH = mf->srcH;
-        LONG rowBytes = std::abs(mf->stride);
-        if (rowBytes < srcW * 4) rowBytes = srcW * 4;
 
-        bool ok = (size_t)curLen >= (size_t)rowBytes * (srcH - 1) + (size_t)srcW * 4;
+        // Ask the buffer for its REAL row pitch. 'top' is the first image row
+        // (top-down order) and 'pitch' is the signed byte distance between rows.
+        const BYTE* top = nullptr;
+        LONG pitch = 0;
+        bool ok = false;
+        bool locked2d = false;
+
+        ComPtr<IMF2DBuffer> buf2d;
+        if (SUCCEEDED(buf.As(&buf2d))) {
+            BYTE* scan0 = nullptr;
+            LONG p = 0;
+            if (SUCCEEDED(buf2d->Lock2D(&scan0, &p))) {
+                locked2d = true;
+                top = scan0;
+                pitch = p;
+                ok = (scan0 != nullptr && p != 0);
+            }
+        }
+
+        if (!locked2d) {
+            // Fallback: plain buffer, trust the media type's stride.
+            BYTE* data = nullptr;
+            DWORD maxLen = 0, curLen = 0;
+            if (FAILED(buf->Lock(&data, &maxLen, &curLen))) return false;
+            LONG rowBytes = std::abs(mf->stride);
+            if (rowBytes < srcW * 4) rowBytes = srcW * 4;
+            ok = (size_t)curLen >= (size_t)rowBytes * (srcH - 1) + (size_t)srcW * 4;
+            if (mf->stride < 0) { top = data + (size_t)(srcH - 1) * rowBytes; pitch = -rowBytes; }
+            else                { top = data; pitch = rowBytes; }
+        }
+
         if (ok) {
-            // RGB32 in memory is B,G,R,X. Negative stride = bottom-up.
-            bool invert = ((mf->stride < 0) != flipVertical);
+            // RGB32 in memory is B,G,R,X. top/pitch are already top-down.
             for (int y = 0; y < outH; ++y) {
-                int sy = (int)((long long)y * srcH / outH);
-                int row = invert ? (srcH - 1 - sy) : sy;
-                const BYTE* srow = data + (size_t)row * rowBytes;
+                int sy = (int)((long long)y * mf->cropH / outH);
+                int row = mf->cropY + (flipVertical ? (mf->cropH - 1 - sy) : sy);
+                const BYTE* srow = top + (ptrdiff_t)row * pitch;
                 unsigned char* d = rgba.data() + (size_t)y * outW * 4;
                 for (int x = 0; x < outW; ++x) {
                     const BYTE* s = srow + (size_t)mf->xmap[(size_t)x] * 4;
@@ -459,7 +529,7 @@ bool TerminalVideo::nextFrame(std::string& out) {
                 }
             }
         }
-        buf->Unlock();
+        if (locked2d) buf2d->Unlock2D(); else buf->Unlock();
         if (!ok) return false;
 
         mf->targetTime = target + interval;
