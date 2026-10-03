@@ -244,9 +244,7 @@ bool encodeFrame(const unsigned char* pixels, int width, int height, std::string
 
 } // anonymous namespace
 
-// ============================================================
 // Media Foundation state (private to this file)
-// ============================================================
 
 struct TerminalVideo::MFState {
     ComPtr<IMFSourceReader> reader;
@@ -305,9 +303,7 @@ struct TerminalVideo::MFState {
     }
 };
 
-// ============================================================
 // TerminalVideo
-// ============================================================
 
 TerminalVideo::TerminalVideo()
     : rowSpan(0), colSpan(0), paddingUp(0), paddingLeft(0), paddingRight(0),
