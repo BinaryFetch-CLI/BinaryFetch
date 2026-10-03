@@ -26,6 +26,7 @@ public:
     void setFps(int fps);          // clamped to 1..60 (and to the video's own fps)
     int  getFps() const;
     void setFlipVertical(bool f);  // use if the video appears upside down
+    void setFadeInMs(int ms);      // fade-in from black on launch; 0 = off. Call before load()
 
     bool load(const std::string& path, int sizePercent);
     bool nextFrame(std::string& outEncoded);   // false at end of video

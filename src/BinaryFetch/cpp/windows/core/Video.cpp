@@ -263,6 +263,13 @@ struct TerminalVideo::MFState {
     // Visible picture area inside the decoded frame (see computeCrop).
     int cropX = 0, cropY = 0, cropW = 0, cropH = 0;
 
+    // Fade-in from black on launch. fadeInMs = 0 turns it off.
+    // framesShown is reset in load() but NOT in restart(), so looping the
+    // video never fades again.
+    int fadeInMs = 800;
+    int fadeFrames = 0;
+    int framesShown = 0;
+
     // Decoders pad frames to block sizes; the padding can hold garbage that
     // shows up as a green line. Use the display aperture if the decoder gives
     // one, then also stay EDGE_TRIM pixels away from the right/bottom edge.
@@ -328,6 +335,7 @@ void TerminalVideo::setCellWidthPx(int px)  { cellWidthPx = px; }
 void TerminalVideo::setFps(int f)           { fps = std::clamp(f, 1, 60); }
 int  TerminalVideo::getFps() const          { return fps; }
 void TerminalVideo::setFlipVertical(bool f) { flipVertical = f; }
+void TerminalVideo::setFadeInMs(int ms)     { mf->fadeInMs = std::clamp(ms, 0, 5000); }
 
 void TerminalVideo::close() {
     mf->reader.Reset();
@@ -433,6 +441,9 @@ bool TerminalVideo::load(const std::string& path, int sizePercent) {
     if (mf->nativeFps > 0.5)
         fps = std::max(1, std::min(fps, (int)std::floor(mf->nativeFps + 0.5)));
 
+    mf->fadeFrames  = (mf->fadeInMs > 0) ? std::max(1, fps * mf->fadeInMs / 1000) : 0;
+    mf->framesShown = 0;
+
     COORD cell = getTerminalCellSizeVideo();
     int cw = (cellWidthPx > 0) ? cellWidthPx : cell.X;
     if (cw <= 0) cw = 8;
@@ -512,6 +523,14 @@ bool TerminalVideo::nextFrame(std::string& out) {
             else                { top = data; pitch = rowBytes; }
         }
 
+        // Fade-in brightness, 0..256 (256 = full). Smoothstep curve so it
+        // eases in and out instead of ramping linearly.
+        int mul = 256;
+        if (mf->fadeFrames > 0 && mf->framesShown < mf->fadeFrames) {
+            float t = (float)(mf->framesShown + 1) / (float)mf->fadeFrames;
+            mul = (int)(t * t * (3.0f - 2.0f * t) * 256.0f);
+        }
+
         if (ok) {
             // RGB32 in memory is B,G,R,X. top/pitch are already top-down.
             for (int y = 0; y < outH; ++y) {
@@ -521,9 +540,9 @@ bool TerminalVideo::nextFrame(std::string& out) {
                 unsigned char* d = rgba.data() + (size_t)y * outW * 4;
                 for (int x = 0; x < outW; ++x) {
                     const BYTE* s = srow + (size_t)mf->xmap[(size_t)x] * 4;
-                    d[0] = s[2];
-                    d[1] = s[1];
-                    d[2] = s[0];
+                    d[0] = (unsigned char)((s[2] * mul) >> 8);
+                    d[1] = (unsigned char)((s[1] * mul) >> 8);
+                    d[2] = (unsigned char)((s[0] * mul) >> 8);
                     d[3] = 255;
                     d += 4;
                 }
@@ -533,6 +552,7 @@ bool TerminalVideo::nextFrame(std::string& out) {
         if (!ok) return false;
 
         mf->targetTime = target + interval;
+        mf->framesShown++;
         return encodeFrame(rgba.data(), outW, outH, out);
     }
 }
