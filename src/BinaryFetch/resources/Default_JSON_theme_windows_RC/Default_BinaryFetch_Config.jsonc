@@ -102,7 +102,7 @@
     //      it won't work, BinaryFetch will render them based on priority
     //      priority:  (Video > Gif > Image > Ascii Art)
     "Ascii_Art": {
-      "enabled": false,
+      "enabled": true,
       "padding_up": 0,
       "padding_left": 0,
       "padding_right": 0
@@ -122,7 +122,7 @@
       "padding_right": 1
     },
     "Video": {
-    "enabled": true,
+    "enabled": false,
     "video_path": "H:\\H_downloads\\test.mkv",
     "flip_vertical": false,
     "fps": 60,
