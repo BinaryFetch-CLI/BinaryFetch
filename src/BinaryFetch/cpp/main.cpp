@@ -363,6 +363,40 @@ private:
 };
 
 #ifdef _WIN32
+// Reads whatever is waiting in the console input queue WITHOUT ever blocking.
+// A console input handle becomes "ready" for any event (resize, focus, mouse),
+// not just key presses, and ReadFile() would then block until a real key
+// arrives. Reading the event records directly avoids that: non-character
+// events are discarded and 'out' simply stays empty.
+static bool drainConsoleInput(HANDLE hIn, std::string& out) {
+    out.clear();
+    DWORD avail = 0;
+    if (!GetNumberOfConsoleInputEvents(hIn, &avail)) return false;
+    if (avail == 0) return true;
+
+    INPUT_RECORD recs[64];
+    DWORD got = 0;
+    DWORD want = (avail < 64) ? avail : 64;
+    if (!ReadConsoleInputW(hIn, recs, want, &got)) return false;
+
+    for (DWORD i = 0; i < got; ++i) {
+        if (recs[i].EventType != KEY_EVENT) continue;
+        const KEY_EVENT_RECORD& k = recs[i].Event.KeyEvent;
+        if (!k.bKeyDown) continue;
+        wchar_t wc = k.uChar.UnicodeChar;
+        if (wc == 0) continue;
+
+        if (wc < 0x80) {
+            out.push_back((char)wc);
+        } else {
+            char u8[8];
+            int len = WideCharToMultiByte(CP_UTF8, 0, &wc, 1, u8, sizeof(u8), nullptr, nullptr);
+            if (len > 0) out.append(u8, (size_t)len);
+        }
+    }
+    return true;
+}
+
 // Full-screen viewer: alternate screen (no scrollback), GIF pinned at the
 // top-left and always animating, info text scrollable beside it.
 // Keys: q / Esc / Ctrl+C = quit, Up/Down, PgUp/PgDn, Home/End, mouse wheel.
@@ -474,9 +508,9 @@ static void runGifViewer(const std::string& captured, const TerminalGif& gif,
             if (now >= end) break;
             if (WaitForSingleObject(hIn, (DWORD)(end - now)) != WAIT_OBJECT_0) break;
 
-            char buf[64]; DWORD n = 0;
-            if (!ReadFile(hIn, buf, sizeof(buf), &n, nullptr) || n == 0) break;
-            std::string in(buf, n);
+            std::string in;
+            if (!drainConsoleInput(hIn, in)) break;
+            if (in.empty()) continue;   // resize/focus/mouse event: ignore, keep waiting
 
             if (in == "\033" || in.find('q') != std::string::npos ||
                 in.find('Q') != std::string::npos || in.find('\x03') != std::string::npos) {
@@ -607,9 +641,9 @@ static void runVideoViewer(const std::string& captured, TerminalVideo& video,
             if (now >= waitUntil) break;
             if (WaitForSingleObject(hIn, (DWORD)(waitUntil - now)) != WAIT_OBJECT_0) break;
 
-            char buf[64]; DWORD n = 0;
-            if (!ReadFile(hIn, buf, sizeof(buf), &n, nullptr) || n == 0) break;
-            std::string in(buf, n);
+            std::string in;
+            if (!drainConsoleInput(hIn, in)) break;
+            if (in.empty()) continue;   // resize/focus/mouse event: ignore, keep waiting
 
             if (in == "\033" || in.find('q') != std::string::npos ||
                 in.find('Q') != std::string::npos || in.find('\x03') != std::string::npos) {
