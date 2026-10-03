@@ -36,7 +36,7 @@ namespace {
 constexpr int PALETTE_SIZE = 256;
 struct RGB { uint8_t r, g, b; };
 
-// ---- cell size: ask the terminal (CSI 16 t), fall back to Win32 ----
+// cell size: ask the terminal (CSI 16 t), fall back to Win32
 bool queryCellSizeFromTerminalVideo(int& outW, int& outH) {
     HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
