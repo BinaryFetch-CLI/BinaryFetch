@@ -95,9 +95,12 @@
     "style": "color"
 },
 "art": {
+
+    //Note:  till v1.8, Linux doesn't support image\video\gif   
+
     //Note: if you enable all three of them (gif,image,ascii) together
     //      it won't work, BinaryFetch will render them based on priority
-    //      priority:  (Gif > Image > Ascii Art)
+    //      priority:  (Video > Gif > Image > Ascii Art)
     "Ascii_Art": {
       "enabled": false,
       "padding_up": 0,
@@ -118,22 +121,33 @@
       "padding_left": 0,
       "padding_right": 1
     },
+    "Video": {
+    "enabled": true,
+    "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
+    "flip_vertical": false,
+    "fps": 60,
+    "image_size_percentage": 70,
+    "padding_up": 1,
+    "padding_left": 0,
+    "padding_right": 1,
+    "loop": true,
+    "cell_width_px": 0,
+    "cell_height_px": 0
+   },
     "Gif": {
       // Gif uses Live render, use Ctrl + c to escape
-      "enabled": true,
-      "gif_path": "G:\\gif\\benchodstikk.gif",
-      "image_size_percentage": 90,
+      "enabled": false,
+      "gif_path": "G:\\gif\\tong.gif",
+      "image_size_percentage": 200,
       "padding_up": 1,
       "padding_left": 0,
       "padding_right": 1,
       "loop": true,
-      "viewer_mode": true, // must be true if you want the gif animated
+      "viewer_mode": true,
       "speed_multiplier": 1.0,
       "max_frames": 0
     }
   },
-
-
 // Config schema — read this once, it applies everywhere below.
 //
 // It might look big and messy at first glance, but it's actually

@@ -89,6 +89,9 @@
     "style": "color"
   },
   "art": {
+
+    //Note:  till v1.8, Linux doesn't support image\video\gif   
+
     //Note: if you enable all three of them (gif,image,ascii) together
     //      it won't work, BinaryFetch will render them based on priority
     //      priority:  (Video > Gif > Image > Ascii Art)
@@ -105,7 +108,7 @@
     // "G:\\screenshot\\sky.jpg"   -> valid
     // "G:\screenshot\sky.jpg"     -> invalid
     "Image": {
-      "enabled": true,
+      "enabled": false,
       "image_path": "G:\\screenshot\\hisky.jpg",
       "image_size_percentage": 47,
       "padding_up": 1,
@@ -113,7 +116,7 @@
       "padding_right": 1
     },
     "Video": {
-    "enabled": false,
+    "enabled": true,
     "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
     "flip_vertical": false,
     "fps": 60,
