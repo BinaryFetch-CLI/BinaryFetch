@@ -680,6 +680,34 @@ static int rowsAboveCursorInViewport() {
 }
 #endif
 
+static EncodeOptions readEncodeOptions(const ConfigManager& config,
+                                       const std::string& block,
+                                       SixelMode defaultMode)
+{
+    EncodeOptions o;
+    o.mode = defaultMode;
+
+    std::string pr = config.getNestedString("art", block + ".protocol", "sixel");
+    if      (pr == "halfblock") o.protocol = GraphicsProtocol::HalfBlock;
+    else if (pr == "kitty")     o.protocol = GraphicsProtocol::Kitty;
+    else if (pr == "iterm2")    o.protocol = GraphicsProtocol::ITerm2;
+    else if (pr == "sixel")     o.protocol = GraphicsProtocol::Sixel;
+    else {
+        std::cerr << "Warning: unknown protocol \"" << pr << "\" in [" << block
+                  << "]. Falling back to sixel.\n";
+        o.protocol = GraphicsProtocol::Sixel;
+    }
+
+    std::string m = config.getNestedString("art", block + ".sixel_mode",
+                        defaultMode == SixelMode::Legacy ? "legacy" : "dithered");
+    if (m == "legacy")        o.mode = SixelMode::Legacy;
+    else if (m == "dithered") o.mode = SixelMode::Dithered;
+
+    int pct = config.getNestedInt("art", block + ".dither_percent", 100);
+    o.dither = std::clamp(pct, 0, 100) / 100.0f;
+    return o;
+}
+
 //  ███╗   ███╗ █████╗ ██╗███╗   ██╗    ██████╗██████╗ ██████╗ 
 //  ████╗ ████║██╔══██╗██║████╗  ██║   ██╔════╝██╔══██╗██╔══██╗
 //  ██╔████╔██║███████║██║██╔██╗ ██║   ██║     ██████╔╝██████╔╝
@@ -716,7 +744,7 @@ int main(){
     //                              (self-heals from embedded EXE resource 101 if missing.
     //                              NEVER overwrites an existing user config.)
 
-    ConfigMode CONFIG_MODE = ConfigMode::Production; // ← switch as needed, set to Production before shipping
+    ConfigMode CONFIG_MODE = ConfigMode::Dev; // ← switch as needed, set to Production before shipping
     ConfigManager config(CONFIG_MODE);
 
 
@@ -742,6 +770,8 @@ int main(){
     bool videoEnabled = config.getNestedBool("art", "Video.enabled", false);
     bool gifEnabled   = config.getNestedBool("art", "Gif.enabled", false);
 
+
+
     // Priority: Video > Gif > Image > ASCII
     if (videoEnabled) {
         video.setPadding(
@@ -754,6 +784,7 @@ int main(){
         video.setFps(config.getNestedInt("art", "Video.fps", 60));
         video.setFlipVertical(config.getNestedBool("art", "Video.flip_vertical", false));
 
+        video.setEncodeOptions(readEncodeOptions(config, "Video", SixelMode::Dithered));
         bool ok = video.load(
             config.getNestedString("art", "Video.video_path", ""),
             config.getNestedInt("art", "Video.image_size_percentage", 100));
@@ -776,6 +807,7 @@ int main(){
         gif.setCellWidthPx(config.getNestedInt("art", "Gif.cell_width_px", 0));
         gif.setCellHeightPx(config.getNestedInt("art", "Gif.cell_height_px", 0));
 
+        gif.setEncodeOptions(readEncodeOptions(config, "Gif", SixelMode::Legacy));
         bool ok = gif.load(
             config.getNestedString("art", "Gif.gif_path", ""),
             config.getNestedInt("art", "Gif.image_size_percentage", 100));
@@ -796,6 +828,7 @@ int main(){
         image.setCellWidthPx(config.getNestedInt("art", "Image.cell_width_px", 0));
         image.setCellHeightPx(config.getNestedInt("art", "Image.cell_height_px", 0));
 
+        image.setEncodeOptions(readEncodeOptions(config, "Image", SixelMode::Dithered));
         bool ok = image.load(
             config.getNestedString("art", "Image.image_path", ""),
             config.getNestedInt("art", "Image.image_size_percentage", 100));

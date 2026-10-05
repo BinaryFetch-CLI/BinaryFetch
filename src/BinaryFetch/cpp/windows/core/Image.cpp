@@ -2,6 +2,7 @@
 #include "stb_image.h"
 
 #include "Image.h"
+#include "PixelEncoders.h"
 
 #include <algorithm>
 #include <array>
@@ -43,21 +44,13 @@ void TerminalImage::setCellWidthPx(int px)  { cellWidthPx = px; }
 int  TerminalImage::getCellWidthPx() const  { return cellWidthPx; }
 
 // ============================================================
-// Windows Sixel encoder — everything below is private to this file
+// Windows pixel encoder — everything below is private to this file
 // ============================================================
 
 namespace {
 
-constexpr int PALETTE_SIZE = 256;
-
 // Alpha threshold below which a pixel is treated as fully transparent.
-// Pixels at or above this are treated as fully opaque — no partial-alpha
-// blending against an unknown terminal background. This threshold is used
-// both for opaque-bounds detection and for the encoder's skip decision,
-// so the crop and the emitted pixels always agree on what "visible" means.
 constexpr uint8_t ALPHA_THRESHOLD = 128;
-
-struct RGB { uint8_t r, g, b; };
 
 // ---- In-band terminal query (XTWINOPS "CSI 16 t") ----
 //
@@ -222,123 +215,7 @@ COORD getTerminalCellSize() {
     return { 8, 16 };
 }
 
-// ---- 6x7x6 = 252-colour cube, used with ordered dithering ----
-// Green gets the extra level because the eye is most sensitive to it.
-// Index = (r * 7 + g) * 6 + b. The last 4 entries are unused.
-std::array<RGB, PALETTE_SIZE> createPalette() {
-    std::array<RGB, PALETTE_SIZE> palette{};
-    int index = 0;
-    for (int r = 0; r < 6; ++r)
-        for (int g = 0; g < 7; ++g)
-            for (int b = 0; b < 6; ++b)
-                palette[index++] = { (uint8_t)(r * 255 / 5),
-                                     (uint8_t)(g * 255 / 6),
-                                     (uint8_t)(b * 255 / 5) };
-    return palette;
-}
 
-inline int colorDistance(const RGB& a, const RGB& b) {
-    int dr = (int)a.r - b.r, dg = (int)a.g - b.g, db = (int)a.b - b.b;
-    return dr * dr + dg * dg + db * db;
-}
-
-// ---- 32x32x32 RGB -> palette-index lookup table ----
-std::vector<uint8_t> buildColorLookup(const std::array<RGB, PALETTE_SIZE>& palette) {
-    constexpr int SIZE = 32;
-    std::vector<uint8_t> lookup(SIZE * SIZE * SIZE);
-    for (int r = 0; r < SIZE; ++r) {
-        for (int g = 0; g < SIZE; ++g) {
-            for (int b = 0; b < SIZE; ++b) {
-                RGB color{ (uint8_t)(r * 255 / 31), (uint8_t)(g * 255 / 31), (uint8_t)(b * 255 / 31) };
-                int bestIndex = 0, bestDistance = INT32_MAX;
-                for (int p = 0; p < PALETTE_SIZE; ++p) {
-                    int d = colorDistance(color, palette[p]);
-                    if (d < bestDistance) { bestDistance = d; bestIndex = p; }
-                }
-                lookup[(r * SIZE * SIZE) + (g * SIZE) + b] = (uint8_t)bestIndex;
-            }
-        }
-    }
-    return lookup;
-}
-
-// Palette + lookup never change between images — compute once per
-// process, not once per load(). This is the single biggest speed win
-// available here (the lookup build is ~8M comparisons).
-const std::array<RGB, PALETTE_SIZE>& getSharedPalette() {
-    static const std::array<RGB, PALETTE_SIZE> palette = createPalette();
-    return palette;
-}
-const std::vector<uint8_t>& getSharedLookup() {
-    static const std::vector<uint8_t> lookup = buildColorLookup(getSharedPalette());
-    return lookup;
-}
-
-inline uint8_t getPaletteIndex(uint8_t r, uint8_t g, uint8_t b, const std::vector<uint8_t>& lookup) {
-    int rr = r >> 3, gg = g >> 3, bb = b >> 3;
-    return lookup[(rr * 32 * 32) + (gg * 32) + bb];
-}
-
-void writePalette(std::ostringstream& out, const std::array<RGB, PALETTE_SIZE>& palette) {
-    for (int i = 0; i < PALETTE_SIZE; ++i) {
-        const RGB& c = palette[i];
-        out << '#' << i << ";2;" << (c.r * 100 / 255) << ';' << (c.g * 100 / 255) << ';' << (c.b * 100 / 255);
-    }
-}
-
-inline void writeRun(std::ostringstream& out, char value, int count) {
-    if (count <= 0) return;
-    if (count >= 4) out << '!' << count << value;
-    else for (int i = 0; i < count; ++i) out << value;
-}
-
-// `opaque` is a per-pixel 0/1 mask (alpha >= threshold). Pixels with
-// opaque == 0 are skipped entirely: no bit set, no color marked used, so
-// the terminal leaves its own background showing through.
-void encodeBand(std::ostringstream& out,
-                 const std::vector<uint8_t>& indexed,
-                 const std::vector<uint8_t>& opaque,
-                 int width, int height, int startY) {
-    const int bandHeight = std::min(6, height - startY);
-    std::vector<uint8_t> masks((size_t)PALETTE_SIZE * width, 0);
-    std::array<bool, PALETTE_SIZE> used{};
-
-    for (int x = 0; x < width; ++x) {
-        for (int dy = 0; dy < bandHeight; ++dy) {
-            int y = startY + dy;
-            size_t idx = (size_t)y * width + x;
-            if (!opaque[idx]) continue;
-            uint8_t color = indexed[idx];
-            masks[(size_t)color * width + x] |= (uint8_t)(1 << dy);
-            used[color] = true;
-        }
-    }
-
-    for (int color = 0; color < PALETTE_SIZE; ++color) {
-        if (!used[color]) continue;
-        out << '#' << color;
-        const uint8_t* row = masks.data() + (size_t)color * width;
-
-        int first = 0;
-        while (first < width && row[first] == 0) ++first;
-        int last = width - 1;
-        while (last >= first && row[last] == 0) --last;
-        if (first > last) continue;
-
-        if (first > 0) writeRun(out, '?', first);
-
-        int x = first;
-        while (x <= last) {
-            char sixel = (char)(63 + row[x]);
-            int runLength = 1;
-            while (x + runLength <= last && row[x + runLength] == row[x]) ++runLength;
-            writeRun(out, sixel, runLength);
-            x += runLength;
-        }
-        out << '$';
-    }
-    out << '-';
-}
 
 // ---- Simple nearest-neighbor resize (RGBA) ----
 std::vector<unsigned char> scalePixels(const unsigned char* src, int srcW, int srcH,
@@ -388,54 +265,7 @@ bool findOpaqueBounds(const unsigned char* rgba, int w, int h,
     return true;
 }
 
-// ---- Full encode: raw RGBA pixels -> complete Sixel escape sequence ----
-bool encodePixelsForTerminal(const unsigned char* pixels, int width, int height,
-                              std::string& outEncoded) {
-    if (!pixels || width <= 0 || height <= 0) return false;
 
-    const auto& palette = getSharedPalette();
-
-    // 8x8 ordered (Bayer) dithering against the 6x7x6 cube.
-    // DITHER: 1.0 = full strength, 0.0 = off (plain rounding, banding returns).
-    constexpr float DITHER = 1.0f;
-    static const uint8_t bayer[64] = {
-         0, 32,  8, 40,  2, 34, 10, 42,
-        48, 16, 56, 24, 50, 18, 58, 26,
-        12, 44,  4, 36, 14, 46,  6, 38,
-        60, 28, 52, 20, 62, 30, 54, 22,
-         3, 35, 11, 43,  1, 33,  9, 41,
-        51, 19, 59, 27, 49, 17, 57, 25,
-        15, 47,  7, 39, 13, 45,  5, 37,
-        63, 31, 55, 23, 61, 29, 53, 21
-    };
-
-    std::vector<uint8_t> indexed((size_t)width * height, 0);
-    std::vector<uint8_t> opaque ((size_t)width * height, 0);
-    for (int y = 0; y < height; ++y) {
-        const unsigned char* row = pixels + (size_t)y * width * 4;
-        for (int x = 0; x < width; ++x) {
-            const unsigned char* p = row + (size_t)x * 4;
-            if (p[3] < ALPHA_THRESHOLD) continue;   // leave transparent
-            float t = 0.5f + (((bayer[((y & 7) << 3) | (x & 7)] + 0.5f) / 64.0f) - 0.5f) * DITHER;
-            int r = std::min(5, (int)(p[0] * (5.0f / 255.0f) + t));
-            int g = std::min(6, (int)(p[1] * (6.0f / 255.0f) + t));
-            int b = std::min(5, (int)(p[2] * (5.0f / 255.0f) + t));
-            indexed[(size_t)y * width + x] = (uint8_t)((r * 7 + g) * 6 + b);
-            opaque [(size_t)y * width + x] = 1;
-        }
-    }
-
-    std::ostringstream out;
-    out << "\033P0;1;0q";                            // start sixel, transparent background
-    out << '"' << "1;1;" << width << ';' << height;  // raster attributes: exact size
-    writePalette(out, palette);
-    for (int y = 0; y < height; y += 6)
-        encodeBand(out, indexed, opaque, width, height, y);
-    out << "\033\\";                                 // end sixel
-
-    outEncoded = out.str();
-    return true;
-}
 
 } // anonymous namespace
 
@@ -507,9 +337,9 @@ bool TerminalImage::load(const std::string& path, int sizePercent) {
     bool ok;
     if (targetW != srcW || targetH != srcH) {
         std::vector<unsigned char> scaled = scalePixels(srcForEncode, srcW, srcH, targetW, targetH);
-        ok = encodePixelsForTerminal(scaled.data(), targetW, targetH, encodedData);
+        ok = encodePixels(scaled.data(), targetW, targetH, encodeOpts, encodedData);
     } else {
-        ok = encodePixelsForTerminal(srcForEncode, srcW, srcH, encodedData);
+        ok = encodePixels(srcForEncode, srcW, srcH, encodeOpts, encodedData);
     }
     stbi_image_free(pixels);
     if (!ok) return false;
@@ -523,14 +353,18 @@ bool TerminalImage::load(const std::string& path, int sizePercent) {
     // the queried/probed cell size, since it's the one value guaranteed to
     // be correct for this exact terminal/font/DPI combination.
     COORD cell = getTerminalCellSize();
-
+    bool ok;
     int effectiveCellW = (cellWidthPx > 0) ? cellWidthPx : cell.X;
     if (effectiveCellW <= 0) effectiveCellW = 8;    // paranoia
-    colSpan = (targetW + effectiveCellW - 1) / effectiveCellW;
+    colSpan = (encodeOpts.protocol == GraphicsProtocol::HalfBlock)
+                ? targetW
+                : (targetW + effectiveCellW - 1) / effectiveCellW;
 
     int effectiveCellH = (cellHeightPx > 0) ? cellHeightPx : cell.Y;
     if (effectiveCellH <= 0) effectiveCellH = 16;   // paranoia
-    rowSpan = (targetH + effectiveCellH - 1) / effectiveCellH;
+    rowSpan = (encodeOpts.protocol == GraphicsProtocol::HalfBlock)
+                ? (targetH + 1) / 2
+                : (targetH + effectiveCellH - 1) / effectiveCellH;
 
     loaded = true;
     return true;

@@ -1,4 +1,5 @@
 #pragma once
+#include "PixelEncoders.h"
 #include <string>
 
 // TerminalImage — platform-neutral image-to-terminal-graphics bridge.
@@ -96,6 +97,7 @@ public:
     // same convention and same rationale as setCellHeightPx above, but
     // feeding colSpan instead of rowSpan.
     void setCellWidthPx(int px);
+    void setEncodeOptions(const EncodeOptions& o) { encodeOpts = o; }
     int getCellWidthPx() const;
 
 private:
@@ -108,4 +110,5 @@ private:
     int cellHeightPx;   // 0 = auto
     int cellWidthPx;    // 0 = auto
     bool loaded;
+    EncodeOptions encodeOpts;   // default = Dithered
 };

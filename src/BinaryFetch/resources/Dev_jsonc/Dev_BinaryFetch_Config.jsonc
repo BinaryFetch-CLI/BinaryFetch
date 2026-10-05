@@ -113,21 +113,55 @@
       "image_size_percentage": 47,
       "padding_up": 1,
       "padding_left": 0,
-      "padding_right": 1
+      "padding_right": 1,
+
+      // "protocol": "sixel" | "halfblock" | "kitty" | "iterm2"   (default: sixel)
+      //     sixel     = needs a Sixel terminal (Windows Terminal 1.22+, WezTerm)
+      //     kitty     = needs Kitty graphics support (WezTerm, Warp; not Windows Terminal)
+      //     iterm2    = needs iTerm2 inline images (WezTerm, Warp; not Windows Terminal)
+      //     halfblock = coloured text, works in any truecolor terminal
+      //     "sixel_mode" and "dither_percent" apply to sixel only.
+      "protocol": "sixel",
+
+      // NEW: Sixel only. How the image is squeezed into 256 colours.
+      // "dithered" = smooth gradients (photos)           (default for Image)
+      // "legacy"   = nearest colour, flat and exact (logos, pixel art)
+      "sixel_mode": "dithered",
+
+      // NEW: Sixel + "dithered" only. Mixing strength, 0-100.
+      // 100 = smoothest (faint grain), 0 = off (banding returns).
+      // Lower it (e.g. 60) if the picture looks too grainy.
+      "dither_percent": 100
     },
     "Video": {
-    "enabled": true,
-    "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
-    "flip_vertical": false,
-    "fps": 60,
-    "image_size_percentage": 70,
-    "padding_up": 1,
-    "padding_left": 0,
-    "padding_right": 1,
-    "loop": true,
-    "cell_width_px": 0,
-    "cell_height_px": 0
-   },
+      "enabled": true,
+      "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
+      "flip_vertical": false,
+      "fps": 60,
+      "image_size_percentage": 70,
+      "padding_up": 1,
+      "padding_left": 0,
+      "padding_right": 1,
+      "loop": true,
+      "cell_width_px": 0,
+      "cell_height_px": 0,
+
+      // "protocol": "sixel" | "halfblock" | "kitty" | "iterm2"   (default: sixel)
+      //     sixel     = needs a Sixel terminal (Windows Terminal 1.22+, WezTerm)
+      //     kitty     = needs Kitty graphics support (WezTerm, Warp; not Windows Terminal)
+      //     iterm2    = needs iTerm2 inline images (WezTerm, Warp; not Windows Terminal)
+      //     halfblock = coloured text, works in any truecolor terminal
+      //     "sixel_mode" and "dither_percent" apply to sixel only.
+      "protocol": "sixel",
+
+      // NEW: Sixel only. "dithered" | "legacy"          (default for Video: dithered)
+      "sixel_mode": "dithered",
+
+      // NEW: Sixel + "dithered" only. 0-100.            (default: 100)
+      // The dither pattern is fixed to screen position, so it
+      // does not shimmer between video frames.
+      "dither_percent": 100
+    },
     "Gif": {
       // Gif uses Live render, use Ctrl + c to escape
       "enabled": false,
@@ -139,7 +173,23 @@
       "loop": true,
       "viewer_mode": true,
       "speed_multiplier": 1.0,
-      "max_frames": 0
+      "max_frames": 0,
+
+      // "protocol": "sixel" | "halfblock" | "kitty" | "iterm2"   (default: sixel)
+      //     sixel     = needs a Sixel terminal (Windows Terminal 1.22+, WezTerm)
+      //     kitty     = needs Kitty graphics support (WezTerm; not Windows Terminal)
+      //     iterm2    = needs iTerm2 inline images (WezTerm; not Windows Terminal)
+      //     halfblock = coloured text, works in any truecolor terminal
+      //     "sixel_mode" and "dither_percent" apply to sixel only.
+      "protocol": "sixel",
+
+      // NEW: Sixel only. "legacy" | "dithered"        (default for Gif: legacy)
+      // "legacy" keeps the original GIF look (flat colours).
+      "sixel_mode": "legacy",
+
+      // NEW: Sixel + "dithered" only. 0-100.          (default: 100)
+      // Ignored while sixel_mode is "legacy".
+      "dither_percent": 100
     }
   },
   // Config schema — read this once, it applies everywhere below.

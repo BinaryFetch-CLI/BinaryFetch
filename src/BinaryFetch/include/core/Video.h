@@ -4,6 +4,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "PixelEncoders.h"
 
 class TerminalVideo {
 public:
@@ -22,6 +23,7 @@ public:
 
     void setCellHeightPx(int px);
     void setCellWidthPx(int px);
+    void setEncodeOptions(const EncodeOptions& o) { encodeOpts = o; }
 
     void setFps(int fps);          // clamped to 1..60 (and to the video's own fps)
     int  getFps() const;
@@ -47,4 +49,5 @@ private:
     std::string videoPath;
     std::vector<unsigned char> rgba;
     MFState* mf;
+    EncodeOptions encodeOpts;
 };

@@ -1,7 +1,8 @@
 // Video.cpp
-// Windows-only. Windows Media Foundation source reader -> scale -> Sixel.
+// Windows-only. Windows Media Foundation source reader -> scale -> PixelEncoders.
 
 #include "Video.h"
+#include "PixelEncoders.h"
 
 #include <algorithm>
 #include <array>
@@ -33,8 +34,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace {
 
-constexpr int PALETTE_SIZE = 256;
-struct RGB { uint8_t r, g, b; };
+
 
 // cell size: ask the terminal (CSI 16 t), fall back to Win32
 bool queryCellSizeFromTerminalVideo(int& outW, int& outH) {
@@ -95,152 +95,7 @@ COORD getTerminalCellSizeVideo() {
     return { 8, 16 };
 }
 
-// 6 x 7 x 6 = 252-colour cube (green gets the extra level because the eye
-// is most sensitive to it). Index = (r * 7 + g) * 6 + b. The last 4 entries
-// are unused. No separate gray ramp: dithering handles grays fine, and a
-// mixed palette would make the dither noisy on gray areas.
-std::array<RGB, PALETTE_SIZE> createPalette() {
-    std::array<RGB, PALETTE_SIZE> palette{};
-    int index = 0;
-    for (int r = 0; r < 6; ++r)
-        for (int g = 0; g < 7; ++g)
-            for (int b = 0; b < 6; ++b)
-                palette[index++] = { (uint8_t)(r * 255 / 5),
-                                     (uint8_t)(g * 255 / 6),
-                                     (uint8_t)(b * 255 / 5) };
-    return palette;
-}
 
-inline int colorDistance(const RGB& a, const RGB& b) {
-    int dr = (int)a.r - b.r, dg = (int)a.g - b.g, db = (int)a.b - b.b;
-    return dr * dr + dg * dg + db * db;
-}
-
-std::vector<uint8_t> buildColorLookup(const std::array<RGB, PALETTE_SIZE>& palette) {
-    constexpr int SIZE = 32;
-    std::vector<uint8_t> lookup(SIZE * SIZE * SIZE);
-    for (int r = 0; r < SIZE; ++r)
-        for (int g = 0; g < SIZE; ++g)
-            for (int b = 0; b < SIZE; ++b) {
-                RGB color{ (uint8_t)(r * 255 / 31), (uint8_t)(g * 255 / 31), (uint8_t)(b * 255 / 31) };
-                int bestIndex = 0, bestDistance = INT32_MAX;
-                for (int p = 0; p < PALETTE_SIZE; ++p) {
-                    int d = colorDistance(color, palette[p]);
-                    if (d < bestDistance) { bestDistance = d; bestIndex = p; }
-                }
-                lookup[(r * SIZE * SIZE) + (g * SIZE) + b] = (uint8_t)bestIndex;
-            }
-    return lookup;
-}
-
-const std::array<RGB, PALETTE_SIZE>& getSharedPalette() {
-    static const std::array<RGB, PALETTE_SIZE> palette = createPalette();
-    return palette;
-}
-const std::vector<uint8_t>& getSharedLookup() {
-    static const std::vector<uint8_t> lookup = buildColorLookup(getSharedPalette());
-    return lookup;
-}
-
-inline uint8_t getPaletteIndex(uint8_t r, uint8_t g, uint8_t b, const std::vector<uint8_t>& lookup) {
-    return lookup[((r >> 3) * 32 * 32) + ((g >> 3) * 32) + (b >> 3)];
-}
-
-void writePalette(std::ostringstream& out, const std::array<RGB, PALETTE_SIZE>& palette) {
-    for (int i = 0; i < PALETTE_SIZE; ++i) {
-        const RGB& c = palette[i];
-        out << '#' << i << ";2;" << (c.r * 100 / 255) << ';' << (c.g * 100 / 255) << ';' << (c.b * 100 / 255);
-    }
-}
-
-inline void writeRun(std::ostringstream& out, char value, int count) {
-    if (count <= 0) return;
-    if (count >= 4) out << '!' << count << value;
-    else for (int i = 0; i < count; ++i) out << value;
-}
-
-void encodeBand(std::ostringstream& out, const std::vector<uint8_t>& indexed,
-                int width, int height, int startY) {
-    const int bandHeight = std::min(6, height - startY);
-    std::vector<uint8_t> masks((size_t)PALETTE_SIZE * width, 0);
-    std::array<bool, PALETTE_SIZE> used{};
-
-    for (int x = 0; x < width; ++x) {
-        for (int dy = 0; dy < bandHeight; ++dy) {
-            uint8_t color = indexed[(size_t)(startY + dy) * width + x];
-            masks[(size_t)color * width + x] |= (uint8_t)(1 << dy);
-            used[color] = true;
-        }
-    }
-
-    for (int color = 0; color < PALETTE_SIZE; ++color) {
-        if (!used[color]) continue;
-        out << '#' << color;
-        const uint8_t* row = masks.data() + (size_t)color * width;
-
-        int first = 0;
-        while (first < width && row[first] == 0) ++first;
-        int last = width - 1;
-        while (last >= first && row[last] == 0) --last;
-        if (first > last) continue;
-
-        if (first > 0) writeRun(out, '?', first);
-        int x = first;
-        while (x <= last) {
-            char sixel = (char)(63 + row[x]);
-            int runLength = 1;
-            while (x + runLength <= last && row[x + runLength] == row[x]) ++runLength;
-            writeRun(out, sixel, runLength);
-            x += runLength;
-        }
-        out << '$';
-    }
-    out << '-';
-}
-
-bool encodeFrame(const unsigned char* pixels, int width, int height, std::string& outEncoded) {
-    if (!pixels || width <= 0 || height <= 0) return false;
-    const auto& palette = getSharedPalette();
-
-    // 8x8 ordered (Bayer) dithering against the 6x7x6 cube. The pattern is
-    // fixed to screen position, so it doesn't shimmer between video frames.
-    // DITHER: 1.0 = full strength, 0.0 = off (plain rounding, banding returns).
-    constexpr float DITHER = 1.0f;
-    static const uint8_t bayer[64] = {
-         0, 32,  8, 40,  2, 34, 10, 42,
-        48, 16, 56, 24, 50, 18, 58, 26,
-        12, 44,  4, 36, 14, 46,  6, 38,
-        60, 28, 52, 20, 62, 30, 54, 22,
-         3, 35, 11, 43,  1, 33,  9, 41,
-        51, 19, 59, 27, 49, 17, 57, 25,
-        15, 47,  7, 39, 13, 45,  5, 37,
-        63, 31, 55, 23, 61, 29, 53, 21
-    };
-
-    std::vector<uint8_t> indexed((size_t)width * height);
-    for (int y = 0; y < height; ++y) {
-        const unsigned char* row = pixels + (size_t)y * width * 4;
-        for (int x = 0; x < width; ++x) {
-            const unsigned char* p = row + (size_t)x * 4;
-            float t = 0.5f + (((bayer[((y & 7) << 3) | (x & 7)] + 0.5f) / 64.0f) - 0.5f) * DITHER;
-            int r = std::min(5, (int)(p[0] * (5.0f / 255.0f) + t));
-            int g = std::min(6, (int)(p[1] * (6.0f / 255.0f) + t));
-            int b = std::min(5, (int)(p[2] * (5.0f / 255.0f) + t));
-            indexed[(size_t)y * width + x] = (uint8_t)((r * 7 + g) * 6 + b);
-        }
-    }
-
-    std::ostringstream out;
-    out << "\033P0;1;0q";
-    out << '"' << "1;1;" << width << ';' << height;
-    writePalette(out, palette);
-    for (int y = 0; y < height; y += 6)
-        encodeBand(out, indexed, width, height, y);
-    out << "\033\\";
-
-    outEncoded = out.str();
-    return true;
-}
 
 } // anonymous namespace
 
@@ -445,8 +300,9 @@ bool TerminalVideo::load(const std::string& path, int sizePercent) {
     if (cw <= 0) cw = 8;
     int ch = (cellHeightPx > 0) ? cellHeightPx : cell.Y;
     if (ch <= 0) ch = 16;
-    colSpan = (outW + cw - 1) / cw;
-    rowSpan = (outH + ch - 1) / ch;
+    const bool half = (encodeOpts.protocol == GraphicsProtocol::HalfBlock);
+    colSpan = half ? outW : (outW + cw - 1) / cw;
+    rowSpan = half ? (outH + 1) / 2 : (outH + ch - 1) / ch;
 
     loaded = true;
     return true;
@@ -549,7 +405,7 @@ bool TerminalVideo::nextFrame(std::string& out) {
 
         mf->targetTime = target + interval;
         mf->framesShown++;
-        return encodeFrame(rgba.data(), outW, outH, out);
+        return encodePixels(rgba.data(), outW, outH, encodeOpts, out);
     }
 }
 

@@ -120,6 +120,7 @@ set(BINARYFETCH_HEADERS
     "${BINARYFETCH_INCLUDE}/core/Image.h"
     "${BINARYFETCH_INCLUDE}/core/Gif.h"
     "${BINARYFETCH_INCLUDE}/core/Video.h"
+    "${BINARYFETCH_INCLUDE}/core/PixelEncoders.h"
     "${BINARYFETCH_INCLUDE}/core/linux_ascii_database.h"
     "${BINARYFETCH_STB_IMAGE}/stb_image.h"
 
@@ -189,7 +190,8 @@ if(WIN32)
         "${BINARYFETCH_CPP}/windows/core/config_management.cpp"
         "${BINARYFETCH_CPP}/windows/core/Image.cpp"
         "${BINARYFETCH_CPP}/windows/core/Gif.cpp"
-        "${BINARYFETCH_CPP}/windows/core/Video.cpp"  
+        "${BINARYFETCH_CPP}/windows/core/Video.cpp"
+        "${BINARYFETCH_CPP}/windows/core/PixelEncoders.cpp"
         # ----------------------------------------------------
         # Detailed Information
         # ----------------------------------------------------

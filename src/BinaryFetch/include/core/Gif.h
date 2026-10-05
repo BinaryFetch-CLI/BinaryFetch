@@ -1,4 +1,5 @@
 #pragma once
+#include "PixelEncoders.h"
 #include <string>
 #include <vector>
 
@@ -39,6 +40,7 @@ public:
     void setCellHeightPx(int px);
     int getCellHeightPx() const;
     void setCellWidthPx(int px);
+    void setEncodeOptions(const EncodeOptions& o) { encodeOpts = o; }
     int getCellWidthPx() const;
 
 private:
@@ -48,4 +50,5 @@ private:
     int paddingUp, paddingLeft, paddingRight;
     int cellHeightPx, cellWidthPx;
     bool loaded;
+    EncodeOptions encodeOpts;
 };

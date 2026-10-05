@@ -1,8 +1,8 @@
 // Gif.cpp
-// Windows-only. Mirrors Image.cpp's private Sixel-encoding internals
-// (duplicated here, not shared) so Image.cpp/Image.h remain untouched.
+// Windows-only. Decodes GIF frames via stb_image and encodes via PixelEncoders.
 
 #include "Gif.h"
+#include "PixelEncoders.h"
 #include "stb_image.h"   // STB_IMAGE_IMPLEMENTATION already defined in Image.cpp
 
 #include <algorithm>
@@ -23,7 +23,9 @@
 TerminalGif::TerminalGif()
     : rowSpan(0), colSpan(0),
       paddingUp(0), paddingLeft(0), paddingRight(0),
-      cellHeightPx(0), cellWidthPx(0), loaded(false) {}
+      cellHeightPx(0), cellWidthPx(0), loaded(false) {
+    encodeOpts.mode = SixelMode::Legacy;
+}
 
 void TerminalGif::setPadding(int up, int left, int right) {
     paddingUp = up; paddingLeft = left; paddingRight = right;
@@ -49,10 +51,7 @@ int TerminalGif::getFrameDelayMs(size_t index) const {
 
 namespace {
 
-constexpr int PALETTE_SIZE = 256;
-constexpr uint8_t ALPHA_THRESHOLD = 128;
 
-struct RGB { uint8_t r, g, b; };
 
 bool queryCellSizeFromTerminalGif(int& outW, int& outH) {
     HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
@@ -117,142 +116,7 @@ COORD getTerminalCellSizeGif() {
     return { 8, 16 };
 }
 
-std::array<RGB, PALETTE_SIZE> createPalette() {
-    std::array<RGB, PALETTE_SIZE> palette{};
-    int index = 0;
-    for (int r = 0; r < 6; ++r)
-        for (int g = 0; g < 6; ++g)
-            for (int b = 0; b < 6; ++b)
-                palette[index++] = { (uint8_t)(r * 51), (uint8_t)(g * 51), (uint8_t)(b * 51) };
-    for (int i = 216; i < 256; ++i) {
-        int gray = static_cast<int>(((i - 216) * 255.0) / 39.0);
-        palette[i] = { (uint8_t)gray, (uint8_t)gray, (uint8_t)gray };
-    }
-    return palette;
-}
 
-inline int colorDistance(const RGB& a, const RGB& b) {
-    int dr = (int)a.r - b.r, dg = (int)a.g - b.g, db = (int)a.b - b.b;
-    return dr * dr + dg * dg + db * db;
-}
-
-std::vector<uint8_t> buildColorLookup(const std::array<RGB, PALETTE_SIZE>& palette) {
-    constexpr int SIZE = 32;
-    std::vector<uint8_t> lookup(SIZE * SIZE * SIZE);
-    for (int r = 0; r < SIZE; ++r)
-        for (int g = 0; g < SIZE; ++g)
-            for (int b = 0; b < SIZE; ++b) {
-                RGB color{ (uint8_t)(r * 255 / 31), (uint8_t)(g * 255 / 31), (uint8_t)(b * 255 / 31) };
-                int bestIndex = 0, bestDistance = INT32_MAX;
-                for (int p = 0; p < PALETTE_SIZE; ++p) {
-                    int d = colorDistance(color, palette[p]);
-                    if (d < bestDistance) { bestDistance = d; bestIndex = p; }
-                }
-                lookup[(r * SIZE * SIZE) + (g * SIZE) + b] = (uint8_t)bestIndex;
-            }
-    return lookup;
-}
-
-const std::array<RGB, PALETTE_SIZE>& getSharedPaletteGif() {
-    static const std::array<RGB, PALETTE_SIZE> palette = createPalette();
-    return palette;
-}
-const std::vector<uint8_t>& getSharedLookupGif() {
-    static const std::vector<uint8_t> lookup = buildColorLookup(getSharedPaletteGif());
-    return lookup;
-}
-
-inline uint8_t getPaletteIndex(uint8_t r, uint8_t g, uint8_t b, const std::vector<uint8_t>& lookup) {
-    int rr = r >> 3, gg = g >> 3, bb = b >> 3;
-    return lookup[(rr * 32 * 32) + (gg * 32) + bb];
-}
-
-void writePalette(std::ostringstream& out, const std::array<RGB, PALETTE_SIZE>& palette) {
-    for (int i = 0; i < PALETTE_SIZE; ++i) {
-        const RGB& c = palette[i];
-        out << '#' << i << ";2;" << (c.r * 100 / 255) << ';' << (c.g * 100 / 255) << ';' << (c.b * 100 / 255);
-    }
-}
-
-inline void writeRun(std::ostringstream& out, char value, int count) {
-    if (count <= 0) return;
-    if (count >= 4) out << '!' << count << value;
-    else for (int i = 0; i < count; ++i) out << value;
-}
-
-void encodeBand(std::ostringstream& out,
-                 const std::vector<uint8_t>& indexed,
-                 const std::vector<uint8_t>& opaque,
-                 int width, int height, int startY) {
-    const int bandHeight = std::min(6, height - startY);
-    std::vector<uint8_t> masks((size_t)PALETTE_SIZE * width, 0);
-    std::array<bool, PALETTE_SIZE> used{};
-
-    for (int x = 0; x < width; ++x) {
-        for (int dy = 0; dy < bandHeight; ++dy) {
-            int y = startY + dy;
-            size_t idx = (size_t)y * width + x;
-            if (!opaque[idx]) continue;
-            uint8_t color = indexed[idx];
-            masks[(size_t)color * width + x] |= (uint8_t)(1 << dy);
-            used[color] = true;
-        }
-    }
-
-    for (int color = 0; color < PALETTE_SIZE; ++color) {
-        if (!used[color]) continue;
-        out << '#' << color;
-        const uint8_t* row = masks.data() + (size_t)color * width;
-
-        int first = 0;
-        while (first < width && row[first] == 0) ++first;
-        int last = width - 1;
-        while (last >= first && row[last] == 0) --last;
-        if (first > last) continue;
-
-        if (first > 0) writeRun(out, '?', first);
-        int x = first;
-        while (x <= last) {
-            char sixel = (char)(63 + row[x]);
-            int runLength = 1;
-            while (x + runLength <= last && row[x + runLength] == row[x]) ++runLength;
-            writeRun(out, sixel, runLength);
-            x += runLength;
-        }
-        out << '$';
-    }
-    out << '-';
-}
-
-bool encodeOneFrame(const unsigned char* pixels, int width, int height, std::string& outEncoded) {
-    if (!pixels || width <= 0 || height <= 0) return false;
-
-    const auto& palette = getSharedPaletteGif();
-    const auto& lookup  = getSharedLookupGif();
-
-    std::vector<uint8_t> indexed((size_t)width * height, 0);
-    std::vector<uint8_t> opaque ((size_t)width * height, 0);
-    for (int y = 0; y < height; ++y) {
-        const unsigned char* row = pixels + (size_t)y * width * 4;
-        for (int x = 0; x < width; ++x) {
-            const unsigned char* p = row + (size_t)x * 4;
-            if (p[3] < ALPHA_THRESHOLD) continue;
-            indexed[(size_t)y * width + x] = getPaletteIndex(p[0], p[1], p[2], lookup);
-            opaque [(size_t)y * width + x] = 1;
-        }
-    }
-
-    std::ostringstream out;
-    out << "\033P0;1;0q";
-    out << '"' << "1;1;" << width << ';' << height;
-    writePalette(out, palette);
-    for (int y = 0; y < height; y += 6)
-        encodeBand(out, indexed, opaque, width, height, y);
-    out << "\033\\";
-
-    outEncoded = out.str();
-    return true;
-}
 
 std::vector<unsigned char> scaleFrame(const unsigned char* src, int srcW, int srcH,
                                        int dstW, int dstH) {
@@ -316,9 +180,9 @@ bool TerminalGif::load(const std::string& path, int sizePercent) {
 
         if (targetW != width || targetH != height) {
             std::vector<unsigned char> scaled = scaleFrame(framePtr, width, height, targetW, targetH);
-            encodeOneFrame(scaled.data(), targetW, targetH, encoded);
+            encodePixels(scaled.data(), targetW, targetH, encodeOpts, encoded);
         } else {
-            encodeOneFrame(framePtr, width, height, encoded);
+            encodePixels(framePtr, width, height, encodeOpts, encoded);
         }
 
         frameEncoded.push_back(std::move(encoded));
@@ -331,11 +195,15 @@ bool TerminalGif::load(const std::string& path, int sizePercent) {
     COORD cell = getTerminalCellSizeGif();
     int effectiveCellW = (cellWidthPx > 0) ? cellWidthPx : cell.X;
     if (effectiveCellW <= 0) effectiveCellW = 8;
-    colSpan = (targetW + effectiveCellW - 1) / effectiveCellW;
+    colSpan = (encodeOpts.protocol == GraphicsProtocol::HalfBlock)
+                ? targetW
+                : (targetW + effectiveCellW - 1) / effectiveCellW;
 
     int effectiveCellH = (cellHeightPx > 0) ? cellHeightPx : cell.Y;
     if (effectiveCellH <= 0) effectiveCellH = 16;
-    rowSpan = (targetH + effectiveCellH - 1) / effectiveCellH;
+    rowSpan = (encodeOpts.protocol == GraphicsProtocol::HalfBlock)
+                ? (targetH + 1) / 2
+                : (targetH + effectiveCellH - 1) / effectiveCellH;
 
     loaded = !frameEncoded.empty();
     return loaded;
