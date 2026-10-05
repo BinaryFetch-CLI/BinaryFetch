@@ -89,24 +89,57 @@
     "style": "color"
   },
   "art": {
+
+    //Note:  till v1.8, Linux doesn't support image\video\gif   
+
+    //Note: if you enable all three of them (gif,image,ascii) together
+    //      it won't work, BinaryFetch will render them based on priority
+    //      priority:  (Video > Gif > Image > Ascii Art)
     "Ascii_Art": {
-      "enabled": true,
+      "enabled": false,
       "padding_up": 0,
       "padding_left": 0,
       "padding_right": 0
     },
+    // Windows paths need DOUBLE backslashes ("\\") because a single
+    // backslash is a JSON escape character. Forward slashes ("/")
+    // This rule applies for both Image & Gif
+    // "G:/screenshot/sky.jpg"     -> valid
+    // "G:\\screenshot\\sky.jpg"   -> valid
+    // "G:\screenshot\sky.jpg"     -> invalid
     "Image": {
       "enabled": false,
-      // Windows paths need DOUBLE backslashes ("\\") because a single
-      // backslash is a JSON escape character. Forward slashes ("/")
-      // "G:/screenshot/sky.jpg"     -> valid
-      // "G:\\screenshot\\sky.jpg"   -> valid
-      // "G:\screenshot\sky.jpg"     -> invalid
       "image_path": "G:\\screenshot\\hisky.jpg",
       "image_size_percentage": 47,
       "padding_up": 1,
       "padding_left": 0,
       "padding_right": 1
+    },
+    "Video": {
+    "enabled": true,
+    "video_path": "C:\\Users\\OBITO\\Downloads\\test.mp4",
+    "flip_vertical": false,
+    "fps": 60,
+    "image_size_percentage": 70,
+    "padding_up": 1,
+    "padding_left": 0,
+    "padding_right": 1,
+    "loop": true,
+    "cell_width_px": 0,
+    "cell_height_px": 0
+   },
+    "Gif": {
+      // Gif uses Live render, use Ctrl + c to escape
+      "enabled": false,
+      "gif_path": "G:\\gif\\tong.gif",
+      "image_size_percentage": 200,
+      "padding_up": 1,
+      "padding_left": 0,
+      "padding_right": 1,
+      "loop": true,
+      "viewer_mode": true,
+      "speed_multiplier": 1.0,
+      "max_frames": 0
     }
   },
   // Config schema — read this once, it applies everywhere below.
